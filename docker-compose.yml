@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  bitcoin-regtest:
+    image: ruimarinho/bitcoin-core:latest
+    container_name: bitcoin-regtest
+    ports:
+      - "18443:18443" # Regtest RPC port
+      - "18444:18444" # Regtest P2P port
+    volumes:
+      - regtest_data:/home/bitcoin/.bitcoin
+    environment:
+      - BITCOIN_RPC_USER=btx-user
+      - BITCOIN_RPC_PASSWORD=btx-pass
+      - BITCOIN_WALLETS=btx-test-wallet
+    command: >
+      bitcoind
+      -regtest
+      -server
+      -rpcbind=0.0.0.0
+      -rpcallowip=0.0.0.0/0
+      -rpcuser=btx-user
+      -rpcpassword=btx-pass
+      -fallbackfee=0.0002
+      -txindex=1
+      -printtoconsole
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "bitcoin-cli", "-regtest", "-rpcuser=btx-user", "-rpcpassword=btx-pass", "getblockchaininfo"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  regtest_data:
