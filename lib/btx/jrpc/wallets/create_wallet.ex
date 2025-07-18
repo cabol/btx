@@ -1,12 +1,16 @@
-defmodule BTx.JRPC.Wallet.CreateWallet do
+defmodule BTx.JRPC.Wallets.CreateWallet do
   @moduledoc """
-  Create a new wallet.
+  Creates and loads a new wallet.
+
+  See [Bitcoin RPC API Reference `createwallet`][createwallet].
+  [createwallet]: https://developer.bitcoin.org/reference/rpc/createwallet.html
   """
 
   use Ecto.Schema
 
-  import BTx.JRPC.Helpers
   import Ecto.Changeset
+
+  alias BTx.JRPC.Request
 
   ## Types & Schema
 
@@ -57,10 +61,10 @@ defmodule BTx.JRPC.Wallet.CreateWallet do
         load_on_startup
       ]
 
-      Map.merge(common_params(), %{
+      Request.new(
         method: "createwallet",
         params: params
-      })
+      )
     end
   end
 

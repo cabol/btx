@@ -54,35 +54,36 @@ defmodule BTx.JRPC do
   end
 
   @doc """
-  Calls the JSON RPC API with the given request.
+  Calls the JSON RPC API with the given method.
   """
   @spec call(client(), Encodable.t(), keyword()) :: rpc_response()
-  def call(client, %_t{} = request, opts \\ []) do
+  def call(client, %_t{} = method, opts \\ []) do
     # Validate options
     opts = Options.validate_rpc_opts!(opts)
 
     # Extract options
     {id, opts} = Keyword.pop(opts, :id)
+    {path, opts} = Keyword.pop(opts, :path)
 
-    # Encode request and add ID if provided
-    body = Encodable.encode(request)
-    body = if id, do: %{body | id: id}, else: body
+    # Encode method and add ID if provided
+    request = Encodable.encode(method)
+    request = if id, do: %{request | id: id}, else: request
 
-    case Tesla.post(client, "/", body, opts: opts) do
+    case Tesla.post(client, path || request.path, request, opts: opts) do
       {:ok, %Tesla.Env{} = response} ->
         Response.new(response)
 
       {:error, reason} ->
-        wrap_error BTx.JRPC.Error, reason: reason, request: request
+        wrap_error BTx.JRPC.Error, reason: reason, method: method
     end
   end
 
   @doc """
-  Calls the JSON RPC API with the given request.
+  Calls the JSON RPC API with the given method.
   """
   @spec call!(client(), Encodable.t(), keyword()) :: Response.t()
-  def call!(client, %_t{} = request, opts \\ []) do
-    case call(client, request, opts) do
+  def call!(client, %_t{} = method, opts \\ []) do
+    case call(client, method, opts) do
       {:ok, response} -> response
       {:error, error} -> raise error
     end

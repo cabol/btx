@@ -29,7 +29,7 @@ defmodule BTx.MixProject do
       dialyzer: dialyzer(),
 
       # Hex
-      description: "Elixir library for Bitcoin",
+      description: "Bitcoin Toolkit for Elixir",
       package: package(),
 
       # Docs

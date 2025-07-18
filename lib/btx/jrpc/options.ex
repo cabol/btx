@@ -60,6 +60,22 @@ defmodule BTx.JRPC.Options do
       doc: """
       The ID for the RPC request.
       """
+    ],
+    path: [
+      type: :string,
+      required: false,
+      doc: """
+      The path to use for the RPC request. This option overrides the `:path`
+      in the request struct returned by the `Encodable` protocol. Some
+      wallet-specific RPC methods have a `:wallet_name` field in the request
+      struct, and when it is present, this option is not needed. See the
+      method documentation before using this option.
+
+      > #### Wallet-specific RPC calls {.info}
+      >
+      > Bitcoin Core requires wallet-specific RPC calls to be made using the
+      > `/wallet/<wallet_name>` URI path, starting from v0.17.0+.
+      """
     ]
   ]
 

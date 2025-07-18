@@ -1,12 +1,16 @@
-defmodule BTx.JRPC.Wallet.GetTransaction do
+defmodule BTx.JRPC.Wallets.GetTransaction do
   @moduledoc """
   Get detailed information about in-wallet transaction `txid`.
+
+  See [Bitcoin RPC API Reference `gettransaction`][gettransaction].
+  [gettransaction]: https://developer.bitcoin.org/reference/rpc/gettransaction.html
   """
 
   use Ecto.Schema
 
-  import BTx.JRPC.Helpers
   import Ecto.Changeset
+
+  alias BTx.JRPC.Request
 
   ## Types & Schema
 
@@ -14,7 +18,9 @@ defmodule BTx.JRPC.Wallet.GetTransaction do
   @type t() :: %__MODULE__{
           txid: String.t() | nil,
           include_watchonly: boolean(),
-          verbose: boolean()
+          verbose: boolean(),
+          # For optional path parameter `/wallet/<wallet_name>`
+          wallet_name: String.t() | nil
         }
 
   @primary_key false
@@ -22,10 +28,12 @@ defmodule BTx.JRPC.Wallet.GetTransaction do
     field :txid, :string
     field :include_watchonly, :boolean, default: true
     field :verbose, :boolean, default: false
+    # For optional path parameter `/wallet/<wallet_name>`
+    field :wallet_name, :string
   end
 
   @required_fields ~w(txid)a
-  @optional_fields ~w(include_watchonly verbose)a
+  @optional_fields ~w(include_watchonly verbose wallet_name)a
 
   ## Encodable protocol
 
@@ -33,12 +41,16 @@ defmodule BTx.JRPC.Wallet.GetTransaction do
     def encode(%{
           txid: txid,
           include_watchonly: include_watchonly,
-          verbose: verbose
+          verbose: verbose,
+          wallet_name: wallet_name
         }) do
-      Map.merge(common_params(), %{
+      path = if wallet_name, do: "/wallet/#{wallet_name}", else: "/"
+
+      Request.new(
         method: "gettransaction",
-        params: [txid, include_watchonly, verbose]
-      })
+        params: [txid, include_watchonly, verbose],
+        path: path
+      )
     end
   end
 
@@ -73,5 +85,6 @@ defmodule BTx.JRPC.Wallet.GetTransaction do
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
     |> validate_length(:txid, is: 64)
+    |> validate_length(:wallet_name, min: 1, max: 64)
   end
 end

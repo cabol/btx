@@ -1,8 +1,8 @@
 defmodule BTx.JRPC.Wallet.GetTransactionTest do
   use ExUnit.Case, async: true
 
-  alias BTx.JRPC.Encodable
-  alias BTx.JRPC.Wallet.GetTransaction
+  alias BTx.JRPC.{Encodable, Request}
+  alias BTx.JRPC.Wallets.GetTransaction
   alias Ecto.Changeset
 
   # Valid Bitcoin transaction ID for testing
@@ -108,41 +108,42 @@ defmodule BTx.JRPC.Wallet.GetTransactionTest do
 
   describe "encodable" do
     test "encodes the request with default options" do
-      assert GetTransaction.new!(txid: @valid_txid)
-             |> Encodable.encode()
-             |> Map.drop([:id]) == %{
+      assert %Request{
                params: [@valid_txid, true, false],
                method: "gettransaction",
-               jsonrpc: "1.0"
-             }
+               jsonrpc: "1.0",
+               path: "/wallet/test_wallet"
+             } =
+               GetTransaction.new!(txid: @valid_txid, wallet_name: "test_wallet")
+               |> Encodable.encode()
     end
 
     test "encodes the request with custom options" do
-      assert GetTransaction.new!(
-               txid: @valid_txid,
-               include_watchonly: false,
-               verbose: true
-             )
-             |> Encodable.encode()
-             |> Map.drop([:id]) == %{
+      assert %Request{
                params: [@valid_txid, false, true],
                method: "gettransaction",
                jsonrpc: "1.0"
-             }
+             } =
+               GetTransaction.new!(
+                 txid: @valid_txid,
+                 include_watchonly: false,
+                 verbose: true
+               )
+               |> Encodable.encode()
     end
 
     test "encodes the request with mixed options" do
-      assert GetTransaction.new!(
-               txid: @valid_txid,
-               include_watchonly: true,
-               verbose: true
-             )
-             |> Encodable.encode()
-             |> Map.drop([:id]) == %{
+      assert %Request{
                params: [@valid_txid, true, true],
                method: "gettransaction",
                jsonrpc: "1.0"
-             }
+             } =
+               GetTransaction.new!(
+                 txid: @valid_txid,
+                 include_watchonly: true,
+                 verbose: true
+               )
+               |> Encodable.encode()
     end
   end
 

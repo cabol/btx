@@ -1,5 +1,5 @@
 # ⚡₿𝕋𝕩
-> Elixir library for Bitcoin.
+> Bitcoin Toolkit for Elixir.
 
 ![CI](http://github.com/cabol/btx/workflows/CI/badge.svg)
 [![Codecov](http://codecov.io/gh/cabol/btx/graph/badge.svg)](http://codecov.io/gh/cabol/btx/graph/badge.svg)
