@@ -60,6 +60,19 @@ defmodule BTx.JRPC.Options do
       doc: """
       The ID for the RPC request.
       """
+    ],
+    path: [
+      type: :string,
+      required: false,
+      default: "/",
+      doc: """
+      The path to use for the RPC request.
+
+      > #### Wallet-specific RPC calls {.info}
+      >
+      > Bitcoin Core requires wallet-specific RPC calls to be made using the
+      > `/wallet/<wallet_name>` URI path, starting from v0.17.0+.
+      """
     ]
   ]
 

@@ -1,6 +1,7 @@
 defmodule BTx.JRPCTest do
   use ExUnit.Case, async: true
 
+  import BTx.TestUtils
   import Tesla.Mock
 
   alias BTx.JRPC
@@ -8,9 +9,7 @@ defmodule BTx.JRPCTest do
   alias BTx.JRPC.Wallet.CreateWallet
   alias Ecto.UUID
 
-  @base_url "http://localhost:18443"
-  @username "btx-user"
-  @password "btx-pass"
+  @url "http://localhost:18443/"
 
   describe "client/1" do
     test "creates a Tesla client with valid options" do
@@ -54,7 +53,7 @@ defmodule BTx.JRPCTest do
 
     test "successful request returns ok tuple", %{client: client, request: request} do
       mock(fn
-        %{method: :post, url: "http://localhost:18443/"} ->
+        %{method: :post, url: @url} ->
           %Tesla.Env{
             status: 200,
             body: %{
@@ -71,7 +70,7 @@ defmodule BTx.JRPCTest do
 
     test "HTTP 400 returns bad request error", %{client: client, request: request} do
       mock(fn
-        %{method: :post, url: "http://localhost:18443/"} ->
+        %{method: :post, url: @url} ->
           %Tesla.Env{status: 400, body: "Bad Request"}
       end)
 
@@ -80,7 +79,7 @@ defmodule BTx.JRPCTest do
 
     test "HTTP 401 returns unauthorized error", %{client: client, request: request} do
       mock(fn
-        %{method: :post, url: "http://localhost:18443/"} ->
+        %{method: :post, url: @url} ->
           %Tesla.Env{status: 401, body: "Unauthorized"}
       end)
 
@@ -89,7 +88,7 @@ defmodule BTx.JRPCTest do
 
     test "HTTP 403 returns forbidden error", %{client: client, request: request} do
       mock(fn
-        %{method: :post, url: "http://localhost:18443/"} ->
+        %{method: :post, url: @url} ->
           %Tesla.Env{status: 403, body: "Forbidden"}
       end)
 
@@ -98,7 +97,7 @@ defmodule BTx.JRPCTest do
 
     test "HTTP 404 returns not found error", %{client: client, request: request} do
       mock(fn
-        %{method: :post, url: "http://localhost:18443/"} ->
+        %{method: :post, url: @url} ->
           %Tesla.Env{status: 404, body: "Not Found"}
       end)
 
@@ -107,7 +106,7 @@ defmodule BTx.JRPCTest do
 
     test "HTTP 405 returns method not allowed error", %{client: client, request: request} do
       mock(fn
-        %{method: :post, url: "http://localhost:18443/"} ->
+        %{method: :post, url: @url} ->
           %Tesla.Env{status: 405, body: "Method Not Allowed"}
       end)
 
@@ -117,7 +116,7 @@ defmodule BTx.JRPCTest do
 
     test "HTTP 503 returns service unavailable error", %{client: client, request: request} do
       mock(fn
-        %{method: :post, url: "http://localhost:18443/"} ->
+        %{method: :post, url: @url} ->
           %Tesla.Env{status: 503, body: "Service Unavailable"}
       end)
 
@@ -127,7 +126,7 @@ defmodule BTx.JRPCTest do
 
     test "JSON-RPC error with HTTP 500 returns method error", %{client: client, request: request} do
       mock(fn
-        %{method: :post, url: "http://localhost:18443/"} ->
+        %{method: :post, url: @url} ->
           %Tesla.Env{
             status: 500,
             body: %{
@@ -149,7 +148,7 @@ defmodule BTx.JRPCTest do
 
     test "JSON-RPC error with HTTP 200 returns method error", %{client: client, request: request} do
       mock(fn
-        %{method: :post, url: "http://localhost:18443/"} ->
+        %{method: :post, url: @url} ->
           %Tesla.Env{
             status: 200,
             body: %{
@@ -170,7 +169,7 @@ defmodule BTx.JRPCTest do
 
     test "unknown HTTP status returns unknown error", %{client: client, request: request} do
       mock(fn
-        %{method: :post, url: "http://localhost:18443/"} ->
+        %{method: :post, url: @url} ->
           %Tesla.Env{
             status: 502,
             body: "Bad Gateway"
@@ -186,7 +185,7 @@ defmodule BTx.JRPCTest do
 
     test "Tesla adapter error returns error", %{client: client, request: request} do
       mock(fn
-        %{method: :post, url: "http://localhost:18443/"} ->
+        %{method: :post, url: @url} ->
           {:error, :timeout}
       end)
 
@@ -198,7 +197,7 @@ defmodule BTx.JRPCTest do
 
     test "connection refused error", %{client: client, request: request} do
       mock(fn
-        %{method: :post, url: "http://localhost:18443/"} ->
+        %{method: :post, url: @url} ->
           {:error, :econnrefused}
       end)
 
@@ -222,7 +221,7 @@ defmodule BTx.JRPCTest do
 
     test "successful request returns response struct", %{client: client, request: request} do
       mock(fn
-        %{method: :post, url: "http://localhost:18443/"} ->
+        %{method: :post, url: @url} ->
           %Tesla.Env{
             status: 200,
             body: %{
@@ -239,7 +238,7 @@ defmodule BTx.JRPCTest do
 
     test "error raises exception", %{client: client, request: request} do
       mock(fn
-        %{method: :post, url: "http://localhost:18443/"} ->
+        %{method: :post, url: @url} ->
           %Tesla.Env{status: 401, body: "Unauthorized"}
       end)
 
@@ -250,7 +249,7 @@ defmodule BTx.JRPCTest do
 
     test "method error raises MethodError exception", %{client: client, request: request} do
       mock(fn
-        %{method: :post, url: "http://localhost:18443/"} ->
+        %{method: :post, url: @url} ->
           %Tesla.Env{
             status: 500,
             body: %{
@@ -274,7 +273,7 @@ defmodule BTx.JRPCTest do
     @tag :integration
     test "can connect to regtest node" do
       client = new_client()
-      wallet_name = "integration_test_#{UUID.generate()}"
+      wallet_name = "integration-test-#{UUID.generate()}"
 
       request = CreateWallet.new!(wallet_name: wallet_name, passphrase: "test")
 
@@ -287,17 +286,5 @@ defmodule BTx.JRPCTest do
         JRPC.call!(client, request, id: wallet_name)
       end
     end
-  end
-
-  ## Private functions
-
-  defp new_client(opts \\ []) do
-    [
-      base_url: @base_url,
-      username: @username,
-      password: @password
-    ]
-    |> Keyword.merge(opts)
-    |> JRPC.client()
   end
 end

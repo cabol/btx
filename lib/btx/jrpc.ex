@@ -63,12 +63,13 @@ defmodule BTx.JRPC do
 
     # Extract options
     {id, opts} = Keyword.pop(opts, :id)
+    {path, opts} = Keyword.pop!(opts, :path)
 
     # Encode request and add ID if provided
     body = Encodable.encode(request)
     body = if id, do: %{body | id: id}, else: body
 
-    case Tesla.post(client, "/", body, opts: opts) do
+    case Tesla.post(client, path, body, opts: opts) do
       {:ok, %Tesla.Env{} = response} ->
         Response.new(response)
 
