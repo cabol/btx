@@ -129,9 +129,22 @@ defmodule BTx.MixProject do
       ],
       groups_for_modules: [
         # BTx,
+        # BTx.JRPC,
+        # BTx.JRPC.Encodable,
+        # BTx.JRPC.Request,
+        # BTx.JRPC.Response,
 
-        "JSON RPC": [
-          BTx.JRPC
+        "RPC APIs": [
+          BTx.JRPC.Wallets
+        ],
+        "Wallet RPCs": [
+          BTx.JRPC.Wallets.CreateWallet,
+          BTx.JRPC.Wallets.GetNewAddress,
+          BTx.JRPC.Wallets.GetTransaction
+        ],
+        Exceptions: [
+          BTx.JRPC.Error,
+          BTx.JRPC.MethodError
         ]
       ]
     ]
@@ -140,7 +153,7 @@ defmodule BTx.MixProject do
   defp extras do
     [
       # Introduction
-      "guides/introduction/getting-started.md"
+      # "guides/introduction/getting-started.md"
     ]
   end
 

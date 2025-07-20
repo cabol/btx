@@ -1,7 +1,6 @@
 defmodule BTx.Helpers do
-  @moduledoc """
-  Helper functions for the BTx library.
-  """
+  @moduledoc false
+  # Helper functions for the BTx library.
 
   @doc """
   Convenience macro for wrapping the given `exception` into a tuple in the

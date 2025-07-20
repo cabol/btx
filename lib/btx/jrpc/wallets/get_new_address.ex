@@ -2,8 +2,21 @@ defmodule BTx.JRPC.Wallets.GetNewAddress do
   @moduledoc """
   Returns a new Bitcoin address for receiving payments.
 
-  If `label` is specified, it is added to the address book so that payments
-  received with the address will be associated with `label`.
+  ## Schema fields (a.k.a "Arguments")
+
+  - `:label` - (optional) The label name for the address to be linked to.
+    It can also be set to the empty string “” to represent the default label.
+    The label does not need to exist, it will be created if there is no label
+    by the given name. Defaults to `""`.
+
+  - `:address_type` - (optional) The type of address to use.
+    The default is "bech32".
+
+  - `:wallet_name` - (optional) When is present, the `:wallet_name` is used
+    to build the path for the request. See
+    ["Wallet-specific RPC calls"][wallet-rpc] section for more information.
+
+  [wallet-rpc]: http://hexdocs.pm/btx/BTx.JRPC.Wallets.html#module-wallet-specific-rpc-calls
 
   See [Bitcoin RPC API Reference `getnewaddress`][getnewaddress].
   [getnewaddress]: https://developer.bitcoin.org/reference/rpc/getnewaddress.html

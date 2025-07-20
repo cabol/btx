@@ -1,7 +1,6 @@
 defmodule BTx.JRPC.Options do
-  @moduledoc """
-  Options for the JSON RPC client.
-  """
+  @moduledoc false
+  # Options for the JSON RPC client.
 
   # Client opts
   client_opts = [
@@ -65,16 +64,17 @@ defmodule BTx.JRPC.Options do
       type: :string,
       required: false,
       doc: """
-      The path to use for the RPC request. This option overrides the `:path`
-      in the request struct returned by the `Encodable` protocol. Some
-      wallet-specific RPC methods have a `:wallet_name` field in the request
-      struct, and when it is present, this option is not needed. See the
-      method documentation before using this option.
+      Custom path for the JSON-RPC endpoint.
 
-      > #### Wallet-specific RPC calls {.info}
+      > #### **Use with caution** {: .warning}
       >
-      > Bitcoin Core requires wallet-specific RPC calls to be made using the
-      > `/wallet/<wallet_name>` URI path, starting from v0.17.0+.
+      > When this option is present, it overrides the automatic path generation
+      > from `:wallet_name` field in request schemas. Most wallet-specific RPC
+      > methods automatically build the correct path when their `:wallet_name`
+      > field is provided, which is the preferred approach. Only use this option
+      > when you need to override the default path behavior. See the method
+      > documentation to check if `:wallet_name` is supported before using this
+      > option.
       """
     ]
   ]

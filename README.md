@@ -52,18 +52,18 @@ Now we can start using the JSON RPC API. Let's create a wallet:
 ```elixir
 iex> BTx.JRPC.client(
 ...>   base_url: "http://127.0.0.1:18443",
-...>   username: "btx-user",
-...>   password: "btx-pass"
+...>   username: "my-user",
+...>   password: "my-pass"
 ...> )
-...> |> BTx.JRPC.call!(BTx.JRPC.Wallet.CreateWallet.new!(
-...>   wallet_name: "btx-wallet",
-...>   passphrase: "btx-pass",
+...> |> BTx.JRPC.Wallets.create_wallet!(
+...>   wallet_name: "my-wallet",
+...>   passphrase: "my-passphrase",
 ...>   avoid_reuse: true,
 ...>   descriptors: true
-...> ))
+...> )
 %BTx.JRPC.Response{
   id: "btx-9cdb7b45-2dc0-4f2e-8d7b-664a03482ca1",
-  result: %{"name" => "btx-wallet"}
+  result: %{"name" => "my-wallet"}
 }
 ```
 
@@ -85,14 +85,19 @@ versions. Not recommended for production use yet.
 
 ## Contributing
 
-We welcome contributions! Please feel free to submit issues, feature requests,
-or pull requests.
+Contributions to **BTx** are very welcome and appreciated!
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+Use the [issue tracker](https://github.com/cabol/btx/issues)
+for bug reports or feature requests. Open a
+[pull request](https://github.com/cabol/btx/pulls)
+when you are ready to contribute.
+
+When submitting a pull request you should not update the
+[CHANGELOG.md](CHANGELOG.md), and also make sure you test your changes
+thoroughly, include unit tests alongside new or changed code.
+
+Before to submit a PR it is highly recommended to run `mix test.ci` and ensure
+all checks run successfully.
 
 ## Copyright and License
 

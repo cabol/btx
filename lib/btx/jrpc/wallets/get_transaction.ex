@@ -2,6 +2,24 @@ defmodule BTx.JRPC.Wallets.GetTransaction do
   @moduledoc """
   Get detailed information about in-wallet transaction `txid`.
 
+  ## Schema fields (a.k.a "Arguments")
+
+  - `:txid` - (required) The transaction ID to get information about.
+
+  - `:include_watchonly` - (optional) Whether to include watch-only addresses
+    in balance calculation and details. Defaults to `true` (for watch-only
+    wallets).
+
+  - `:verbose` - (optional) Whether to include a decoded field containing the
+    decoded transaction (equivalent to RPC `decoderawtransaction`). Defaults
+    to `false`.
+
+  - `:wallet_name` - (optional) When is present, the `:wallet_name` is used
+      to build the path for the request. See
+      ["Wallet-specific RPC calls"][wallet-rpc] section for more information.
+
+  [wallet-rpc]: http://hexdocs.pm/btx/BTx.JRPC.Wallets.html#module-wallet-specific-rpc-calls
+
   See [Bitcoin RPC API Reference `gettransaction`][gettransaction].
   [gettransaction]: https://developer.bitcoin.org/reference/rpc/gettransaction.html
   """

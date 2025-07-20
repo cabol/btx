@@ -162,8 +162,7 @@ defmodule BTx.JRPCTest do
           }
       end)
 
-      assert {:error,
-              %BTx.JRPC.MethodError{id: "test-id", code: -6, message: "Insufficient funds"}} =
+      assert {:error, %BTx.JRPC.MethodError{id: "test-id", code: -6, message: "Insufficient funds"}} =
                JRPC.call(client, method)
     end
 
