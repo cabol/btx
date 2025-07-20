@@ -1,5 +1,7 @@
-defmodule BTx.JRPC.Wallet.GetTransactionTest do
+defmodule BTx.JRPC.Wallets.GetTransactionTest do
   use ExUnit.Case, async: true
+
+  import BTx.TestUtils
 
   alias BTx.JRPC.{Encodable, Request}
   alias BTx.JRPC.Wallets.GetTransaction
@@ -21,12 +23,14 @@ defmodule BTx.JRPC.Wallet.GetTransactionTest do
               %GetTransaction{
                 txid: @valid_txid,
                 include_watchonly: false,
-                verbose: true
+                verbose: true,
+                wallet_name: "test_wallet"
               }} =
                GetTransaction.new(
                  txid: @valid_txid,
                  include_watchonly: false,
-                 verbose: true
+                 verbose: true,
+                 wallet_name: "test_wallet"
                )
     end
 
@@ -34,8 +38,27 @@ defmodule BTx.JRPC.Wallet.GetTransactionTest do
       assert {:ok,
               %GetTransaction{
                 include_watchonly: true,
-                verbose: false
+                verbose: false,
+                wallet_name: nil
               }} = GetTransaction.new(txid: @valid_txid)
+    end
+
+    test "accepts valid wallet names" do
+      valid_names = [
+        "simple",
+        "wallet123",
+        "my-wallet",
+        "my_wallet",
+        # minimum length
+        "a",
+        # maximum length
+        String.duplicate("a", 64)
+      ]
+
+      for name <- valid_names do
+        assert {:ok, %GetTransaction{wallet_name: ^name}} =
+                 GetTransaction.new(txid: @valid_txid, wallet_name: name)
+      end
     end
 
     test "returns an error if txid is missing" do
@@ -72,6 +95,15 @@ defmodule BTx.JRPC.Wallet.GetTransactionTest do
 
       assert Keyword.fetch!(errors, :txid) == {"can't be blank", [{:validation, :required}]}
     end
+
+    test "returns error for wallet name too long" do
+      long_name = String.duplicate("a", 65)
+
+      assert {:error, %Changeset{} = changeset} =
+               GetTransaction.new(txid: @valid_txid, wallet_name: long_name)
+
+      assert "should be at most 64 character(s)" in errors_on(changeset).wallet_name
+    end
   end
 
   describe "new!/1" do
@@ -84,12 +116,14 @@ defmodule BTx.JRPC.Wallet.GetTransactionTest do
       assert %GetTransaction{
                txid: @valid_txid,
                include_watchonly: false,
-               verbose: true
+               verbose: true,
+               wallet_name: "test_wallet"
              } =
                GetTransaction.new!(
                  txid: @valid_txid,
                  include_watchonly: false,
-                 verbose: true
+                 verbose: true,
+                 wallet_name: "test_wallet"
                )
     end
 
@@ -104,10 +138,27 @@ defmodule BTx.JRPC.Wallet.GetTransactionTest do
         GetTransaction.new!(%{})
       end
     end
+
+    test "raises an error if wallet name is invalid" do
+      assert_raise Ecto.InvalidChangesetError, fn ->
+        GetTransaction.new!(txid: @valid_txid, wallet_name: String.duplicate("a", 65))
+      end
+    end
   end
 
   describe "encodable" do
     test "encodes the request with default options" do
+      assert %Request{
+               params: [@valid_txid, true, false],
+               method: "gettransaction",
+               jsonrpc: "1.0",
+               path: "/"
+             } =
+               GetTransaction.new!(txid: @valid_txid)
+               |> Encodable.encode()
+    end
+
+    test "encodes the request with wallet name" do
       assert %Request{
                params: [@valid_txid, true, false],
                method: "gettransaction",
@@ -122,7 +173,8 @@ defmodule BTx.JRPC.Wallet.GetTransactionTest do
       assert %Request{
                params: [@valid_txid, false, true],
                method: "gettransaction",
-               jsonrpc: "1.0"
+               jsonrpc: "1.0",
+               path: "/"
              } =
                GetTransaction.new!(
                  txid: @valid_txid,
@@ -132,16 +184,18 @@ defmodule BTx.JRPC.Wallet.GetTransactionTest do
                |> Encodable.encode()
     end
 
-    test "encodes the request with mixed options" do
+    test "encodes the request with all options" do
       assert %Request{
-               params: [@valid_txid, true, true],
+               params: [@valid_txid, false, true],
                method: "gettransaction",
-               jsonrpc: "1.0"
+               jsonrpc: "1.0",
+               path: "/wallet/my_wallet"
              } =
                GetTransaction.new!(
                  txid: @valid_txid,
-                 include_watchonly: true,
-                 verbose: true
+                 include_watchonly: false,
+                 verbose: true,
+                 wallet_name: "my_wallet"
                )
                |> Encodable.encode()
     end
@@ -171,6 +225,17 @@ defmodule BTx.JRPC.Wallet.GetTransactionTest do
       assert changeset.valid?
     end
 
+    test "validates wallet name length" do
+      # Too long
+      long_name = String.duplicate("a", 65)
+
+      changeset =
+        GetTransaction.changeset(%GetTransaction{}, %{txid: @valid_txid, wallet_name: long_name})
+
+      refute changeset.valid?
+      assert "should be at most 64 character(s)" in errors_on(changeset).wallet_name
+    end
+
     test "accepts valid boolean values for optional fields" do
       changeset =
         GetTransaction.changeset(%GetTransaction{}, %{
@@ -183,14 +248,15 @@ defmodule BTx.JRPC.Wallet.GetTransactionTest do
       assert Changeset.get_change(changeset, :include_watchonly) == false
       assert Changeset.get_change(changeset, :verbose) == true
     end
-  end
 
-  # Helper function for testing changeset errors
-  defp errors_on(changeset) do
-    Changeset.traverse_errors(changeset, fn {message, opts} ->
-      Regex.replace(~r"%{(\w+)}", message, fn _, key ->
-        opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
-      end)
-    end)
+    test "accepts nil wallet_name" do
+      changeset =
+        GetTransaction.changeset(%GetTransaction{}, %{
+          txid: @valid_txid,
+          wallet_name: nil
+        })
+
+      assert changeset.valid?
+    end
   end
 end

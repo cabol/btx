@@ -82,7 +82,7 @@ defmodule BTx.JRPC do
   Calls the JSON RPC API with the given method.
   """
   @spec call!(client(), Encodable.t(), keyword()) :: Response.t()
-  def call!(client, %_t{} = method, opts \\ []) do
+  def call!(client, method, opts \\ []) do
     case call(client, method, opts) do
       {:ok, response} -> response
       {:error, error} -> raise error

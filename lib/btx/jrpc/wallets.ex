@@ -25,6 +25,14 @@ defmodule BTx.JRPC.Wallets do
   end
 
   @doc """
+  Same as `create_wallet/3` but raises on error.
+  """
+  @spec create_wallet!(JRPC.client(), params(), keyword()) :: BTx.JRPC.Response.t()
+  def create_wallet!(client, params, opts \\ []) do
+    JRPC.call!(client, CreateWallet.new!(params), opts)
+  end
+
+  @doc """
   Returns a new Bitcoin address for receiving payments.
   """
   @spec get_new_address(JRPC.client(), params(), keyword()) :: response()
@@ -35,6 +43,14 @@ defmodule BTx.JRPC.Wallets do
   end
 
   @doc """
+  Same as `get_new_address/3` but raises on error.
+  """
+  @spec get_new_address!(JRPC.client(), params(), keyword()) :: BTx.JRPC.Response.t()
+  def get_new_address!(client, params, opts \\ []) do
+    JRPC.call!(client, GetNewAddress.new!(params), opts)
+  end
+
+  @doc """
   Get detailed information about in-wallet transaction `txid`.
   """
   @spec get_transaction(JRPC.client(), params(), keyword()) :: response()
@@ -42,5 +58,13 @@ defmodule BTx.JRPC.Wallets do
     with {:ok, request} <- GetTransaction.new(params) do
       JRPC.call(client, request, opts)
     end
+  end
+
+  @doc """
+  Same as `get_transaction/3` but raises on error.
+  """
+  @spec get_transaction!(JRPC.client(), params(), keyword()) :: BTx.JRPC.Response.t()
+  def get_transaction!(client, params, opts \\ []) do
+    JRPC.call!(client, GetTransaction.new!(params), opts)
   end
 end

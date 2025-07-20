@@ -27,6 +27,9 @@ defmodule BTx.JRPC.Request do
   """
   @spec new(keyword() | map()) :: t()
   def new(params) do
-    struct!(__MODULE__, Enum.into(params, %{id: "btx-" <> UUID.generate()}))
+    params
+    |> Enum.into(%{})
+    |> Map.put_new(:id, "btx-" <> UUID.generate())
+    |> then(&struct!(__MODULE__, &1))
   end
 end
