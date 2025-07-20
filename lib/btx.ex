@@ -14,7 +14,11 @@ defmodule BTx do
   @spec json_module() :: module()
   if Code.ensure_loaded?(JSON) do
     def json_module, do: JSON
+
+    def json_encoder, do: JSON.Encoder
   else
     def json_module, do: Jason
+
+    def json_encoder, do: Jason.Encoder
   end
 end

@@ -16,6 +16,7 @@ defmodule BTx.JRPC.Wallets.CreateWallet do
 
   @typedoc "CreateWallet request"
   @type t() :: %__MODULE__{
+          method: String.t(),
           wallet_name: String.t() | nil,
           disable_private_keys: boolean(),
           blank: boolean(),
@@ -27,6 +28,10 @@ defmodule BTx.JRPC.Wallets.CreateWallet do
 
   @primary_key false
   embedded_schema do
+    # Predefined fields
+    field :method, :string, default: "createwallet"
+
+    # Method fields
     field :wallet_name, :string
     field :disable_private_keys, :boolean, default: false
     field :blank, :boolean, default: false
@@ -43,6 +48,7 @@ defmodule BTx.JRPC.Wallets.CreateWallet do
 
   defimpl BTx.JRPC.Encodable, for: __MODULE__ do
     def encode(%{
+          method: method,
           wallet_name: wallet_name,
           disable_private_keys: disable_private_keys,
           blank: blank,
@@ -62,7 +68,7 @@ defmodule BTx.JRPC.Wallets.CreateWallet do
       ]
 
       Request.new(
-        method: "createwallet",
+        method: method,
         params: params
       )
     end

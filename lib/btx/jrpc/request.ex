@@ -16,7 +16,7 @@ defmodule BTx.JRPC.Request do
           path: String.t()
         }
 
-  @derive {JSON.Encoder, only: [:id, :jsonrpc, :method, :params]}
+  @derive {BTx.json_encoder(), only: [:id, :jsonrpc, :method, :params]}
   @enforce_keys ~w(method params)a
   defstruct id: nil, jsonrpc: "1.0", method: nil, params: [], path: "/"
 

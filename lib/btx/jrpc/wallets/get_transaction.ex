@@ -16,20 +16,25 @@ defmodule BTx.JRPC.Wallets.GetTransaction do
 
   @typedoc "GetTransaction request"
   @type t() :: %__MODULE__{
+          method: String.t(),
+          wallet_name: String.t() | nil,
           txid: String.t() | nil,
           include_watchonly: boolean(),
-          verbose: boolean(),
-          # For optional path parameter `/wallet/<wallet_name>`
-          wallet_name: String.t() | nil
+          verbose: boolean()
         }
 
   @primary_key false
   embedded_schema do
+    # Predefined fields
+    field :method, :string, default: "gettransaction"
+
+    # For optional path parameter `/wallet/<wallet_name>`
+    field :wallet_name, :string
+
+    # Method fields
     field :txid, :string
     field :include_watchonly, :boolean, default: true
     field :verbose, :boolean, default: false
-    # For optional path parameter `/wallet/<wallet_name>`
-    field :wallet_name, :string
   end
 
   @required_fields ~w(txid)a
@@ -39,6 +44,7 @@ defmodule BTx.JRPC.Wallets.GetTransaction do
 
   defimpl BTx.JRPC.Encodable, for: __MODULE__ do
     def encode(%{
+          method: method,
           txid: txid,
           include_watchonly: include_watchonly,
           verbose: verbose,
@@ -47,7 +53,7 @@ defmodule BTx.JRPC.Wallets.GetTransaction do
       path = if wallet_name, do: "/wallet/#{wallet_name}", else: "/"
 
       Request.new(
-        method: "gettransaction",
+        method: method,
         params: [txid, include_watchonly, verbose],
         path: path
       )

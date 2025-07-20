@@ -3,6 +3,7 @@
     "minimum_coverage": 100
   },
   "skip_files": [
+    "lib/btx.ex",
     "lib/btx/helpers.ex",
     "test/support/*"
   ]

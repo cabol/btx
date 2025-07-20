@@ -1,6 +1,10 @@
 locals_without_parens = [
   # BTx.Helpers
-  wrap_error: 2
+  wrap_error: 2,
+
+  # BTx.TestUtils
+  with_telemetry_handler: 2,
+  with_telemetry_handler: 3
 ]
 
 [

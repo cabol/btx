@@ -13,7 +13,7 @@ defmodule BTx.JRPC.Response do
           result: map() | nil
         }
 
-  @derive JSON.Encoder
+  @derive BTx.json_encoder()
   @enforce_keys ~w(id)a
   defstruct id: nil, result: nil
 

@@ -29,4 +29,27 @@ defmodule BTx.TestUtils do
       end)
     end)
   end
+
+  @doc """
+  Helper function for testing telemetry events.
+  """
+  @spec with_telemetry_handler(any(), [atom()], (-> any())) :: any()
+  def with_telemetry_handler(handler_id \\ self(), events, fun) do
+    :ok =
+      :telemetry.attach_many(
+        handler_id,
+        events,
+        &__MODULE__.handle_event/4,
+        %{pid: self()}
+      )
+
+    fun.()
+  after
+    :telemetry.detach(handler_id)
+  end
+
+  @doc false
+  def handle_event(event, measurements, metadata, %{pid: pid}) do
+    send(pid, {event, measurements, metadata})
+  end
 end
