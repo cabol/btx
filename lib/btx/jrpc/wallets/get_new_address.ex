@@ -69,8 +69,8 @@ defmodule BTx.JRPC.Wallets.GetNewAddress do
 
       Request.new(
         method: method,
-        params: [label, address_type],
-        path: path
+        path: path,
+        params: [label, address_type]
       )
     end
   end

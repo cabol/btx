@@ -72,8 +72,8 @@ defmodule BTx.JRPC.Wallets.GetTransaction do
 
       Request.new(
         method: method,
-        params: [txid, include_watchonly, verbose],
-        path: path
+        path: path,
+        params: [txid, include_watchonly, verbose]
       )
     end
   end

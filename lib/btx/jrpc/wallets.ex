@@ -28,7 +28,7 @@ defmodule BTx.JRPC.Wallets do
   """
 
   alias BTx.JRPC
-  alias BTx.JRPC.Wallets.{CreateWallet, GetNewAddress, GetTransaction}
+  alias BTx.JRPC.Wallets.{CreateWallet, GetBalance, GetNewAddress, GetTransaction}
 
   @typedoc "Params for wallet-related RPC calls"
   @type params() :: keyword() | %{optional(atom()) => any()}
@@ -231,5 +231,79 @@ defmodule BTx.JRPC.Wallets do
   @spec get_transaction!(JRPC.client(), params(), keyword()) :: BTx.JRPC.Response.t()
   def get_transaction!(client, params, opts \\ []) do
     JRPC.call!(client, GetTransaction.new!(params), opts)
+  end
+
+  @doc """
+  Returns the total available balance.
+
+  ## Arguments
+
+  - `client` - Same as `BTx.JRPC.call/3`.
+  - `params` - A keyword list or map of parameters for the request.
+    See `BTx.JRPC.Wallets.GetBalance` for more information about the
+    available parameters.
+  - `opts` - Same as `BTx.JRPC.call/3`.
+
+  ## Options
+
+  See `BTx.JRPC.call/3`.
+
+  ## Examples
+
+      # Get balance with default parameters
+      iex> BTx.JRPC.Wallets.get_balance(client, wallet_name: "my_wallet")
+      {:ok, %BTx.JRPC.Response{
+        id: 1,
+        result: 1.50000000,
+        status: :ok
+      }}
+
+      # Get balance with minimum confirmations
+      iex> BTx.JRPC.Wallets.get_balance(client,
+      ...>   wallet_name: "my_wallet",
+      ...>   minconf: 6
+      ...> )
+      {:ok, %BTx.JRPC.Response{
+        id: 1,
+        result: 1.25000000,
+        status: :ok
+      }}
+
+      # Get balance excluding watch-only addresses
+      iex> BTx.JRPC.Wallets.get_balance(client,
+      ...>   wallet_name: "my_wallet",
+      ...>   include_watchonly: false
+      ...> )
+      {:ok, %BTx.JRPC.Response{
+        id: 1,
+        result: 1.00000000,
+        status: :ok
+      }}
+
+      # Get balance excluding dirty outputs (avoid reuse)
+      iex> BTx.JRPC.Wallets.get_balance(client,
+      ...>   wallet_name: "my_wallet",
+      ...>   avoid_reuse: true
+      ...> )
+      {:ok, %BTx.JRPC.Response{
+        id: 1,
+        result: 0.75000000,
+        status: :ok
+      }}
+
+  """
+  @spec get_balance(JRPC.client(), params(), keyword()) :: response()
+  def get_balance(client, params \\ %{}, opts \\ []) do
+    with {:ok, request} <- GetBalance.new(params) do
+      JRPC.call(client, request, opts)
+    end
+  end
+
+  @doc """
+  Same as `get_balance/3` but raises on error.
+  """
+  @spec get_balance!(JRPC.client(), params(), keyword()) :: BTx.JRPC.Response.t()
+  def get_balance!(client, params \\ %{}, opts \\ []) do
+    JRPC.call!(client, GetBalance.new!(params), opts)
   end
 end
