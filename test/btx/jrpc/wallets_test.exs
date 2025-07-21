@@ -6,6 +6,7 @@ defmodule BTx.JRPC.WalletsTest do
   import Tesla.Mock
 
   alias BTx.JRPC.Wallets
+  alias BTx.JRPC.Wallets.{CreateWalletResult, GetTransactionResult}
   alias Ecto.UUID
 
   @url "http://localhost:18443/"
@@ -47,15 +48,15 @@ defmodule BTx.JRPC.WalletsTest do
           }
       end)
 
-      assert {:ok, response} =
+      assert {:ok, result} =
                Wallets.create_wallet(client,
                  wallet_name: "test_wallet",
                  passphrase: "secure_pass",
                  descriptors: true
                )
 
-      assert response.result["name"] == "test_wallet"
-      assert response.result["warning"] == ""
+      assert result.name == "test_wallet"
+      refute result.warning
     end
 
     test "creates a wallet with custom ID", %{client: client} do
@@ -83,15 +84,14 @@ defmodule BTx.JRPC.WalletsTest do
           }
       end)
 
-      assert {:ok, response} =
+      assert {:ok, result} =
                Wallets.create_wallet(client,
                  id: custom_id,
                  wallet_name: "custom_id_wallet",
                  passphrase: "test_pass"
                )
 
-      assert response.id == custom_id
-      assert response.result["name"] == "custom_id_wallet"
+      assert result.name == "custom_id_wallet"
     end
 
     test "call with all options enabled", %{client: client} do
@@ -119,7 +119,7 @@ defmodule BTx.JRPC.WalletsTest do
           }
       end)
 
-      assert {:ok, response} =
+      assert {:ok, result} =
                Wallets.create_wallet(client,
                  wallet_name: "feature_wallet",
                  passphrase: "complex_pass",
@@ -130,7 +130,7 @@ defmodule BTx.JRPC.WalletsTest do
                  load_on_startup: false
                )
 
-      assert response.result["name"] == "feature_wallet"
+      assert result.name == "feature_wallet"
     end
 
     test "handles wallet already exists error", %{client: client} do
@@ -199,8 +199,8 @@ defmodule BTx.JRPC.WalletsTest do
 
       params = [wallet_name: wallet_name, passphrase: "test_pass", descriptors: true]
 
-      assert %{id: ^wallet_name, result: %{"name" => ^wallet_name}} =
-               Wallets.create_wallet!(client, params, id: wallet_name)
+      assert Wallets.create_wallet!(client, params, id: wallet_name) ==
+               CreateWalletResult.new!(%{name: wallet_name})
 
       assert_raise BTx.JRPC.MethodError, ~r/already exists/, fn ->
         Wallets.create_wallet!(client, params)
@@ -232,9 +232,8 @@ defmodule BTx.JRPC.WalletsTest do
       end)
 
       assert r = Wallets.create_wallet!(client, wallet_name: "test_wallet", passphrase: "pass")
-      assert r.result["name"] == "test_wallet"
-      assert r.result["warning"] == ""
-      assert r.id == "test-id"
+      assert r.name == "test_wallet"
+      refute r.warning
     end
 
     test "raises on error", %{client: client} do
@@ -281,14 +280,14 @@ defmodule BTx.JRPC.WalletsTest do
           }
       end)
 
-      assert {:ok, response} =
+      assert {:ok, address} =
                Wallets.get_new_address(client,
                  label: "test_address",
                  address_type: "bech32",
                  wallet_name: wallet_name
                )
 
-      assert response.result == "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+      assert address == "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
     end
 
     test "call with default values", %{client: client, url: url, wallet_name: wallet_name} do
@@ -311,8 +310,8 @@ defmodule BTx.JRPC.WalletsTest do
           }
       end)
 
-      assert {:ok, response} = Wallets.get_new_address(client, wallet_name: wallet_name)
-      assert is_binary(response.result)
+      assert {:ok, address} = Wallets.get_new_address(client, wallet_name: wallet_name)
+      assert is_binary(address)
     end
 
     test "call with only label specified", %{client: client, url: url, wallet_name: wallet_name} do
@@ -335,10 +334,10 @@ defmodule BTx.JRPC.WalletsTest do
           }
       end)
 
-      assert {:ok, response} =
+      assert {:ok, address} =
                Wallets.get_new_address(client, label: "savings", wallet_name: wallet_name)
 
-      assert response.result =~ "bc1q"
+      assert address =~ "bc1q"
     end
 
     test "call with only address_type specified", %{
@@ -365,11 +364,11 @@ defmodule BTx.JRPC.WalletsTest do
           }
       end)
 
-      assert {:ok, response} =
+      assert {:ok, address} =
                Wallets.get_new_address(client, address_type: "legacy", wallet_name: wallet_name)
 
       # Legacy addresses start with 1
-      assert String.starts_with?(response.result, "1")
+      assert String.starts_with?(address, "1")
     end
 
     test "handles RPC error response", %{client: client, url: url, wallet_name: wallet_name} do
@@ -439,8 +438,8 @@ defmodule BTx.JRPC.WalletsTest do
             }
         end)
 
-        assert {:ok, response} = Wallets.get_new_address(client, params)
-        assert String.starts_with?(response.result, prefix)
+        assert {:ok, address} = Wallets.get_new_address(client, params)
+        assert String.starts_with?(address, prefix)
       end
     end
 
@@ -455,15 +454,15 @@ defmodule BTx.JRPC.WalletsTest do
           real_client,
           wallet_name: "test-wallet-#{UUID.generate()}",
           passphrase: "test"
-        ).result["name"]
+        ).name
 
       # Now try to get a new address
-      assert {:ok, response} =
+      assert {:ok, address} =
                Wallets.get_new_address(real_client, wallet_name: wallet_name)
 
-      assert is_binary(response.result)
+      assert is_binary(address)
       # Bitcoin addresses are long
-      assert String.length(response.result) > 20
+      assert String.length(address) > 20
     end
   end
 
@@ -495,245 +494,8 @@ defmodule BTx.JRPC.WalletsTest do
           }
       end)
 
-      assert r = Wallets.get_new_address!(client, wallet_name: wallet_name)
-      assert r.result == "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
-    end
-  end
-
-  describe "get_transaction/3" do
-    setup do
-      client = new_client(adapter: Tesla.Mock)
-
-      %{client: client}
-    end
-
-    test "successful call returns transaction details", %{client: client} do
-      response_data = get_transaction_preset(:receive)
-
-      mock(fn
-        %{method: :post, url: @url, body: body} ->
-          # Verify the request body structure
-          assert %{
-                   "method" => "gettransaction",
-                   "params" => [@valid_txid, true, false],
-                   "jsonrpc" => "1.0",
-                   "id" => id
-                 } = BTx.json_module().decode!(body)
-
-          assert is_binary(id)
-
-          %Tesla.Env{
-            status: 200,
-            body: %{
-              "id" => id,
-              "result" => response_data,
-              "error" => nil
-            }
-          }
-      end)
-
-      assert {:ok, response} = Wallets.get_transaction(client, txid: @valid_txid)
-      assert response.result["txid"] == response_data["txid"]
-      assert response.result["amount"] == 0.05000000
-      assert response.result["confirmations"] == 6
-    end
-
-    test "call with verbose option returns decoded transaction", %{client: client} do
-      response_data =
-        get_transaction_result_fixture(%{
-          "decoded" => %{
-            "txid" => @valid_txid,
-            "version" => 2,
-            "size" => 225
-          }
-        })
-
-      mock(fn
-        %{method: :post, url: @url, body: body} ->
-          body = BTx.json_module().decode!(body)
-
-          assert %{
-                   "params" => [@valid_txid, true, true]
-                 } = body
-
-          %Tesla.Env{
-            status: 200,
-            body: %{
-              "id" => body["id"],
-              "result" => response_data,
-              "error" => nil
-            }
-          }
-      end)
-
-      assert {:ok, response} = Wallets.get_transaction(client, txid: @valid_txid, verbose: true)
-      assert response.result["decoded"]["txid"] == @valid_txid
-      assert response.result["decoded"]["version"] == 2
-    end
-
-    test "call with send transaction fixture", %{client: client} do
-      send_txid = "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
-      response_data = get_transaction_preset(:send)
-
-      mock(fn
-        %{method: :post, url: @url} ->
-          %Tesla.Env{
-            status: 200,
-            body: %{
-              "id" => "test-id",
-              "result" => response_data,
-              "error" => nil
-            }
-          }
-      end)
-
-      assert {:ok, response} = Wallets.get_transaction(client, txid: send_txid)
-      # Negative for send
-      assert response.result["amount"] == -0.10000000
-      assert response.result["fee"] == -0.00002500
-      assert hd(response.result["details"])["category"] == "send"
-    end
-
-    test "call with coinbase transaction fixture", %{client: client} do
-      coinbase_txid = "fedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321"
-      response_data = get_transaction_preset(:coinbase)
-
-      mock(fn
-        %{method: :post, url: @url} ->
-          %Tesla.Env{
-            status: 200,
-            body: %{
-              "id" => "test-id",
-              "result" => response_data,
-              "error" => nil
-            }
-          }
-      end)
-
-      assert {:ok, response} = Wallets.get_transaction(client, txid: coinbase_txid)
-      # Block reward
-      assert response.result["amount"] == 6.25000000
-      assert response.result["generated"] == true
-      assert response.result["confirmations"] == 150
-      assert hd(response.result["details"])["category"] == "generate"
-    end
-
-    test "call with unconfirmed transaction fixture", %{client: client} do
-      unconfirmed_txid = "567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234"
-      response_data = get_transaction_preset(:unconfirmed)
-
-      mock(fn
-        %{method: :post, url: @url} ->
-          %Tesla.Env{
-            status: 200,
-            body: %{
-              "id" => "test-id",
-              "result" => response_data,
-              "error" => nil
-            }
-          }
-      end)
-
-      assert {:ok, response} = Wallets.get_transaction(client, txid: unconfirmed_txid)
-      assert response.result["confirmations"] == 0
-      assert response.result["trusted"] == false
-      assert is_nil(response.result["blockhash"])
-    end
-
-    test "call with custom transaction data", %{client: client} do
-      custom_data =
-        get_transaction_result_fixture(%{
-          "amount" => 2.5,
-          "confirmations" => 100,
-          "comment" => "Large payment",
-          "details" => [
-            %{
-              "category" => "receive",
-              "amount" => 2.5,
-              "label" => "Big Customer"
-            }
-          ]
-        })
-
-      mock(fn
-        %{method: :post, url: @url} ->
-          %Tesla.Env{
-            status: 200,
-            body: %{
-              "id" => "test-id",
-              "result" => custom_data,
-              "error" => nil
-            }
-          }
-      end)
-
-      assert {:ok, response} = Wallets.get_transaction(client, txid: @valid_txid)
-      assert response.result["amount"] == 2.5
-      assert response.result["confirmations"] == 100
-      assert response.result["comment"] == "Large payment"
-    end
-
-    test "handles transaction not found error", %{client: client} do
-      mock(fn
-        %{method: :post, url: @url} ->
-          %Tesla.Env{
-            status: 500,
-            body: %{
-              "id" => "test-id",
-              "result" => nil,
-              "error" => %{
-                "code" => -5,
-                "message" => "Invalid or non-wallet transaction id"
-              }
-            }
-          }
-      end)
-
-      assert {:error, %BTx.JRPC.MethodError{code: -5, message: message}} =
-               Wallets.get_transaction(client, txid: @valid_txid)
-
-      assert message =~ "Invalid or non-wallet transaction id"
-    end
-
-    test "call! raises on error", %{client: client} do
-      mock(fn
-        %{method: :post, url: @url} ->
-          %Tesla.Env{status: 401, body: "Unauthorized"}
-      end)
-
-      assert_raise BTx.JRPC.Error, ~r/Unauthorized/, fn ->
-        Wallets.get_transaction!(client, txid: @valid_txid)
-      end
-    end
-
-    @tag :integration
-    test "real Bitcoin regtest integration" do
-      # This test requires a real Bitcoin regtest node with wallet and transactions
-      real_client = new_client()
-
-      # You would need a real transaction ID from your regtest environment
-      # This is just an example - replace with actual txid from your tests
-      real_txid = @valid_txid
-
-      # FIXME: Create a successful scenario for this test
-      case Wallets.get_transaction(real_client, txid: real_txid) do
-        {:ok, response} ->
-          assert is_binary(response.result["txid"])
-          assert is_number(response.result["amount"])
-          assert is_integer(response.result["confirmations"])
-
-        {:error, %BTx.JRPC.Error{reason: {:rpc, :unauthorized}}} ->
-          # Expected if regtest is not running or credentials are wrong
-          :ok
-
-        {:error, %BTx.JRPC.MethodError{code: -5}} ->
-          # Transaction not found - expected if using placeholder txid
-          :ok
-
-        {:error, %BTx.JRPC.MethodError{}} ->
-          # Some other Bitcoin Core error
-          :ok
-      end
+      assert address = Wallets.get_new_address!(client, wallet_name: wallet_name)
+      assert address == "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
     end
   end
 
@@ -767,8 +529,7 @@ defmodule BTx.JRPC.WalletsTest do
           }
       end)
 
-      assert {:ok, response} = Wallets.get_balance(client)
-      assert response.result == 1.50000000
+      assert Wallets.get_balance(client) == {:ok, 1.50000000}
     end
 
     test "call with wallet name", %{client: client} do
@@ -792,8 +553,7 @@ defmodule BTx.JRPC.WalletsTest do
           }
       end)
 
-      assert {:ok, response} = Wallets.get_balance(client, wallet_name: "test-wallet")
-      assert response.result == 2.50000000
+      assert Wallets.get_balance(client, wallet_name: "test-wallet") == {:ok, 2.50000000}
     end
 
     test "call with minimum confirmations", %{client: client} do
@@ -815,8 +575,7 @@ defmodule BTx.JRPC.WalletsTest do
           }
       end)
 
-      assert {:ok, response} = Wallets.get_balance(client, minconf: 6)
-      assert response.result == 1.25000000
+      assert Wallets.get_balance(client, minconf: 6) == {:ok, 1.25000000}
     end
 
     test "call with include_watchonly false", %{client: client} do
@@ -838,8 +597,7 @@ defmodule BTx.JRPC.WalletsTest do
           }
       end)
 
-      assert {:ok, response} = Wallets.get_balance(client, include_watchonly: false)
-      assert response.result == 1.00000000
+      assert Wallets.get_balance(client, include_watchonly: false) == {:ok, 1.00000000}
     end
 
     test "call with all parameters", %{client: client} do
@@ -863,15 +621,12 @@ defmodule BTx.JRPC.WalletsTest do
           }
       end)
 
-      assert {:ok, response} =
-               Wallets.get_balance(client,
-                 wallet_name: "my-wallet",
-                 minconf: 3,
-                 include_watchonly: true,
-                 avoid_reuse: false
-               )
-
-      assert response.result == 0.75000000
+      assert Wallets.get_balance(client,
+               wallet_name: "my-wallet",
+               minconf: 3,
+               include_watchonly: true,
+               avoid_reuse: false
+             ) == {:ok, 0.75000000}
     end
 
     test "handles insufficient funds (zero balance)", %{client: client} do
@@ -887,8 +642,7 @@ defmodule BTx.JRPC.WalletsTest do
           }
       end)
 
-      assert {:ok, response} = Wallets.get_balance(client)
-      assert response.result == 0.00000000
+      assert Wallets.get_balance(client) == {:ok, 0.00000000}
     end
 
     test "handles wallet not found error", %{client: client} do
@@ -938,12 +692,13 @@ defmodule BTx.JRPC.WalletsTest do
           wallet_name: "test-wallet-#{UUID.generate()}",
           passphrase: "test",
           avoid_reuse: true
-        ).result["name"]
+        ).name
 
-      assert {:ok, response} =
+      assert {:ok, balance} =
                Wallets.get_balance(real_client, wallet_name: wallet_name)
 
-      assert response.result >= 0.0
+      assert is_number(balance)
+      assert balance >= 0.0
     end
   end
 
@@ -967,9 +722,7 @@ defmodule BTx.JRPC.WalletsTest do
           }
       end)
 
-      assert r = Wallets.get_balance!(client)
-      assert r.result == 1.50000000
-      assert r.id == "test-id"
+      assert Wallets.get_balance!(client) == 1.50000000
     end
 
     test "raises on error", %{client: client} do
@@ -980,6 +733,470 @@ defmodule BTx.JRPC.WalletsTest do
 
       assert_raise BTx.JRPC.Error, ~r/Unauthorized/, fn ->
         Wallets.get_balance!(client)
+      end
+    end
+  end
+
+  describe "get_transaction/3" do
+    setup do
+      client = new_client(adapter: Tesla.Mock)
+
+      %{client: client}
+    end
+
+    test "successful call returns transaction details", %{client: client} do
+      response_data = get_transaction_preset(:receive)
+
+      mock(fn
+        %{method: :post, url: @url, body: body} ->
+          # Verify the request body structure
+          assert %{
+                   "method" => "gettransaction",
+                   "params" => [@valid_txid, true, false],
+                   "jsonrpc" => "1.0",
+                   "id" => id
+                 } = BTx.json_module().decode!(body)
+
+          assert is_binary(id)
+
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => id,
+              "result" => response_data,
+              "error" => nil
+            }
+          }
+      end)
+
+      assert {:ok, %GetTransactionResult{} = result} =
+               Wallets.get_transaction(client, txid: @valid_txid)
+
+      assert result.txid == response_data["txid"]
+      assert result.amount == 0.05000000
+      assert result.confirmations == 6
+    end
+
+    test "call with verbose option returns decoded transaction", %{client: client} do
+      response_data =
+        get_transaction_result_fixture(%{
+          "decoded" => %{
+            "txid" => @valid_txid,
+            "version" => 2,
+            "size" => 225
+          }
+        })
+
+      mock(fn
+        %{method: :post, url: @url, body: body} ->
+          body = BTx.json_module().decode!(body)
+
+          assert %{
+                   "params" => [@valid_txid, true, true]
+                 } = body
+
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => body["id"],
+              "result" => response_data,
+              "error" => nil
+            }
+          }
+      end)
+
+      assert {:ok, %GetTransactionResult{} = result} =
+               Wallets.get_transaction(client, txid: @valid_txid, verbose: true)
+
+      assert result.decoded["txid"] == @valid_txid
+      assert result.decoded["version"] == 2
+    end
+
+    test "call with send transaction fixture", %{client: client} do
+      send_txid = "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
+      response_data = get_transaction_preset(:send)
+
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => "test-id",
+              "result" => response_data,
+              "error" => nil
+            }
+          }
+      end)
+
+      assert {:ok, %GetTransactionResult{} = result} =
+               Wallets.get_transaction(client, txid: send_txid)
+
+      # Negative for send
+      assert result.amount == -0.10000000
+      assert result.fee == -0.00002500
+      assert hd(result.details)["category"] == "send"
+    end
+
+    test "call with coinbase transaction fixture", %{client: client} do
+      coinbase_txid = "fedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321"
+      response_data = get_transaction_preset(:coinbase)
+
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => "test-id",
+              "result" => response_data,
+              "error" => nil
+            }
+          }
+      end)
+
+      assert {:ok, %GetTransactionResult{} = result} =
+               Wallets.get_transaction(client, txid: coinbase_txid)
+
+      # Block reward
+      assert result.amount == 6.25000000
+      assert result.generated == true
+      assert result.confirmations == 150
+      assert hd(result.details)["category"] == "generate"
+    end
+
+    test "call with unconfirmed transaction fixture", %{client: client} do
+      unconfirmed_txid = "567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234"
+      response_data = get_transaction_preset(:unconfirmed)
+
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => "test-id",
+              "result" => response_data,
+              "error" => nil
+            }
+          }
+      end)
+
+      assert {:ok, %GetTransactionResult{} = result} =
+               Wallets.get_transaction(client, txid: unconfirmed_txid)
+
+      assert result.confirmations == 0
+      assert result.trusted == false
+      assert is_nil(result.blockhash)
+    end
+
+    test "call with custom transaction data", %{client: client} do
+      custom_data =
+        get_transaction_result_fixture(%{
+          "amount" => 2.5,
+          "confirmations" => 100,
+          "comment" => "Large payment",
+          "details" => [
+            %{
+              "category" => "receive",
+              "amount" => 2.5,
+              "label" => "Big Customer"
+            }
+          ]
+        })
+
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => "test-id",
+              "result" => custom_data,
+              "error" => nil
+            }
+          }
+      end)
+
+      assert {:ok, %GetTransactionResult{} = result} =
+               Wallets.get_transaction(client, txid: @valid_txid)
+
+      assert result.amount == 2.5
+      assert result.confirmations == 100
+      assert result.comment == "Large payment"
+    end
+
+    test "handles transaction not found error", %{client: client} do
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{
+            status: 500,
+            body: %{
+              "id" => "test-id",
+              "result" => nil,
+              "error" => %{
+                "code" => -5,
+                "message" => "Invalid or non-wallet transaction id"
+              }
+            }
+          }
+      end)
+
+      assert {:error, %BTx.JRPC.MethodError{code: -5, message: message}} =
+               Wallets.get_transaction(client, txid: @valid_txid)
+
+      assert message =~ "Invalid or non-wallet transaction id"
+    end
+
+    test "call! raises on error", %{client: client} do
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{status: 401, body: "Unauthorized"}
+      end)
+
+      assert_raise BTx.JRPC.Error, ~r/Unauthorized/, fn ->
+        Wallets.get_transaction!(client, txid: @valid_txid)
+      end
+    end
+
+    test "handles invalid transaction result data", %{client: client} do
+      # Test when Bitcoin Core returns malformed data
+      invalid_data = %{
+        # Invalid length - should fail validation
+        "txid" => "invalid_short_txid",
+        # Valid amount
+        "amount" => 1.0,
+        # Valid but negative
+        "confirmations" => -999,
+        "time" => 1_234_567_890,
+        "timereceived" => 1_234_567_890,
+        "hex" => "deadbeef"
+      }
+
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => "test-id",
+              "result" => invalid_data,
+              "error" => nil
+            }
+          }
+      end)
+
+      assert {:error, %Ecto.Changeset{} = changeset} =
+               Wallets.get_transaction(client, txid: @valid_txid)
+
+      # Should have txid validation error
+      assert "should be 64 character(s)" in errors_on(changeset).txid
+    end
+
+    test "handles bip125-replaceable field mapping", %{client: client} do
+      response_data =
+        get_transaction_result_fixture(%{
+          # Hyphenated field should map to bip125_replaceable
+          "bip125-replaceable" => "yes"
+        })
+
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => "test-id",
+              "result" => response_data,
+              "error" => nil
+            }
+          }
+      end)
+
+      assert {:ok, %GetTransactionResult{} = result} =
+               Wallets.get_transaction(client, txid: @valid_txid)
+
+      assert result.bip125_replaceable == "yes"
+    end
+
+    test "handles transaction with wallet conflicts", %{client: client} do
+      conflicting_txid = "1111111111111111111111111111111111111111111111111111111111111111"
+
+      response_data =
+        get_transaction_result_fixture(%{
+          "walletconflicts" => [conflicting_txid]
+        })
+
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => "test-id",
+              "result" => response_data,
+              "error" => nil
+            }
+          }
+      end)
+
+      assert {:ok, %GetTransactionResult{} = result} =
+               Wallets.get_transaction(client, txid: @valid_txid)
+
+      assert result.walletconflicts == [conflicting_txid]
+    end
+
+    test "handles minimal transaction data", %{client: client} do
+      # Test with only required fields
+      minimal_data = %{
+        "amount" => 1.0,
+        "confirmations" => 1,
+        "txid" => @valid_txid,
+        "time" => 1_234_567_890,
+        "timereceived" => 1_234_567_890,
+        "hex" => "deadbeef"
+      }
+
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => "test-id",
+              "result" => minimal_data,
+              "error" => nil
+            }
+          }
+      end)
+
+      assert {:ok, %GetTransactionResult{} = result} =
+               Wallets.get_transaction(client, txid: @valid_txid)
+
+      assert result.amount == 1.0
+      assert result.confirmations == 1
+      assert result.txid == @valid_txid
+      # Optional fields should be nil
+      assert is_nil(result.fee)
+      assert is_nil(result.comment)
+      assert is_nil(result.blockhash)
+      # Array fields should have defaults
+      assert result.walletconflicts == []
+      assert result.details == []
+    end
+
+    test "handles invalid bip125_replaceable value", %{client: client} do
+      response_data =
+        get_transaction_result_fixture(%{
+          # Should fail validation
+          "bip125-replaceable" => "invalid_value"
+        })
+
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => "test-id",
+              "result" => response_data,
+              "error" => nil
+            }
+          }
+      end)
+
+      assert {:error, %Ecto.Changeset{} = changeset} =
+               Wallets.get_transaction(client, txid: @valid_txid)
+
+      assert "is invalid" in errors_on(changeset).bip125_replaceable
+    end
+
+    @tag :integration
+    test "real Bitcoin regtest integration" do
+      # This test requires a real Bitcoin regtest node with wallet and transactions
+      real_client = new_client()
+
+      # You would need a real transaction ID from your regtest environment
+      # This is just an example - replace with actual txid from your tests
+      real_txid = @valid_txid
+
+      # FIXME: Create a successful scenario for this test
+      case Wallets.get_transaction(real_client, txid: real_txid) do
+        {:ok, %GetTransactionResult{} = result} ->
+          assert is_binary(result.txid)
+          assert is_number(result.amount)
+          assert is_integer(result.confirmations)
+
+        {:error, %BTx.JRPC.Error{reason: {:rpc, :unauthorized}}} ->
+          # Expected if regtest is not running or credentials are wrong
+          :ok
+
+        {:error, %BTx.JRPC.MethodError{code: -5}} ->
+          # Transaction not found - expected if using placeholder txid
+          :ok
+
+        {:error, %BTx.JRPC.MethodError{}} ->
+          # Some other Bitcoin Core error
+          :ok
+      end
+    end
+  end
+
+  # Add a new describe block for get_transaction!/3
+  describe "get_transaction!/3" do
+    setup do
+      client = new_client(adapter: Tesla.Mock)
+
+      %{client: client}
+    end
+
+    test "returns transaction result", %{client: client} do
+      response_data = get_transaction_preset(:receive)
+
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => "test-id",
+              "result" => response_data,
+              "error" => nil
+            }
+          }
+      end)
+
+      assert %GetTransactionResult{} = result = Wallets.get_transaction!(client, txid: @valid_txid)
+      assert result.txid == response_data["txid"]
+      assert result.amount == 0.05000000
+    end
+
+    test "raises on error", %{client: client} do
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{status: 401, body: "Unauthorized"}
+      end)
+
+      assert_raise BTx.JRPC.Error, ~r/Unauthorized/, fn ->
+        Wallets.get_transaction!(client, txid: @valid_txid)
+      end
+    end
+
+    test "raises on invalid result data", %{client: client} do
+      invalid_data = %{
+        # Too short - should fail validation
+        "txid" => "invalid",
+        "amount" => 1.0,
+        "confirmations" => 1,
+        "time" => 1_234_567_890,
+        "timereceived" => 1_234_567_890,
+        "hex" => "deadbeef"
+      }
+
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => "test-id",
+              "result" => invalid_data,
+              "error" => nil
+            }
+          }
+      end)
+
+      assert_raise Ecto.InvalidChangesetError, fn ->
+        Wallets.get_transaction!(client, txid: @valid_txid)
       end
     end
   end

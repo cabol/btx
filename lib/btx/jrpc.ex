@@ -187,10 +187,11 @@ defmodule BTx.JRPC do
   @typedoc "Proxy type for a Tesla client"
   @type client() :: Tesla.Client.t()
 
+  @typedoc "Error from the JSON RPC API"
+  @type rpc_error() :: {:error, BTx.JRPC.MethodError.t() | BTx.JRPC.Error.t()}
+
   @typedoc "Response from the JSON RPC API"
-  @type rpc_response() ::
-          {:ok, BTx.JRPC.Response.t()}
-          | {:error, BTx.JRPC.MethodError.t() | BTx.JRPC.Error.t()}
+  @type rpc_response() :: {:ok, BTx.JRPC.Response.t()} | rpc_error()
 
   ## API
 

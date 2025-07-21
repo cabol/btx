@@ -7,11 +7,14 @@ defmodule BTx.JRPC.Response do
 
   import BTx.Helpers
 
+  @typedoc "Native type for the result field"
+  @type native_type() :: number() | boolean() | String.t() | map() | nil
+
+  @typedoc "Result type for the response"
+  @type result() :: native_type() | [native_type()]
+
   @typedoc "Response from the JSON RPC API"
-  @type t() :: %__MODULE__{
-          id: String.t(),
-          result: map() | nil
-        }
+  @type t() :: %__MODULE__{id: String.t() | nil, result: result()}
 
   @derive BTx.json_encoder()
   @enforce_keys ~w(id)a

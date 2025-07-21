@@ -61,9 +61,9 @@ iex> BTx.JRPC.client(
 ...>   avoid_reuse: true,
 ...>   descriptors: true
 ...> )
-%BTx.JRPC.Response{
-  id: "btx-9cdb7b45-2dc0-4f2e-8d7b-664a03482ca1",
-  result: %{"name" => "my-wallet"}
+%BTx.JRPC.BTx.JRPC.Wallets.CreateWalletResult{
+  name: "my-wallet",
+  warning: nil
 }
 ```
 
