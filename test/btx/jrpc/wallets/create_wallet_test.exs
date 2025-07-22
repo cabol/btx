@@ -107,20 +107,11 @@ defmodule BTx.JRPC.Wallets.CreateWalletTest do
                {"can't be blank", [{:validation, :required}]}
     end
 
-    test "returns error for missing passphrase" do
-      assert {:error, %Changeset{errors: errors}} =
-               CreateWallet.new(wallet_name: "test_wallet")
-
-      assert Keyword.fetch!(errors, :passphrase) == {"can't be blank", [{:validation, :required}]}
-    end
-
     test "returns error for both missing required fields" do
       assert {:error, %Changeset{errors: errors}} = CreateWallet.new(%{})
 
       assert Keyword.fetch!(errors, :wallet_name) ==
                {"can't be blank", [{:validation, :required}]}
-
-      assert Keyword.fetch!(errors, :passphrase) == {"can't be blank", [{:validation, :required}]}
     end
 
     test "returns error for invalid wallet name format" do
@@ -168,21 +159,12 @@ defmodule BTx.JRPC.Wallets.CreateWalletTest do
       assert "should be at most 1024 character(s)" in errors_on(changeset).passphrase
     end
 
-    test "returns error for empty passphrase" do
-      assert {:error, %Changeset{errors: errors}} =
-               CreateWallet.new(wallet_name: "test_wallet", passphrase: "")
-
-      assert Keyword.fetch!(errors, :passphrase) == {"can't be blank", [{:validation, :required}]}
-    end
-
     test "returns multiple errors for multiple invalid fields" do
       assert {:error, %Changeset{errors: errors}} =
                CreateWallet.new(wallet_name: "invalid%#", passphrase: "")
 
       assert Keyword.fetch!(errors, :wallet_name) ==
                {"has invalid format", [{:validation, :format}]}
-
-      assert Keyword.fetch!(errors, :passphrase) == {"can't be blank", [{:validation, :required}]}
     end
   end
 
@@ -214,11 +196,7 @@ defmodule BTx.JRPC.Wallets.CreateWalletTest do
 
     test "raises error for missing required fields" do
       assert_raise Ecto.InvalidChangesetError, fn ->
-        CreateWallet.new!(wallet_name: "test_wallet")
-      end
-
-      assert_raise Ecto.InvalidChangesetError, fn ->
-        CreateWallet.new!(passphrase: "test_pass")
+        CreateWallet.new!([])
       end
     end
 
@@ -297,7 +275,6 @@ defmodule BTx.JRPC.Wallets.CreateWalletTest do
 
       refute changeset.valid?
       assert "can't be blank" in errors_on(changeset).wallet_name
-      assert "can't be blank" in errors_on(changeset).passphrase
     end
 
     test "validates wallet name format" do

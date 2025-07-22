@@ -72,8 +72,8 @@ defmodule BTx.JRPC.Wallets.CreateWallet do
     field :load_on_startup, Ecto.Enum, values: [true, false, nil], default: nil
   end
 
-  @required_fields ~w(wallet_name passphrase)a
-  @optional_fields ~w(disable_private_keys blank avoid_reuse descriptors load_on_startup)a
+  @required_fields ~w(wallet_name)a
+  @optional_fields ~w(disable_private_keys blank passphrase avoid_reuse descriptors load_on_startup)a
 
   ## Encodable protocol
 

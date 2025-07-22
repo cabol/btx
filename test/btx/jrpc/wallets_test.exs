@@ -5,7 +5,7 @@ defmodule BTx.JRPC.WalletsTest do
   import BTx.WalletsFixtures
   import Tesla.Mock
 
-  alias BTx.JRPC.Wallets
+  alias BTx.JRPC.{Mining, Wallets}
   alias BTx.JRPC.Wallets.{CreateWalletResult, GetTransactionResult, SendToAddressResult}
   alias Ecto.UUID
 
@@ -1529,39 +1529,28 @@ defmodule BTx.JRPC.WalletsTest do
         Wallets.create_wallet!(
           real_client,
           wallet_name: "test-wallet-#{UUID.generate()}",
-          passphrase: "test"
+          avoid_reuse: true
         ).name
 
-      # You would need a valid address and sufficient funds for this test
-      # This is just an example - replace with actual values from your tests
-      test_address = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+      # Now try to get a new address
+      address = Wallets.get_new_address!(real_client, wallet_name: wallet_name)
 
-      case Wallets.send_to_address(real_client,
-             address: test_address,
-             amount: 0.001,
-             wallet_name: wallet_name
-           ) do
-        {:ok, result} ->
-          assert %SendToAddressResult{} = result
-          assert is_binary(result.txid)
-          assert String.length(result.txid) == 64
+      assert [_ | _] =
+               Mining.generate_to_address!(real_client,
+                 nblocks: 101,
+                 address: address
+               )
 
-        {:error, %BTx.JRPC.Error{reason: {:rpc, :unauthorized}}} ->
-          # Expected if regtest is not running or credentials are wrong
-          :ok
+      assert {:ok, %SendToAddressResult{} = result} =
+               Wallets.send_to_address(real_client,
+                 address: address,
+                 amount: 0.001,
+                 wallet_name: wallet_name,
+                 avoid_reuse: true
+               )
 
-        {:error, %BTx.JRPC.MethodError{code: -6}} ->
-          # Insufficient funds - expected if wallet has no balance
-          :ok
-
-        {:error, %BTx.JRPC.MethodError{code: -13}} ->
-          # Wallet encrypted - expected if passphrase not set
-          :ok
-
-        {:error, %BTx.JRPC.MethodError{}} ->
-          # Some other Bitcoin Core error
-          :ok
-      end
+      assert is_binary(result.txid)
+      assert String.length(result.txid) == 64
     end
   end
 

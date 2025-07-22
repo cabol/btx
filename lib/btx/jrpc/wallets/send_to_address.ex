@@ -52,6 +52,7 @@ defmodule BTx.JRPC.Wallets.SendToAddress do
 
   use Ecto.Schema
 
+  import BTx.Ecto.ChangesetUtils
   import Ecto.Changeset
 
   alias BTx.JRPC.Request
@@ -184,21 +185,5 @@ defmodule BTx.JRPC.Wallets.SendToAddress do
     |> validate_length(:wallet_name, min: 1, max: 64)
     |> validate_length(:comment, max: 1024)
     |> validate_length(:comment_to, max: 1024)
-  end
-
-  ## Private functions
-
-  # Check if address contains only valid Bitcoin address characters
-  defp valid_address_format(changeset) do
-    validate_change(changeset, :address, fn :address, address ->
-      # Bitcoin addresses use Base58 (legacy/P2SH) or Bech32 (segwit) character sets
-      # This is a basic check - Bitcoin Core will do the comprehensive validation
-      if String.match?(address, ~r/^[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]+$/) or
-           String.match?(address, ~r/^[a-z0-9]+$/) do
-        []
-      else
-        [address: "is not a valid Bitcoin address"]
-      end
-    end)
   end
 end

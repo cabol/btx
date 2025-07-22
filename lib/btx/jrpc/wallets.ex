@@ -12,6 +12,7 @@ defmodule BTx.JRPC.Wallets do
   - `BTx.JRPC.Wallets.CreateWallet`
   - `BTx.JRPC.Wallets.GetNewAddress`
   - `BTx.JRPC.Wallets.GetTransaction`
+  - `BTx.JRPC.Wallets.SendToAddress`
   - **More coming soon**
 
   ## Wallet-specific RPC calls
