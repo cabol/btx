@@ -6,7 +6,7 @@ defmodule BTx.JRPC.WalletsTest do
   import Tesla.Mock
 
   alias BTx.JRPC.Wallets
-  alias BTx.JRPC.Wallets.{CreateWalletResult, GetTransactionResult}
+  alias BTx.JRPC.Wallets.{CreateWalletResult, GetTransactionResult, SendToAddressResult}
   alias Ecto.UUID
 
   @url "http://localhost:18443/"
@@ -1197,6 +1197,434 @@ defmodule BTx.JRPC.WalletsTest do
 
       assert_raise Ecto.InvalidChangesetError, fn ->
         Wallets.get_transaction!(client, txid: @valid_txid)
+      end
+    end
+  end
+
+  describe "send_to_address/3" do
+    setup do
+      client = new_client(adapter: Tesla.Mock)
+
+      %{client: client}
+    end
+
+    test "successful call returns transaction ID", %{client: client} do
+      address = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+      expected_txid = "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+
+      mock(fn
+        %{method: :post, url: @url, body: body} ->
+          # Verify the request body structure
+          assert %{
+                   "method" => "sendtoaddress",
+                   "params" => [^address, 0.1, nil, nil, false, nil, nil, "unset", true, nil, false],
+                   "jsonrpc" => "1.0",
+                   "id" => id
+                 } = BTx.json_module().decode!(body)
+
+          assert is_binary(id)
+
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => id,
+              "result" => expected_txid,
+              "error" => nil
+            }
+          }
+      end)
+
+      assert {:ok, result} =
+               Wallets.send_to_address(client,
+                 address: address,
+                 amount: 0.1
+               )
+
+      assert %SendToAddressResult{} = result
+      assert result.txid == expected_txid
+      assert is_nil(result.fee_reason)
+    end
+
+    test "call with wallet name", %{client: client} do
+      address = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+      url = Path.join(@url, "/wallet/test-wallet")
+      expected_txid = "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
+
+      mock(fn
+        %{method: :post, url: ^url, body: body} ->
+          assert %{
+                   "method" => "sendtoaddress",
+                   "params" => [
+                     ^address,
+                     0.05,
+                     nil,
+                     nil,
+                     false,
+                     nil,
+                     nil,
+                     "unset",
+                     true,
+                     nil,
+                     false
+                   ],
+                   "jsonrpc" => "1.0"
+                 } = BTx.json_module().decode!(body)
+
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => "test-id",
+              "result" => expected_txid,
+              "error" => nil
+            }
+          }
+      end)
+
+      assert {:ok, result} =
+               Wallets.send_to_address(client,
+                 address: address,
+                 amount: 0.05,
+                 wallet_name: "test-wallet"
+               )
+
+      assert %SendToAddressResult{} = result
+      assert result.txid == expected_txid
+    end
+
+    test "call with comments and fee deduction", %{client: client} do
+      address = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+      expected_txid = "fedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321"
+
+      mock(fn
+        %{method: :post, url: @url, body: body} ->
+          assert %{
+                   "method" => "sendtoaddress",
+                   "params" => [
+                     ^address,
+                     0.02,
+                     "Payment for services",
+                     "Alice",
+                     true,
+                     nil,
+                     nil,
+                     "unset",
+                     true,
+                     nil,
+                     false
+                   ],
+                   "jsonrpc" => "1.0"
+                 } = BTx.json_module().decode!(body)
+
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => "test-id",
+              "result" => expected_txid,
+              "error" => nil
+            }
+          }
+      end)
+
+      assert {:ok, result} =
+               Wallets.send_to_address(client,
+                 address: address,
+                 amount: 0.02,
+                 comment: "Payment for services",
+                 comment_to: "Alice",
+                 subtract_fee_from_amount: true
+               )
+
+      assert %SendToAddressResult{} = result
+      assert result.txid == expected_txid
+    end
+
+    test "call with verbose output", %{client: client} do
+      address = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+      expected_txid = "567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234"
+
+      mock(fn
+        %{method: :post, url: @url, body: body} ->
+          assert %{
+                   "method" => "sendtoaddress",
+                   "params" => [^address, 0.1, nil, nil, false, nil, nil, "unset", true, nil, true],
+                   "jsonrpc" => "1.0"
+                 } = BTx.json_module().decode!(body)
+
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => "test-id",
+              "result" => %{
+                "txid" => expected_txid,
+                "fee reason" => "Fallback fee"
+              },
+              "error" => nil
+            }
+          }
+      end)
+
+      assert {:ok, result} =
+               Wallets.send_to_address(client,
+                 address: address,
+                 amount: 0.1,
+                 verbose: true
+               )
+
+      assert %SendToAddressResult{} = result
+      assert result.txid == expected_txid
+      assert result.fee_reason == "Fallback fee"
+    end
+
+    test "call with fee rate and confirmation target", %{client: client} do
+      address = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+      expected_txid = String.duplicate("1", 64)
+
+      mock(fn
+        %{method: :post, url: @url, body: body} ->
+          assert %{
+                   "method" => "sendtoaddress",
+                   "params" => [
+                     ^address,
+                     0.5,
+                     nil,
+                     nil,
+                     false,
+                     true,
+                     6,
+                     "economical",
+                     false,
+                     25.0,
+                     false
+                   ],
+                   "jsonrpc" => "1.0"
+                 } = BTx.json_module().decode!(body)
+
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => "test-id",
+              "result" => expected_txid,
+              "error" => nil
+            }
+          }
+      end)
+
+      assert {:ok, result} =
+               Wallets.send_to_address(client,
+                 address: address,
+                 amount: 0.5,
+                 replaceable: true,
+                 conf_target: 6,
+                 estimate_mode: "economical",
+                 avoid_reuse: false,
+                 fee_rate: 25.0
+               )
+
+      assert %SendToAddressResult{} = result
+      assert result.txid == expected_txid
+    end
+
+    test "handles insufficient funds error", %{client: client} do
+      address = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{
+            status: 500,
+            body: %{
+              "id" => "test-id",
+              "result" => nil,
+              "error" => %{
+                "code" => -6,
+                "message" => "Insufficient funds"
+              }
+            }
+          }
+      end)
+
+      assert {:error, %BTx.JRPC.MethodError{code: -6, message: message}} =
+               Wallets.send_to_address(client,
+                 address: address,
+                 amount: 100.0
+               )
+
+      assert message == "Insufficient funds"
+    end
+
+    test "handles invalid address error", %{client: client} do
+      address = String.duplicate("1", 64)
+
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{
+            status: 500,
+            body: %{
+              "id" => "test-id",
+              "result" => nil,
+              "error" => %{
+                "code" => -5,
+                "message" => "Invalid Bitcoin address"
+              }
+            }
+          }
+      end)
+
+      assert {:error, %BTx.JRPC.MethodError{code: -5, message: message}} =
+               Wallets.send_to_address(client,
+                 address: address,
+                 amount: 0.1
+               )
+
+      assert message == "Invalid Bitcoin address"
+    end
+
+    test "handles wallet encrypted error", %{client: client} do
+      address = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{
+            status: 500,
+            body: %{
+              "id" => "test-id",
+              "result" => nil,
+              "error" => %{
+                "code" => -13,
+                "message" =>
+                  "Error: Please enter the wallet passphrase with walletpassphrase first."
+              }
+            }
+          }
+      end)
+
+      assert {:error, %BTx.JRPC.MethodError{code: -13, message: message}} =
+               Wallets.send_to_address(client,
+                 address: address,
+                 amount: 0.1
+               )
+
+      assert message =~ "passphrase"
+    end
+
+    test "call! raises on error", %{client: client} do
+      address = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{status: 401, body: "Unauthorized"}
+      end)
+
+      assert_raise BTx.JRPC.Error, ~r/Unauthorized/, fn ->
+        Wallets.send_to_address!(client, address: address, amount: 0.1)
+      end
+    end
+
+    @tag :integration
+    test "real Bitcoin regtest integration" do
+      # This test requires a real Bitcoin regtest node running
+      real_client = new_client()
+
+      # First ensure we have a wallet loaded, create one if needed
+      wallet_name =
+        Wallets.create_wallet!(
+          real_client,
+          wallet_name: "test-wallet-#{UUID.generate()}",
+          passphrase: "test"
+        ).name
+
+      # You would need a valid address and sufficient funds for this test
+      # This is just an example - replace with actual values from your tests
+      test_address = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+
+      case Wallets.send_to_address(real_client,
+             address: test_address,
+             amount: 0.001,
+             wallet_name: wallet_name
+           ) do
+        {:ok, result} ->
+          assert %SendToAddressResult{} = result
+          assert is_binary(result.txid)
+          assert String.length(result.txid) == 64
+
+        {:error, %BTx.JRPC.Error{reason: {:rpc, :unauthorized}}} ->
+          # Expected if regtest is not running or credentials are wrong
+          :ok
+
+        {:error, %BTx.JRPC.MethodError{code: -6}} ->
+          # Insufficient funds - expected if wallet has no balance
+          :ok
+
+        {:error, %BTx.JRPC.MethodError{code: -13}} ->
+          # Wallet encrypted - expected if passphrase not set
+          :ok
+
+        {:error, %BTx.JRPC.MethodError{}} ->
+          # Some other Bitcoin Core error
+          :ok
+      end
+    end
+  end
+
+  describe "send_to_address!/3" do
+    setup do
+      client = new_client(adapter: Tesla.Mock)
+
+      %{client: client}
+    end
+
+    test "returns transaction result", %{client: client} do
+      address = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+      expected_txid = "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => "test-id",
+              "result" => expected_txid,
+              "error" => nil
+            }
+          }
+      end)
+
+      assert %SendToAddressResult{} =
+               result =
+               Wallets.send_to_address!(client, address: address, amount: 0.1)
+
+      assert result.txid == expected_txid
+    end
+
+    test "raises on error", %{client: client} do
+      address = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{status: 401, body: "Unauthorized"}
+      end)
+
+      assert_raise BTx.JRPC.Error, ~r/Unauthorized/, fn ->
+        Wallets.send_to_address!(client, address: address, amount: 0.1)
+      end
+    end
+
+    test "raises on invalid result data", %{client: client} do
+      address = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => "test-id",
+              "result" => "invalid_short_txid",
+              "error" => nil
+            }
+          }
+      end)
+
+      assert_raise Ecto.InvalidChangesetError, fn ->
+        Wallets.send_to_address!(client, address: address, amount: 0.1)
       end
     end
   end

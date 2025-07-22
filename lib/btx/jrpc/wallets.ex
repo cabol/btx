@@ -36,7 +36,9 @@ defmodule BTx.JRPC.Wallets do
     GetBalance,
     GetNewAddress,
     GetTransaction,
-    GetTransactionResult
+    GetTransactionResult,
+    SendToAddress,
+    SendToAddressResult
   }
 
   @typedoc "Params for wallet-related RPC calls"
@@ -291,5 +293,79 @@ defmodule BTx.JRPC.Wallets do
     |> JRPC.call!(GetTransaction.new!(params), opts)
     |> Map.fetch!(:result)
     |> GetTransactionResult.new!()
+  end
+
+  @doc """
+  Send an amount to a given address.
+
+  Requires wallet passphrase to be set with walletpassphrase call if wallet is
+  encrypted.
+
+  ## Arguments
+
+  - `client` - Same as `BTx.JRPC.call/3`.
+  - `params` - A keyword list or map of parameters for the request.
+    See `BTx.JRPC.Wallets.SendToAddress` for more information about the
+    available parameters.
+  - `opts` - Same as `BTx.JRPC.call/3`.
+
+  ## Options
+
+  See `BTx.JRPC.call/3`.
+
+  ## Examples
+
+      # Send 0.1 BTC to an address
+      iex> BTx.JRPC.Wallets.send_to_address(client,
+      ...>   address: "bc1q09vm5lfy0j5reeulh4x5752q25uqqvz34hufdl",
+      ...>   amount: 0.1,
+      ...>   wallet_name: "my_wallet"
+      ...> )
+      {:ok, %BTx.JRPC.Wallets.SendToAddressResult{
+        txid: "1234567890abcdef...",
+        fee_reason: nil
+      }}
+
+      # Send with comment and fee deduction
+      iex> BTx.JRPC.Wallets.send_to_address(client,
+      ...>   address: "bc1q09vm5lfy0j5reeulh4x5752q25uqqvz34hufdl",
+      ...>   amount: 0.05,
+      ...>   comment: "Payment for services",
+      ...>   comment_to: "Alice",
+      ...>   subtractfeefromamount: true,
+      ...>   wallet_name: "my_wallet"
+      ...> )
+      {:ok, %BTx.JRPC.Wallets.SendToAddressResult{...}}
+
+      # Send with verbose output for fee details
+      iex> BTx.JRPC.Wallets.send_to_address(client,
+      ...>   address: "bc1q09vm5lfy0j5reeulh4x5752q25uqqvz34hufdl",
+      ...>   amount: 0.2,
+      ...>   verbose: true,
+      ...>   wallet_name: "my_wallet"
+      ...> )
+      {:ok, %BTx.JRPC.Wallets.SendToAddressResult{
+        txid: "1234567890abcdef...",
+        fee_reason: "Fallback fee"
+      }}
+
+  """
+  @spec send_to_address(JRPC.client(), params(), keyword()) :: response(SendToAddressResult.t())
+  def send_to_address(client, params, opts \\ []) do
+    with {:ok, request} <- SendToAddress.new(params),
+         {:ok, %Response{result: result}} <- JRPC.call(client, request, opts) do
+      SendToAddressResult.new(result)
+    end
+  end
+
+  @doc """
+  Same as `send_to_address/3` but raises on error.
+  """
+  @spec send_to_address!(JRPC.client(), params(), keyword()) :: SendToAddressResult.t()
+  def send_to_address!(client, params, opts \\ []) do
+    client
+    |> JRPC.call!(SendToAddress.new!(params), opts)
+    |> Map.fetch!(:result)
+    |> SendToAddressResult.new!()
   end
 end

@@ -36,7 +36,7 @@ defmodule BTx.JRPC.Wallets.CreateWalletResult do
   def new(attrs) when is_map(attrs) do
     %__MODULE__{}
     |> changeset(attrs)
-    |> apply_action(:createwallet)
+    |> apply_action(:createwallet_result)
   end
 
   @doc """
@@ -46,7 +46,7 @@ defmodule BTx.JRPC.Wallets.CreateWalletResult do
   def new!(attrs) when is_map(attrs) do
     %__MODULE__{}
     |> changeset(attrs)
-    |> apply_action!(:createwallet)
+    |> apply_action!(:createwallet_result)
   end
 
   @doc """
