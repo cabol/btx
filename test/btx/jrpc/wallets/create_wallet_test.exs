@@ -2,10 +2,15 @@ defmodule BTx.JRPC.Wallets.CreateWalletTest do
   use ExUnit.Case, async: true
 
   import BTx.TestUtils
+  import Tesla.Mock
 
-  alias BTx.JRPC.{Encodable, Request}
-  alias BTx.JRPC.Wallets.CreateWallet
-  alias Ecto.Changeset
+  alias BTx.JRPC.{Encodable, Request, Wallets}
+  alias BTx.JRPC.Wallets.{CreateWallet, CreateWalletResult}
+  alias Ecto.{Changeset, UUID}
+
+  @url "http://localhost:18443/"
+
+  ## Schema tests
 
   describe "new/1" do
     test "creates a new wallet with required fields" do
@@ -367,6 +372,242 @@ defmodule BTx.JRPC.Wallets.CreateWalletTest do
 
         assert changeset.valid?
         assert Changeset.get_change(changeset, :load_on_startup) == value
+      end
+    end
+  end
+
+  ## CreateWallet RPC
+
+  describe "(RPC) Wallets.create_wallet/3" do
+    setup do
+      client = new_client(adapter: Tesla.Mock)
+
+      %{client: client}
+    end
+
+    test "successful wallet creation returns wallet info", %{client: client} do
+      mock(fn
+        %{method: :post, url: @url, body: body} ->
+          # Verify the method body structure
+          assert %{
+                   "method" => "createwallet",
+                   "params" => ["test_wallet", false, false, "secure_pass", false, true, nil],
+                   "jsonrpc" => "1.0",
+                   "id" => id
+                 } = BTx.json_module().decode!(body)
+
+          # Should have auto-generated ID
+          assert is_binary(id)
+
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => id,
+              "result" => %{
+                "name" => "test_wallet",
+                "warning" => ""
+              },
+              "error" => nil
+            }
+          }
+      end)
+
+      assert {:ok, result} =
+               Wallets.create_wallet(client,
+                 wallet_name: "test_wallet",
+                 passphrase: "secure_pass",
+                 descriptors: true
+               )
+
+      assert result.name == "test_wallet"
+      refute result.warning
+    end
+
+    test "creates a wallet with custom ID", %{client: client} do
+      custom_id = "create-wallet-#{System.system_time()}"
+
+      mock(fn
+        %{method: :post, url: @url, body: body} ->
+          # Verify custom ID is used
+          assert %{
+                   "method" => "createwallet",
+                   "params" => ["custom_id_wallet", false, false, "test_pass", false, false, nil],
+                   "jsonrpc" => "1.0"
+                 } = BTx.json_module().decode!(body)
+
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => custom_id,
+              "result" => %{
+                "name" => "custom_id_wallet",
+                "warning" => ""
+              },
+              "error" => nil
+            }
+          }
+      end)
+
+      assert {:ok, result} =
+               Wallets.create_wallet(client,
+                 id: custom_id,
+                 wallet_name: "custom_id_wallet",
+                 passphrase: "test_pass"
+               )
+
+      assert result.name == "custom_id_wallet"
+    end
+
+    test "call with all options enabled", %{client: client} do
+      mock(fn
+        %{method: :post, url: @url, body: body} ->
+          body = BTx.json_module().decode!(body)
+
+          # Verify all options are encoded correctly
+          assert %{
+                   "method" => "createwallet",
+                   "params" => ["feature_wallet", true, true, "complex_pass", true, true, false],
+                   "jsonrpc" => "1.0"
+                 } = body
+
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => body["id"],
+              "result" => %{
+                "name" => "feature_wallet",
+                "warning" => "Empty wallet"
+              },
+              "error" => nil
+            }
+          }
+      end)
+
+      assert {:ok, result} =
+               Wallets.create_wallet(client,
+                 wallet_name: "feature_wallet",
+                 passphrase: "complex_pass",
+                 disable_private_keys: true,
+                 blank: true,
+                 avoid_reuse: true,
+                 descriptors: true,
+                 load_on_startup: false
+               )
+
+      assert result.name == "feature_wallet"
+    end
+
+    test "handles wallet already exists error", %{client: client} do
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{
+            status: 500,
+            body: %{
+              "id" => "test-id",
+              "result" => nil,
+              "error" => %{
+                "code" => -4,
+                "message" => "Wallet existing_wallet already exists."
+              }
+            }
+          }
+      end)
+
+      assert {:error, %BTx.JRPC.MethodError{id: "test-id", code: -4, message: message}} =
+               Wallets.create_wallet(client,
+                 wallet_name: "existing_wallet",
+                 passphrase: "test_pass"
+               )
+
+      assert message =~ "already exists"
+    end
+
+    test "handles invalid wallet name error", %{client: client} do
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{
+            status: 500,
+            body: %{
+              "id" => "test-id",
+              "result" => nil,
+              "error" => %{
+                "code" => -8,
+                "message" => "Invalid parameter, wallet name contains invalid characters"
+              }
+            }
+          }
+      end)
+
+      assert {:error, %BTx.JRPC.MethodError{code: -8, message: message}} =
+               Wallets.create_wallet(client, wallet_name: "test_wallet", passphrase: "test_pass")
+
+      assert message =~ "invalid characters"
+    end
+
+    test "call! raises on error", %{client: client} do
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{status: 401, body: "Unauthorized"}
+      end)
+
+      assert_raise BTx.JRPC.Error, ~r/Unauthorized/, fn ->
+        Wallets.create_wallet!(client, wallet_name: "error_wallet", passphrase: "test_pass")
+      end
+    end
+
+    @tag :integration
+    test "real Bitcoin regtest integration" do
+      # This test requires a real Bitcoin regtest node running
+      client = new_client()
+      wallet_name = "integration-test-#{UUID.generate()}"
+
+      params = [wallet_name: wallet_name, passphrase: "test_pass", descriptors: true]
+
+      assert Wallets.create_wallet!(client, params, id: wallet_name) ==
+               CreateWalletResult.new!(%{name: wallet_name})
+
+      assert_raise BTx.JRPC.MethodError, ~r/already exists/, fn ->
+        Wallets.create_wallet!(client, params)
+      end
+    end
+  end
+
+  describe "(RPC) Wallets.create_wallet!/3" do
+    setup do
+      client = new_client(adapter: Tesla.Mock)
+
+      %{client: client}
+    end
+
+    test "creates a wallet", %{client: client} do
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => "test-id",
+              "result" => %{
+                "name" => "test_wallet",
+                "warning" => ""
+              },
+              "error" => nil
+            }
+          }
+      end)
+
+      assert r = Wallets.create_wallet!(client, wallet_name: "test_wallet", passphrase: "pass")
+      assert r.name == "test_wallet"
+      refute r.warning
+    end
+
+    test "raises on error", %{client: client} do
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{status: 401, body: "Unauthorized"}
+      end)
+
+      assert_raise BTx.JRPC.Error, ~r/Unauthorized/, fn ->
+        Wallets.create_wallet!(client, wallet_name: "error_wallet", passphrase: "test_pass")
       end
     end
   end

@@ -40,7 +40,9 @@ defmodule BTx.JRPC.Wallets do
     GetTransactionResult,
     ListWallets,
     SendToAddress,
-    SendToAddressResult
+    SendToAddressResult,
+    UnloadWallet,
+    UnloadWalletResult
   }
 
   @typedoc "Params for wallet-related RPC calls"
@@ -125,6 +127,77 @@ defmodule BTx.JRPC.Wallets do
     |> JRPC.call!(CreateWallet.new!(params), opts)
     |> Map.fetch!(:result)
     |> CreateWalletResult.new!()
+  end
+
+  @doc """
+  Unloads the wallet referenced by the request endpoint or unloads the wallet
+  specified in the argument.
+
+  ## Arguments
+
+  - `client` - Same as `BTx.JRPC.call/3`.
+  - `params` - A keyword list or map of parameters for the request.
+    See `BTx.JRPC.Wallets.UnloadWallet` for more information about the
+    available parameters.
+  - `opts` - Same as `BTx.JRPC.call/3`.
+
+  ## Options
+
+  See `BTx.JRPC.call/3`.
+
+  ## Examples
+
+      # Unload wallet by name (parameter approach)
+      iex> BTx.JRPC.Wallets.unload_wallet(client,
+      ...>   wallet_name: "my_wallet"
+      ...> )
+      {:ok, %BTx.JRPC.Wallets.UnloadWalletResult{
+        warning: nil
+      }}
+
+      # Unload wallet via endpoint (endpoint approach)
+      iex> BTx.JRPC.Wallets.unload_wallet(client,
+      ...>   endpoint_wallet_name: "my_wallet"
+      ...> )
+      {:ok, %BTx.JRPC.Wallets.UnloadWalletResult{
+        warning: nil
+      }}
+
+      # Unload wallet and remove from startup list
+      iex> BTx.JRPC.Wallets.unload_wallet(client,
+      ...>   wallet_name: "my_wallet",
+      ...>   load_on_startup: false
+      ...> )
+      {:ok, %BTx.JRPC.Wallets.UnloadWalletResult{
+        warning: nil
+      }}
+
+      # Unload wallet with warning
+      iex> BTx.JRPC.Wallets.unload_wallet(client,
+      ...>   endpoint_wallet_name: "problematic_wallet"
+      ...> )
+      {:ok, %BTx.JRPC.Wallets.UnloadWalletResult{
+        warning: "Wallet was not unloaded cleanly"
+      }}
+
+  """
+  @spec unload_wallet(JRPC.client(), params(), keyword()) :: response(UnloadWalletResult.t())
+  def unload_wallet(client, params, opts \\ []) do
+    with {:ok, request} <- UnloadWallet.new(params),
+         {:ok, %Response{result: result}} <- JRPC.call(client, request, opts) do
+      UnloadWalletResult.new(result)
+    end
+  end
+
+  @doc """
+  Same as `unload_wallet/3` but raises on error.
+  """
+  @spec unload_wallet!(JRPC.client(), params(), keyword()) :: UnloadWalletResult.t()
+  def unload_wallet!(client, params, opts \\ []) do
+    client
+    |> JRPC.call!(UnloadWallet.new!(params), opts)
+    |> Map.fetch!(:result)
+    |> UnloadWalletResult.new!()
   end
 
   @doc """

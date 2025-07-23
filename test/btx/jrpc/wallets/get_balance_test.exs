@@ -2,10 +2,15 @@ defmodule BTx.JRPC.Wallets.GetBalanceTest do
   use ExUnit.Case, async: true
 
   import BTx.TestUtils
+  import Tesla.Mock
 
-  alias BTx.JRPC.{Encodable, Request}
+  alias BTx.JRPC.{Encodable, Request, Wallets}
   alias BTx.JRPC.Wallets.GetBalance
-  alias Ecto.Changeset
+  alias Ecto.{Changeset, UUID}
+
+  @url "http://localhost:18443/"
+
+  ## Schema tests
 
   describe "new/1" do
     test "creates a new GetBalance with default values" do
@@ -279,6 +284,246 @@ defmodule BTx.JRPC.Wallets.GetBalanceTest do
     test "accepts empty parameters" do
       changeset = GetBalance.changeset(%GetBalance{}, %{})
       assert changeset.valid?
+    end
+  end
+
+  ## GetBalance RPC
+
+  describe "(RPC) Wallets.get_balance/3" do
+    setup do
+      client = new_client(adapter: Tesla.Mock)
+
+      %{client: client}
+    end
+
+    test "successful call returns balance", %{client: client} do
+      mock(fn
+        %{method: :post, url: @url, body: body} ->
+          # Verify the request body structure
+          assert %{
+                   "method" => "getbalance",
+                   "params" => ["*", 0, true, true],
+                   "jsonrpc" => "1.0",
+                   "id" => id
+                 } = BTx.json_module().decode!(body)
+
+          assert is_binary(id)
+
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => id,
+              "result" => 1.50000000,
+              "error" => nil
+            }
+          }
+      end)
+
+      assert Wallets.get_balance(client) == {:ok, 1.50000000}
+    end
+
+    test "call with wallet name", %{client: client} do
+      url = Path.join(@url, "/wallet/test-wallet")
+
+      mock(fn
+        %{method: :post, url: ^url, body: body} ->
+          assert %{
+                   "method" => "getbalance",
+                   "params" => ["*", 0, true, true],
+                   "jsonrpc" => "1.0"
+                 } = BTx.json_module().decode!(body)
+
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => "test-id",
+              "result" => 2.50000000,
+              "error" => nil
+            }
+          }
+      end)
+
+      assert Wallets.get_balance(client, wallet_name: "test-wallet") == {:ok, 2.50000000}
+    end
+
+    test "call with minimum confirmations", %{client: client} do
+      mock(fn
+        %{method: :post, url: @url, body: body} ->
+          assert %{
+                   "method" => "getbalance",
+                   "params" => ["*", 6, true, true],
+                   "jsonrpc" => "1.0"
+                 } = BTx.json_module().decode!(body)
+
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => "test-id",
+              "result" => 1.25000000,
+              "error" => nil
+            }
+          }
+      end)
+
+      assert Wallets.get_balance(client, minconf: 6) == {:ok, 1.25000000}
+    end
+
+    test "call with include_watchonly false", %{client: client} do
+      mock(fn
+        %{method: :post, url: @url, body: body} ->
+          assert %{
+                   "method" => "getbalance",
+                   "params" => ["*", 0, false, true],
+                   "jsonrpc" => "1.0"
+                 } = BTx.json_module().decode!(body)
+
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => "test-id",
+              "result" => 1.00000000,
+              "error" => nil
+            }
+          }
+      end)
+
+      assert Wallets.get_balance(client, include_watchonly: false) == {:ok, 1.00000000}
+    end
+
+    test "call with all parameters", %{client: client} do
+      url = Path.join(@url, "/wallet/my-wallet")
+
+      mock(fn
+        %{method: :post, url: ^url, body: body} ->
+          assert %{
+                   "method" => "getbalance",
+                   "params" => ["*", 3, true, false],
+                   "jsonrpc" => "1.0"
+                 } = BTx.json_module().decode!(body)
+
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => "test-id",
+              "result" => 0.75000000,
+              "error" => nil
+            }
+          }
+      end)
+
+      assert Wallets.get_balance(client,
+               wallet_name: "my-wallet",
+               minconf: 3,
+               include_watchonly: true,
+               avoid_reuse: false
+             ) == {:ok, 0.75000000}
+    end
+
+    test "handles insufficient funds (zero balance)", %{client: client} do
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => "test-id",
+              "result" => 0.00000000,
+              "error" => nil
+            }
+          }
+      end)
+
+      assert Wallets.get_balance(client) == {:ok, 0.00000000}
+    end
+
+    test "handles wallet not found error", %{client: client} do
+      url = Path.join(@url, "/wallet/nonexistent")
+
+      mock(fn
+        %{method: :post, url: ^url} ->
+          %Tesla.Env{
+            status: 500,
+            body: %{
+              "id" => "test-id",
+              "result" => nil,
+              "error" => %{
+                "code" => -18,
+                "message" => "Requested wallet does not exist or is not loaded"
+              }
+            }
+          }
+      end)
+
+      assert {:error, %BTx.JRPC.MethodError{code: -18, message: message}} =
+               Wallets.get_balance(client, wallet_name: "nonexistent")
+
+      assert message == "Requested wallet does not exist or is not loaded"
+    end
+
+    test "call! raises on error", %{client: client} do
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{status: 401, body: "Unauthorized"}
+      end)
+
+      assert_raise BTx.JRPC.Error, ~r/Unauthorized/, fn ->
+        Wallets.get_balance!(client)
+      end
+    end
+
+    @tag :integration
+    test "real Bitcoin regtest integration" do
+      # This test requires a real Bitcoin regtest node running
+      real_client = new_client()
+
+      # First ensure we have a wallet loaded, create one if needed
+      wallet_name =
+        Wallets.create_wallet!(
+          real_client,
+          wallet_name: "test-wallet-#{UUID.generate()}",
+          passphrase: "test",
+          avoid_reuse: true
+        ).name
+
+      assert {:ok, balance} =
+               Wallets.get_balance(real_client, wallet_name: wallet_name)
+
+      assert is_number(balance)
+      assert balance >= 0.0
+    end
+  end
+
+  describe "(RPC) Wallets.get_balance!/3" do
+    setup do
+      client = new_client(adapter: Tesla.Mock)
+
+      %{client: client}
+    end
+
+    test "returns balance", %{client: client} do
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => "test-id",
+              "result" => 1.50000000,
+              "error" => nil
+            }
+          }
+      end)
+
+      assert Wallets.get_balance!(client) == 1.50000000
+    end
+
+    test "raises on error", %{client: client} do
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{status: 401, body: "Unauthorized"}
+      end)
+
+      assert_raise BTx.JRPC.Error, ~r/Unauthorized/, fn ->
+        Wallets.get_balance!(client)
+      end
     end
   end
 end
