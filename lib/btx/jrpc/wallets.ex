@@ -39,6 +39,8 @@ defmodule BTx.JRPC.Wallets do
     GetTransaction,
     GetTransactionResult,
     ListWallets,
+    LoadWallet,
+    LoadWalletResult,
     SendToAddress,
     SendToAddressResult,
     UnloadWallet,
@@ -127,6 +129,83 @@ defmodule BTx.JRPC.Wallets do
     |> JRPC.call!(CreateWallet.new!(params), opts)
     |> Map.fetch!(:result)
     |> CreateWalletResult.new!()
+  end
+
+  @doc """
+  Loads a wallet from a wallet file or directory.
+
+  Note that all wallet command-line options used when starting bitcoind will be
+  applied to the new wallet (eg -rescan, etc).
+
+  ## Arguments
+
+  - `client` - Same as `BTx.JRPC.call/3`.
+  - `params` - A keyword list or map of parameters for the request.
+    See `BTx.JRPC.Wallets.LoadWallet` for more information about the
+    available parameters.
+  - `opts` - Same as `BTx.JRPC.call/3`.
+
+  ## Options
+
+  See `BTx.JRPC.call/3`.
+
+  ## Examples
+
+      # Load a wallet from file
+      iex> BTx.JRPC.Wallets.load_wallet(client,
+      ...>   filename: "test.dat"
+      ...> )
+      {:ok, %BTx.JRPC.Wallets.LoadWalletResult{
+        name: "test",
+        warning: nil
+      }}
+
+      # Load a wallet from directory
+      iex> BTx.JRPC.Wallets.load_wallet(client,
+      ...>   filename: "wallet_directory"
+      ...> )
+      {:ok, %BTx.JRPC.Wallets.LoadWalletResult{
+        name: "wallet_directory",
+        warning: nil
+      }}
+
+      # Load wallet and add to startup list
+      iex> BTx.JRPC.Wallets.load_wallet(client,
+      ...>   filename: "production.dat",
+      ...>   load_on_startup: true
+      ...> )
+      {:ok, %BTx.JRPC.Wallets.LoadWalletResult{
+        name: "production",
+        warning: nil
+      }}
+
+      # Load wallet with warning
+      iex> BTx.JRPC.Wallets.load_wallet(client,
+      ...>   filename: "old_wallet.dat"
+      ...> )
+      {:ok, %BTx.JRPC.Wallets.LoadWalletResult{
+        name: "old_wallet",
+        warning: "Wallet was not loaded cleanly"
+      }}
+
+  """
+  @spec load_wallet(JRPC.client(), params(), keyword()) :: response(LoadWalletResult.t())
+  def load_wallet(client, params, opts \\ []) do
+    with {:ok, request} <- LoadWallet.new(params),
+         {:ok, %Response{result: result}} <- JRPC.call(client, request, opts) do
+      LoadWalletResult.new(result)
+    end
+  end
+
+  @doc """
+  Same as `load_wallet/3` but raises on error.
+  """
+  @spec load_wallet!(JRPC.client(), params(), keyword()) :: LoadWalletResult.t()
+  def load_wallet!(client, params, opts \\ []) do
+    client
+    |> JRPC.call!(LoadWallet.new!(params), opts)
+    |> Map.fetch!(:result)
+    |> LoadWalletResult.new!()
   end
 
   @doc """
