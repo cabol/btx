@@ -38,6 +38,7 @@ defmodule BTx.JRPC.Wallets do
     GetNewAddress,
     GetTransaction,
     GetTransactionResult,
+    ListWallets,
     SendToAddress,
     SendToAddressResult
   }
@@ -124,6 +125,53 @@ defmodule BTx.JRPC.Wallets do
     |> JRPC.call!(CreateWallet.new!(params), opts)
     |> Map.fetch!(:result)
     |> CreateWalletResult.new!()
+  end
+
+  @doc """
+  Returns a list of currently loaded wallets.
+
+  For full information on the wallet, use "getwalletinfo".
+
+  ## Arguments
+
+  - `client` - Same as `BTx.JRPC.call/3`.
+  - `opts` - Same as `BTx.JRPC.call/3`.
+
+  ## Options
+
+  See `BTx.JRPC.call/3`.
+
+  ## Examples
+
+      # List all currently loaded wallets
+      iex> BTx.JRPC.Wallets.list_wallets(client)
+      {:ok, ["wallet1", "wallet2", "my_test_wallet"]}
+
+      # When no wallets are loaded
+      iex> BTx.JRPC.Wallets.list_wallets(client)
+      {:ok, []}
+
+      # List wallets with custom request ID
+      iex> BTx.JRPC.Wallets.list_wallets(client, id: "list-wallets-001")
+      {:ok, ["main_wallet"]}
+
+  """
+  @spec list_wallets(JRPC.client(), keyword()) :: response([String.t()])
+  def list_wallets(client, opts \\ []) do
+    with {:ok, request} <- ListWallets.new(),
+         {:ok, %Response{result: result}} <- JRPC.call(client, request, opts) do
+      {:ok, result}
+    end
+  end
+
+  @doc """
+  Same as `list_wallets/2` but raises on error.
+  """
+  @spec list_wallets!(JRPC.client(), keyword()) :: [String.t()]
+  def list_wallets!(client, opts \\ []) do
+    client
+    |> JRPC.call!(ListWallets.new!(), opts)
+    |> Map.fetch!(:result)
   end
 
   @doc """

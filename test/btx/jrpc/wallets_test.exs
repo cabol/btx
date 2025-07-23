@@ -14,6 +14,8 @@ defmodule BTx.JRPC.WalletsTest do
   # Valid Bitcoin transaction ID for testing
   @valid_txid "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
 
+  ## CreateWallet
+
   describe "create_wallet/3" do
     setup do
       client = new_client(adapter: Tesla.Mock)
@@ -247,6 +249,238 @@ defmodule BTx.JRPC.WalletsTest do
       end
     end
   end
+
+  ## ListWallets
+
+  describe "list_wallets/2" do
+    setup do
+      client = new_client(adapter: Tesla.Mock)
+
+      %{client: client}
+    end
+
+    test "successful call returns array of wallet names", %{client: client} do
+      wallet_names = ["wallet1", "wallet2", "test_wallet"]
+
+      mock(fn
+        %{method: :post, url: @url, body: body} ->
+          # Verify the method body structure
+          assert %{
+                   "method" => "listwallets",
+                   "params" => [],
+                   "jsonrpc" => "1.0",
+                   "id" => id
+                 } = BTx.json_module().decode!(body)
+
+          # Should have auto-generated ID
+          assert is_binary(id)
+
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => id,
+              "result" => wallet_names,
+              "error" => nil
+            }
+          }
+      end)
+
+      assert {:ok, result} = Wallets.list_wallets(client)
+      assert result == wallet_names
+      assert length(result) == 3
+    end
+
+    test "returns empty array when no wallets are loaded", %{client: client} do
+      mock(fn
+        %{method: :post, url: @url, body: body} ->
+          # Verify the request structure
+          assert %{
+                   "method" => "listwallets",
+                   "params" => [],
+                   "jsonrpc" => "1.0"
+                 } = BTx.json_module().decode!(body)
+
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => "test-id",
+              "result" => [],
+              "error" => nil
+            }
+          }
+      end)
+
+      assert {:ok, result} = Wallets.list_wallets(client)
+      assert result == []
+    end
+
+    test "call with custom ID", %{client: client} do
+      custom_id = "list-wallets-#{System.system_time()}"
+      wallet_names = ["main_wallet"]
+
+      mock(fn
+        %{method: :post, url: @url, body: body} ->
+          # Verify custom ID is used
+          assert %{
+                   "method" => "listwallets",
+                   "params" => [],
+                   "jsonrpc" => "1.0",
+                   "id" => ^custom_id
+                 } = BTx.json_module().decode!(body)
+
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => custom_id,
+              "result" => wallet_names,
+              "error" => nil
+            }
+          }
+      end)
+
+      assert {:ok, result} = Wallets.list_wallets(client, id: custom_id)
+      assert result == wallet_names
+    end
+
+    test "returns single wallet in array", %{client: client} do
+      single_wallet = ["default"]
+
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => "test-id",
+              "result" => single_wallet,
+              "error" => nil
+            }
+          }
+      end)
+
+      assert {:ok, result} = Wallets.list_wallets(client)
+      assert result == single_wallet
+      assert length(result) == 1
+    end
+
+    test "handles Bitcoin Core RPC errors", %{client: client} do
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{
+            status: 500,
+            body: %{
+              "id" => "test-id",
+              "result" => nil,
+              "error" => %{
+                "code" => -32_601,
+                "message" => "Method not found"
+              }
+            }
+          }
+      end)
+
+      assert {:error, %BTx.JRPC.MethodError{code: -32_601, message: message}} =
+               Wallets.list_wallets(client)
+
+      assert message == "Method not found"
+    end
+
+    test "handles network/connection errors", %{client: client} do
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{status: 401, body: "Unauthorized"}
+      end)
+
+      assert {:error, %BTx.JRPC.Error{reason: {:rpc, :unauthorized}}} =
+               Wallets.list_wallets(client)
+    end
+
+    test "handles service unavailable", %{client: client} do
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{status: 503, body: "Service Unavailable"}
+      end)
+
+      assert {:error, %BTx.JRPC.Error{reason: {:rpc, :service_unavailable}}} =
+               Wallets.list_wallets(client)
+    end
+
+    test "call! raises on error", %{client: client} do
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{status: 401, body: "Unauthorized"}
+      end)
+
+      assert_raise BTx.JRPC.Error, ~r/Unauthorized/, fn ->
+        Wallets.list_wallets!(client)
+      end
+    end
+
+    @tag :integration
+    test "real Bitcoin regtest integration" do
+      # This test requires a real Bitcoin regtest node running
+      real_client = new_client()
+
+      assert {:ok, wallets} = Wallets.list_wallets(real_client)
+      assert is_list(wallets)
+    end
+  end
+
+  describe "list_wallets!/2" do
+    setup do
+      client = new_client(adapter: Tesla.Mock)
+
+      %{client: client}
+    end
+
+    test "returns array of wallet names", %{client: client} do
+      wallet_names = ["wallet1", "wallet2"]
+
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => "test-id",
+              "result" => wallet_names,
+              "error" => nil
+            }
+          }
+      end)
+
+      assert result = Wallets.list_wallets!(client)
+      assert result == wallet_names
+    end
+
+    test "returns empty array", %{client: client} do
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => "test-id",
+              "result" => [],
+              "error" => nil
+            }
+          }
+      end)
+
+      assert result = Wallets.list_wallets!(client)
+      assert result == []
+    end
+
+    test "raises on error", %{client: client} do
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{status: 401, body: "Unauthorized"}
+      end)
+
+      assert_raise BTx.JRPC.Error, ~r/Unauthorized/, fn ->
+        Wallets.list_wallets!(client)
+      end
+    end
+  end
+
+  ## GetNewAddress
 
   describe "get_new_address/3" do
     setup do
@@ -499,6 +733,8 @@ defmodule BTx.JRPC.WalletsTest do
     end
   end
 
+  ## GetBalance
+
   describe "get_balance/3" do
     setup do
       client = new_client(adapter: Tesla.Mock)
@@ -736,6 +972,8 @@ defmodule BTx.JRPC.WalletsTest do
       end
     end
   end
+
+  ## GetTransaction
 
   describe "get_transaction/3" do
     setup do
@@ -1200,6 +1438,8 @@ defmodule BTx.JRPC.WalletsTest do
       end
     end
   end
+
+  ## SendToAddress
 
   describe "send_to_address/3" do
     setup do
