@@ -18,6 +18,7 @@ defmodule BTx.JRPC.Wallets do
   - `BTx.JRPC.Wallets.GetNewAddress`
   - `BTx.JRPC.Wallets.SendToAddress`
   - `BTx.JRPC.Wallets.GetTransaction`
+  - `BTx.JRPC.Wallets.ListTransactions`
   - **More coming soon**
 
   ## Wallet-specific RPC calls
@@ -45,6 +46,8 @@ defmodule BTx.JRPC.Wallets do
     GetTransactionResult,
     GetWalletInfo,
     GetWalletInfoResult,
+    ListTransactions,
+    ListTransactionsItem,
     ListWallets,
     LoadWallet,
     LoadWalletResult,
@@ -641,5 +644,113 @@ defmodule BTx.JRPC.Wallets do
     |> JRPC.call!(GetTransaction.new!(params), opts)
     |> Map.fetch!(:result)
     |> GetTransactionResult.new!()
+  end
+
+  @doc """
+  If a label name is provided, this will return only incoming transactions
+  paying to addresses with the specified label.
+
+  Returns up to 'count' most recent transactions skipping the first 'skip'
+  transactions.
+
+  ## Arguments
+
+  - `client` - Same as `BTx.JRPC.call/3`.
+  - `params` - A keyword list or map of parameters for the request.
+    See `BTx.JRPC.Wallets.ListTransactions` for more information about the
+    available parameters.
+  - `opts` - Same as `BTx.JRPC.call/3`.
+
+  ## Options
+
+  See `BTx.JRPC.call/3`.
+
+  ## Examples
+
+      # List the most recent 10 transactions
+      iex> BTx.JRPC.Wallets.list_transactions(client, wallet_name: "my_wallet")
+      {:ok, [
+        %BTx.JRPC.Wallets.ListTransactionsItem{
+          category: "receive",
+          amount: 0.05,
+          txid: "abc123...",
+          confirmations: 6,
+          ...
+        },
+        ...
+      ]}
+
+      # List transactions with specific label
+      iex> BTx.JRPC.Wallets.list_transactions(client,
+      ...>   wallet_name: "my_wallet",
+      ...>   label: "customer_payments"
+      ...> )
+      {:ok, [...]}
+
+      # List transactions with pagination
+      iex> BTx.JRPC.Wallets.list_transactions(client,
+      ...>   wallet_name: "my_wallet",
+      ...>   count: 20,
+      ...>   skip: 100
+      ...> )
+      {:ok, [...]}
+
+      # List all transactions (disable filtering)
+      iex> BTx.JRPC.Wallets.list_transactions(client,
+      ...>   wallet_name: "my_wallet",
+      ...>   label: "*"
+      ...> )
+      {:ok, [...]}
+
+  """
+  @spec list_transactions(JRPC.client(), params(), keyword()) ::
+          response([ListTransactionsItem.t()])
+  def list_transactions(client, params, opts \\ []) do
+    with {:ok, request} <- ListTransactions.new(params),
+         {:ok, %Response{result: result}} <- JRPC.call(client, request, opts) do
+      parse_transaction_list(result)
+    end
+  end
+
+  @doc """
+  Same as `list_transactions/3` but raises on error.
+  """
+  @spec list_transactions!(JRPC.client(), params(), keyword()) :: [ListTransactionsItem.t()]
+  def list_transactions!(client, params, opts \\ []) do
+    client
+    |> JRPC.call!(ListTransactions.new!(params), opts)
+    |> Map.fetch!(:result)
+    |> parse_transaction_list!()
+  end
+
+  ## Private helper functions
+
+  defp parse_transaction_list(transactions) do
+    transactions
+    |> assert_transaction_list!()
+    |> Enum.reduce_while({:ok, []}, fn transaction, {:ok, acc} ->
+      case ListTransactionsItem.new(transaction) do
+        {:ok, item} -> {:cont, {:ok, [item | acc]}}
+        {:error, changeset} -> {:halt, {:error, changeset}}
+      end
+    end)
+    |> case do
+      {:ok, items} -> {:ok, Enum.reverse(items)}
+      error -> error
+    end
+  end
+
+  defp parse_transaction_list!(transactions) do
+    transactions
+    |> assert_transaction_list!()
+    |> Enum.map(&ListTransactionsItem.new!/1)
+  end
+
+  defp assert_transaction_list!(transactions) when is_list(transactions) do
+    transactions
+  end
+
+  defp assert_transaction_list!(transactions) do
+    raise "Expected a list of transactions, got #{inspect(transactions)}"
   end
 end
