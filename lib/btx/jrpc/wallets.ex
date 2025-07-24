@@ -16,6 +16,7 @@ defmodule BTx.JRPC.Wallets do
   - `BTx.JRPC.Wallets.GetWalletInfo`
   - `BTx.JRPC.Wallets.GetBalance`
   - `BTx.JRPC.Wallets.GetNewAddress`
+  - `BTx.JRPC.Wallets.GetReceivedByAddress`
   - `BTx.JRPC.Wallets.SendToAddress`
   - `BTx.JRPC.Wallets.GetTransaction`
   - `BTx.JRPC.Wallets.ListTransactions`
@@ -42,6 +43,7 @@ defmodule BTx.JRPC.Wallets do
     CreateWalletResult,
     GetBalance,
     GetNewAddress,
+    GetReceivedByAddress,
     GetTransaction,
     GetTransactionResult,
     GetWalletInfo,
@@ -507,6 +509,73 @@ defmodule BTx.JRPC.Wallets do
   def get_new_address!(client, params, opts \\ []) do
     client
     |> JRPC.call!(GetNewAddress.new!(params), opts)
+    |> Map.fetch!(:result)
+  end
+
+  @doc """
+  Returns the total amount received by the given address in transactions with
+  at least minconf confirmations.
+
+  ## Arguments
+
+  - `client` - Same as `BTx.JRPC.call/3`.
+  - `params` - A keyword list or map of parameters for the request.
+    See `BTx.JRPC.Wallets.GetReceivedByAddress` for more information about the
+    available parameters.
+  - `opts` - Same as `BTx.JRPC.call/3`.
+
+  ## Options
+
+  See `BTx.JRPC.call/3`.
+
+  ## Examples
+
+      # Get amount received by address with default confirmations
+      iex> BTx.JRPC.Wallets.get_received_by_address(client,
+      ...>   address: "bc1q09vm5lfy0j5reeulh4x5752q25uqqvz34hufdl",
+      ...>   wallet_name: "my_wallet"
+      ...> )
+      {:ok, 0.05000000}
+
+      # Get amount including unconfirmed transactions (zero confirmations)
+      iex> BTx.JRPC.Wallets.get_received_by_address(client,
+      ...>   address: "bc1q09vm5lfy0j5reeulh4x5752q25uqqvz34hufdl",
+      ...>   minconf: 0,
+      ...>   wallet_name: "my_wallet"
+      ...> )
+      {:ok, 0.15000000}
+
+      # Get amount with at least 6 confirmations
+      iex> BTx.JRPC.Wallets.get_received_by_address(client,
+      ...>   address: "bc1q09vm5lfy0j5reeulh4x5752q25uqqvz34hufdl",
+      ...>   minconf: 6,
+      ...>   wallet_name: "my_wallet"
+      ...> )
+      {:ok, 0.02500000}
+
+      # Address that has received no payments
+      iex> BTx.JRPC.Wallets.get_received_by_address(client,
+      ...>   address: "bc1qnew0dd3ess4ge4y5r3zarvary0c5xw7kv8f3t4",
+      ...>   wallet_name: "my_wallet"
+      ...> )
+      {:ok, 0.00000000}
+
+  """
+  @spec get_received_by_address(JRPC.client(), params(), keyword()) :: response(number())
+  def get_received_by_address(client, params, opts \\ []) do
+    with {:ok, request} <- GetReceivedByAddress.new(params),
+         {:ok, %Response{result: result}} <- JRPC.call(client, request, opts) do
+      {:ok, result}
+    end
+  end
+
+  @doc """
+  Same as `get_received_by_address/3` but raises on error.
+  """
+  @spec get_received_by_address!(JRPC.client(), params(), keyword()) :: number()
+  def get_received_by_address!(client, params, opts \\ []) do
+    client
+    |> JRPC.call!(GetReceivedByAddress.new!(params), opts)
     |> Map.fetch!(:result)
   end
 
