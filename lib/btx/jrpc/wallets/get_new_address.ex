@@ -48,7 +48,7 @@ defmodule BTx.JRPC.Wallets.GetNewAddress do
 
     # Method fields
     field :label, :string, default: ""
-    field :address_type, :string, default: "bech32"
+    field :address_type, :string
   end
 
   @optional_fields ~w(label address_type wallet_name)a

@@ -638,29 +638,32 @@ defmodule BTx.JRPC.Wallets.GetTransactionTest do
       # This test requires a real Bitcoin regtest node with wallet and transactions
       real_client = new_client()
 
-      # You would need a real transaction ID from your regtest environment
-      # This is just an example - replace with actual txid from your tests
-      real_txid = @valid_txid
+      # Wallet for this test
+      wallet_name = "btx-shared-test-wallet"
 
-      # FIXME: Create a successful scenario for this test
-      case Wallets.get_transaction(real_client, txid: real_txid) do
-        {:ok, %GetTransactionResult{} = result} ->
-          assert is_binary(result.txid)
-          assert is_number(result.amount)
-          assert is_integer(result.confirmations)
+      # Step 1: Create a destination address (different wallet or address)
+      address =
+        Wallets.get_new_address!(real_client, wallet_name: wallet_name, label: "destination")
 
-        {:error, %BTx.JRPC.Error{reason: {:rpc, :unauthorized}}} ->
-          # Expected if regtest is not running or credentials are wrong
-          :ok
+      # Step 2: Send a transaction
+      {:ok, send_result} =
+        Wallets.send_to_address(real_client,
+          address: address,
+          amount: 0.001,
+          wallet_name: wallet_name,
+          comment: "Integration test transaction"
+        )
 
-        {:error, %BTx.JRPC.MethodError{code: -5}} ->
-          # Transaction not found - expected if using placeholder txid
-          :ok
+      # Step 3: Verify the transaction
+      assert {:ok, %GetTransactionResult{} = result} =
+               Wallets.get_transaction(real_client,
+                 txid: send_result.txid,
+                 wallet_name: wallet_name
+               )
 
-        {:error, %BTx.JRPC.MethodError{}} ->
-          # Some other Bitcoin Core error
-          :ok
-      end
+      assert is_binary(result.txid)
+      assert is_number(result.amount)
+      assert is_integer(result.confirmations)
     end
   end
 

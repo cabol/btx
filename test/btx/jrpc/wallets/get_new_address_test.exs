@@ -14,15 +14,15 @@ defmodule BTx.JRPC.Wallets.GetNewAddressTest do
 
   describe "new/1" do
     test "creates a new method with default values" do
-      assert {:ok, %GetNewAddress{label: "", address_type: "bech32"}} = GetNewAddress.new()
+      assert {:ok, %GetNewAddress{label: "", address_type: nil}} = GetNewAddress.new()
     end
 
     test "creates a new method with empty map" do
-      assert {:ok, %GetNewAddress{label: "", address_type: "bech32"}} = GetNewAddress.new(%{})
+      assert {:ok, %GetNewAddress{label: "", address_type: nil}} = GetNewAddress.new(%{})
     end
 
     test "creates a new method with custom label" do
-      assert {:ok, %GetNewAddress{label: "test_label", address_type: "bech32"}} =
+      assert {:ok, %GetNewAddress{label: "test_label", address_type: nil}} =
                GetNewAddress.new(label: "test_label")
     end
 
@@ -37,7 +37,7 @@ defmodule BTx.JRPC.Wallets.GetNewAddressTest do
     end
 
     test "uses defaults when parameters are not provided" do
-      assert {:ok, %GetNewAddress{label: "", address_type: "bech32"}} = GetNewAddress.new(%{})
+      assert {:ok, %GetNewAddress{label: "", address_type: nil}} = GetNewAddress.new(%{})
     end
 
     test "accepts all valid address types" do
@@ -107,7 +107,7 @@ defmodule BTx.JRPC.Wallets.GetNewAddressTest do
 
   describe "new!/1" do
     test "creates a new method with default values" do
-      assert %GetNewAddress{label: "", address_type: "bech32"} = GetNewAddress.new!()
+      assert %GetNewAddress{label: "", address_type: nil} = GetNewAddress.new!()
     end
 
     test "creates a new method with custom parameters" do
@@ -133,7 +133,7 @@ defmodule BTx.JRPC.Wallets.GetNewAddressTest do
   describe "encodable" do
     test "encodes method with default values" do
       assert %Request{
-               params: ["", "bech32"],
+               params: ["", nil],
                method: "getnewaddress",
                jsonrpc: "1.0",
                path: "/"
@@ -142,7 +142,7 @@ defmodule BTx.JRPC.Wallets.GetNewAddressTest do
 
     test "encodes method with custom label only" do
       assert %Request{
-               params: ["test_label", "bech32"],
+               params: ["test_label", nil],
                method: "getnewaddress",
                jsonrpc: "1.0",
                path: "/"
@@ -160,20 +160,20 @@ defmodule BTx.JRPC.Wallets.GetNewAddressTest do
 
     test "encodes method with both custom parameters" do
       assert %Request{
-        params: ["savings", "bech32m"],
-        method: "getnewaddress",
-        jsonrpc: "1.0",
-        path: "/"
-      }
+               params: ["savings", "bech32m"],
+               method: "getnewaddress",
+               jsonrpc: "1.0",
+               path: "/"
+             } = GetNewAddress.new!(label: "savings", address_type: "bech32m") |> Encodable.encode()
     end
 
     test "encodes method with empty label and custom address_type" do
       assert %Request{
-        params: ["", "legacy"],
-        method: "getnewaddress",
-        jsonrpc: "1.0",
-        path: "/"
-      }
+               params: ["", "legacy"],
+               method: "getnewaddress",
+               jsonrpc: "1.0",
+               path: "/"
+             } = GetNewAddress.new!(label: "", address_type: "legacy") |> Encodable.encode()
     end
 
     test "encodes all valid address types correctly" do
@@ -229,7 +229,7 @@ defmodule BTx.JRPC.Wallets.GetNewAddressTest do
       # Test that defaults work when fields are omitted entirely
       {:ok, result} = GetNewAddress.new(%{})
       assert result.label == ""
-      assert result.address_type == "bech32"
+      assert result.address_type == nil
     end
 
     test "accepts nil values without validation errors" do
@@ -312,7 +312,7 @@ defmodule BTx.JRPC.Wallets.GetNewAddressTest do
           # Verify default values are sent
           assert %{
                    "method" => "getnewaddress",
-                   "params" => ["", "bech32"],
+                   "params" => ["", nil],
                    "jsonrpc" => "1.0"
                  } = BTx.json_module().decode!(body)
 
@@ -336,7 +336,7 @@ defmodule BTx.JRPC.Wallets.GetNewAddressTest do
           # Verify label is sent with default address_type
           assert %{
                    "method" => "getnewaddress",
-                   "params" => ["savings", "bech32"],
+                   "params" => ["savings", nil],
                    "jsonrpc" => "1.0"
                  } = BTx.json_module().decode!(body)
 
@@ -496,7 +496,7 @@ defmodule BTx.JRPC.Wallets.GetNewAddressTest do
           # Verify the method body structure
           assert %{
                    "method" => "getnewaddress",
-                   "params" => ["", "bech32"],
+                   "params" => ["", nil],
                    "jsonrpc" => "1.0"
                  } = BTx.json_module().decode!(body)
 

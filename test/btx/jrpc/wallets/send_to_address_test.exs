@@ -6,7 +6,7 @@ defmodule BTx.JRPC.Wallets.SendToAddressTest do
 
   alias BTx.JRPC.{Encodable, Request, Wallets}
   alias BTx.JRPC.Wallets.{SendToAddress, SendToAddressResult}
-  alias Ecto.{Changeset, UUID}
+  alias Ecto.Changeset
 
   # Valid Bitcoin addresses for testing
   @valid_legacy_address "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2"
@@ -703,25 +703,25 @@ defmodule BTx.JRPC.Wallets.SendToAddressTest do
       # This test requires a real Bitcoin regtest node running
       real_client = new_client()
 
-      # First ensure we have a wallet loaded, create one if needed
-      wallet_name =
-        Wallets.create_wallet!(
-          real_client,
-          wallet_name: "test-wallet-#{UUID.generate()}",
-          avoid_reuse: true
-        ).name
+      # Wallet for this test
+      wallet_name = "btx-shared-test-wallet"
 
-      # Now try to get a new address
-      address = Wallets.get_new_address!(real_client, wallet_name: wallet_name)
+      # Step 1: Create a destination address (different wallet or address)
+      address =
+        Wallets.get_new_address!(real_client, wallet_name: wallet_name, label: "destination")
 
-      assert_raise BTx.JRPC.MethodError, ~r/Insufficient funds/, fn ->
-        Wallets.send_to_address!(real_client,
+      # Step 2: Send a transaction
+      {:ok, send_result} =
+        Wallets.send_to_address(real_client,
           address: address,
           amount: 0.001,
           wallet_name: wallet_name,
-          avoid_reuse: true
+          comment: "Integration test transaction"
         )
-      end
+
+      # Step 3: Verify the transaction
+      assert %SendToAddressResult{} = send_result
+      assert send_result.txid != nil
     end
   end
 

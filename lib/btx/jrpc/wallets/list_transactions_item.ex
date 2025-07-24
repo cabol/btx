@@ -5,6 +5,7 @@ defmodule BTx.JRPC.Wallets.ListTransactionsItem do
 
   use Ecto.Schema
 
+  import BTx.Ecto.ChangesetUtils
   import Ecto.Changeset
 
   ## Types & Schema
@@ -116,17 +117,6 @@ defmodule BTx.JRPC.Wallets.ListTransactionsItem do
   end
 
   ## Private functions
-
-  # Normalize attributes from Bitcoin Core JSON response format to our schema format
-  defp normalize_attrs(attrs) when is_map(attrs) do
-    attrs
-    |> Enum.map(&normalize_field/1)
-    |> Enum.into(%{})
-  end
-
-  # Handle field name mapping from Bitcoin Core JSON to our schema
-  defp normalize_field({"bip125-replaceable", value}), do: {"bip125_replaceable", value}
-  defp normalize_field({key, value}), do: {key, value}
 
   # Custom validation for blockhash format (64 character hex string)
   defp validate_blockhash_format(changeset) do

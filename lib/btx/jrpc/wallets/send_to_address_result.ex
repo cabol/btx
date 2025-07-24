@@ -8,6 +8,7 @@ defmodule BTx.JRPC.Wallets.SendToAddressResult do
 
   use Ecto.Schema
 
+  import BTx.Ecto.ChangesetUtils
   import Ecto.Changeset
 
   alias BTx.JRPC.Response
@@ -82,17 +83,4 @@ defmodule BTx.JRPC.Wallets.SendToAddressResult do
     |> validate_length(:txid, is: 64)
     |> validate_format(:txid, ~r/^[a-fA-F0-9]{64}$/)
   end
-
-  # Private functions
-
-  # Normalize attributes from Bitcoin Core JSON response format to our schema format
-  defp normalize_attrs(attrs) when is_map(attrs) do
-    attrs
-    |> Enum.map(&normalize_field/1)
-    |> Enum.into(%{})
-  end
-
-  # Handle field name mapping from Bitcoin Core JSON to our schema
-  defp normalize_field({"fee reason", value}), do: {"fee_reason", value}
-  defp normalize_field({key, value}), do: {key, value}
 end

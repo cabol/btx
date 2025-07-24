@@ -4,7 +4,17 @@ locals_without_parens = [
 
   # BTx.TestUtils
   with_telemetry_handler: 2,
-  with_telemetry_handler: 3
+  with_telemetry_handler: 3,
+
+  # Tests
+  assert_eventually: 0,
+  assert_eventually: 1,
+  assert_eventually: 2,
+  assert_eventually: 3,
+  wait_until: 0,
+  wait_until: 1,
+  wait_until: 2,
+  wait_until: 3
 ]
 
 [

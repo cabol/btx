@@ -22,4 +22,19 @@ defmodule BTx.Ecto.ChangesetUtils do
       end
     end)
   end
+
+  @doc """
+  Normalizes the attributes of a schema.
+  """
+  @spec normalize_attrs(map()) :: map()
+  def normalize_attrs(attrs) when is_map(attrs) do
+    attrs
+    |> Enum.map(&normalize_field/1)
+    |> Enum.into(%{})
+  end
+
+  # Handle field name mapping from Bitcoin Core JSON to our schema
+  defp normalize_field({"bip125-replaceable", value}), do: {"bip125_replaceable", value}
+  defp normalize_field({"fee reason", value}), do: {"fee_reason", value}
+  defp normalize_field({key, value}), do: {key, value}
 end

@@ -7,6 +7,7 @@ defmodule BTx.JRPC.Wallets.GetTransactionResult do
 
   use Ecto.Schema
 
+  import BTx.Ecto.ChangesetUtils
   import Ecto.Changeset
 
   alias BTx.JRPC.Response
@@ -107,17 +108,4 @@ defmodule BTx.JRPC.Wallets.GetTransactionResult do
     |> validate_number(:timereceived, greater_than_or_equal_to: 0)
     |> validate_inclusion(:bip125_replaceable, ["yes", "no", "unknown"])
   end
-
-  # Private functions
-
-  # Normalize attributes from Bitcoin Core JSON response format to our schema format
-  defp normalize_attrs(attrs) when is_map(attrs) do
-    attrs
-    |> Enum.map(&normalize_field/1)
-    |> Enum.into(%{})
-  end
-
-  # Handle field name mapping from Bitcoin Core JSON to our schema
-  defp normalize_field({"bip125-replaceable", value}), do: {"bip125_replaceable", value}
-  defp normalize_field({key, value}), do: {key, value}
 end

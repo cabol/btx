@@ -6,7 +6,7 @@ defmodule BTx.JRPC.Wallets.ListTransactionsTest do
 
   alias BTx.JRPC.{Encodable, Request, Wallets}
   alias BTx.JRPC.Wallets.{ListTransactions, ListTransactionsItem}
-  alias Ecto.{Changeset, UUID}
+  alias Ecto.Changeset
 
   @url "http://localhost:18443/"
 
@@ -469,25 +469,27 @@ defmodule BTx.JRPC.Wallets.ListTransactionsTest do
       # This test requires a real Bitcoin regtest node running
       real_client = new_client()
 
-      # First ensure we have a wallet loaded, create one if needed
-      wallet_name = "list-transactions-test-#{UUID.generate()}"
+      # Wallet for this test
+      wallet_name = "btx-shared-test-wallet"
 
-      # Create wallet
-      %BTx.JRPC.Wallets.CreateWalletResult{name: ^wallet_name} =
-        Wallets.create_wallet!(
-          real_client,
+      # Step 1: Create a destination address (different wallet or address)
+      address =
+        Wallets.get_new_address!(real_client, wallet_name: wallet_name, label: "destination")
+
+      # Step 2: Send a transaction
+      {:ok, send_result} =
+        Wallets.send_to_address(real_client,
+          address: address,
+          amount: 0.001,
           wallet_name: wallet_name,
-          passphrase: "test",
-          avoid_reuse: true
+          comment: "Integration test transaction"
         )
 
-      # TODO: Perform a transaction to test the list_transactions RPC
-      # Try to list transactions
+      # Step 3: Try to list transactions
       assert {:ok, transactions} =
                Wallets.list_transactions(real_client, wallet_name: wallet_name)
 
-      assert is_list(transactions)
-      assert Enum.all?(transactions, &match?(%ListTransactionsItem{}, &1))
+      assert send_result.txid in Enum.map(transactions, & &1.txid)
     end
   end
 
