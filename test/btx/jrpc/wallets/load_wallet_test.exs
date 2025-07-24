@@ -353,6 +353,8 @@ defmodule BTx.JRPC.Wallets.LoadWalletTest do
     test "real Bitcoin regtest integration" do
       # This test requires a real Bitcoin regtest node running
       client = new_client()
+
+      # Create a unique wallet name
       wallet_name = "load-wallet-#{UUID.generate()}"
 
       # Create wallet

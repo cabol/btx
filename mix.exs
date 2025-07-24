@@ -116,17 +116,6 @@ defmodule BTx.MixProject do
       extra_section: "GUIDES",
       extras: extras(),
       groups_for_extras: groups_for_extras(),
-      groups_for_docs: [
-        # JSON RPC API
-        group_for_function("Blockchain RPCs"),
-        group_for_function("Control RPCs"),
-        group_for_function("Generating RPCs"),
-        group_for_function("Mining RPCs"),
-        group_for_function("Network RPCs"),
-        group_for_function("Rawtransactions RPCs"),
-        group_for_function("Util RPCs"),
-        group_for_function("Wallet RPCs")
-      ],
       groups_for_modules: [
         # BTx,
         # BTx.JRPC,
@@ -135,7 +124,11 @@ defmodule BTx.MixProject do
         # BTx.JRPC.Response,
 
         "RPC APIs": [
+          BTx.JRPC.Mining,
           BTx.JRPC.Wallets
+        ],
+        "Mining RPCs": [
+          BTx.JRPC.Mining.GenerateToAddress
         ],
         "Wallet RPCs": [
           BTx.JRPC.Wallets.CreateWallet,
@@ -163,8 +156,6 @@ defmodule BTx.MixProject do
       Learning: ~r{guides/learning/[^\/]+\.md}
     ]
   end
-
-  defp group_for_function(group), do: {String.to_atom(group), &(&1[:group] == group)}
 
   defp dialyzer do
     [

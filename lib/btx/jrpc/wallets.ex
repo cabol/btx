@@ -10,9 +10,14 @@ defmodule BTx.JRPC.Wallets do
   ## Wallet requests
 
   - `BTx.JRPC.Wallets.CreateWallet`
+  - `BTx.JRPC.Wallets.LoadWallet`
+  - `BTx.JRPC.Wallets.UnloadWallet`
+  - `BTx.JRPC.Wallets.ListWallets`
+  - `BTx.JRPC.Wallets.GetWalletInfo`
+  - `BTx.JRPC.Wallets.GetBalance`
   - `BTx.JRPC.Wallets.GetNewAddress`
-  - `BTx.JRPC.Wallets.GetTransaction`
   - `BTx.JRPC.Wallets.SendToAddress`
+  - `BTx.JRPC.Wallets.GetTransaction`
   - **More coming soon**
 
   ## Wallet-specific RPC calls
@@ -38,6 +43,8 @@ defmodule BTx.JRPC.Wallets do
     GetNewAddress,
     GetTransaction,
     GetTransactionResult,
+    GetWalletInfo,
+    GetWalletInfoResult,
     ListWallets,
     LoadWallet,
     LoadWalletResult,
@@ -327,13 +334,13 @@ defmodule BTx.JRPC.Wallets do
   end
 
   @doc """
-  Returns a new Bitcoin address for receiving payments.
+  Returns an object containing various wallet state info.
 
   ## Arguments
 
   - `client` - Same as `BTx.JRPC.call/3`.
   - `params` - A keyword list or map of parameters for the request.
-    See `BTx.JRPC.Wallets.GetNewAddress` for more information about the
+    See `BTx.JRPC.Wallets.GetWalletInfo` for more information about the
     available parameters.
   - `opts` - Same as `BTx.JRPC.call/3`.
 
@@ -343,34 +350,53 @@ defmodule BTx.JRPC.Wallets do
 
   ## Examples
 
-      # Get a new address
-      iex> BTx.JRPC.Wallets.get_new_address(client, wallet_name: "my_wallet")
-      {:ok, "bc1q..."}
+      # Get wallet info for default wallet
+      iex> BTx.JRPC.Wallets.get_wallet_info(client)
+      {:ok, %BTx.JRPC.Wallets.GetWalletInfoResult{
+        walletname: "default",
+        walletversion: 169900,
+        format: "sqlite",
+        balance: 1.5,
+        txcount: 42,
+        descriptors: true,
+        ...
+      }}
 
-      # Get a new address with a custom label
-      iex> BTx.JRPC.Wallets.get_new_address(client,
-      ...>   wallet_name: "my_wallet",
-      ...>   label: "Customer Payment"
+      # Get wallet info for specific wallet
+      iex> BTx.JRPC.Wallets.get_wallet_info(client,
+      ...>   wallet_name: "my_wallet"
       ...> )
-      {:ok, "bc1q..."}
+      {:ok, %BTx.JRPC.Wallets.GetWalletInfoResult{
+        walletname: "my_wallet",
+        ...
+      }}
+
+      # Check if wallet is encrypted and locked
+      iex> {:ok, info} = BTx.JRPC.Wallets.get_wallet_info(client, wallet_name: "encrypted_wallet")
+      iex> if info.unlocked_until && info.unlocked_until > 0 do
+      ...>   IO.puts("Wallet is unlocked until \#{info.unlocked_until}")
+      ...> else
+      ...>   IO.puts("Wallet is locked")
+      ...> end
 
   """
-  @spec get_new_address(JRPC.client(), params(), keyword()) :: response(String.t())
-  def get_new_address(client, params, opts \\ []) do
-    with {:ok, request} <- GetNewAddress.new(params),
+  @spec get_wallet_info(JRPC.client(), params(), keyword()) :: response(GetWalletInfoResult.t())
+  def get_wallet_info(client, params \\ %{}, opts \\ []) do
+    with {:ok, request} <- GetWalletInfo.new(params),
          {:ok, %Response{result: result}} <- JRPC.call(client, request, opts) do
-      {:ok, result}
+      GetWalletInfoResult.new(result)
     end
   end
 
   @doc """
-  Same as `get_new_address/3` but raises on error.
+  Same as `get_wallet_info/3` but raises on error.
   """
-  @spec get_new_address!(JRPC.client(), params(), keyword()) :: String.t()
-  def get_new_address!(client, params, opts \\ []) do
+  @spec get_wallet_info!(JRPC.client(), params(), keyword()) :: GetWalletInfoResult.t()
+  def get_wallet_info!(client, params \\ %{}, opts \\ []) do
     client
-    |> JRPC.call!(GetNewAddress.new!(params), opts)
+    |> JRPC.call!(GetWalletInfo.new!(params), opts)
     |> Map.fetch!(:result)
+    |> GetWalletInfoResult.new!()
   end
 
   @doc """
@@ -435,13 +461,13 @@ defmodule BTx.JRPC.Wallets do
   end
 
   @doc """
-  Get detailed information about in-wallet transaction `txid`.
+  Returns a new Bitcoin address for receiving payments.
 
   ## Arguments
 
   - `client` - Same as `BTx.JRPC.call/3`.
   - `params` - A keyword list or map of parameters for the request.
-    See `BTx.JRPC.Wallets.GetTransaction` for more information about the
+    See `BTx.JRPC.Wallets.GetNewAddress` for more information about the
     available parameters.
   - `opts` - Same as `BTx.JRPC.call/3`.
 
@@ -451,49 +477,34 @@ defmodule BTx.JRPC.Wallets do
 
   ## Examples
 
-      # Get transaction information
-      iex> BTx.JRPC.Wallets.get_transaction(client, txid: "txid")
-      {:ok, %BTx.JRPC.Wallets.GetTransactionResult{
-        txid: "txid",
-        amount: 0.05000000,
-        confirmations: 6,
-        ...
-      }}
+      # Get a new address
+      iex> BTx.JRPC.Wallets.get_new_address(client, wallet_name: "my_wallet")
+      {:ok, "bc1q..."}
 
-      # Get transaction information with verbose option
-      iex> BTx.JRPC.Wallets.get_transaction(client, txid: "txid", verbose: true)
-      {:ok, %BTx.JRPC.Wallets.GetTransactionResult{
-        txid: "txid",
-        amount: 0.05000000,
-        decoded: %{"txid" => "txid", "version" => 2, ...},
-        ...
-      }}
-
-      # Get transaction information with wallet-specific RPC call
-      iex> BTx.JRPC.Wallets.get_transaction(client,
-      ...>   txid: "txid",
-      ...>   wallet_name: "my_wallet"
+      # Get a new address with a custom label
+      iex> BTx.JRPC.Wallets.get_new_address(client,
+      ...>   wallet_name: "my_wallet",
+      ...>   label: "Customer Payment"
       ...> )
-      {:ok, %BTx.JRPC.Wallets.GetTransactionResult{...}}
+      {:ok, "bc1q..."}
 
   """
-  @spec get_transaction(JRPC.client(), params(), keyword()) :: response(GetTransactionResult.t())
-  def get_transaction(client, params, opts \\ []) do
-    with {:ok, request} <- GetTransaction.new(params),
+  @spec get_new_address(JRPC.client(), params(), keyword()) :: response(String.t())
+  def get_new_address(client, params, opts \\ []) do
+    with {:ok, request} <- GetNewAddress.new(params),
          {:ok, %Response{result: result}} <- JRPC.call(client, request, opts) do
-      GetTransactionResult.new(result)
+      {:ok, result}
     end
   end
 
   @doc """
-  Same as `get_transaction/3` but raises on error.
+  Same as `get_new_address/3` but raises on error.
   """
-  @spec get_transaction!(JRPC.client(), params(), keyword()) :: GetTransactionResult.t()
-  def get_transaction!(client, params, opts \\ []) do
+  @spec get_new_address!(JRPC.client(), params(), keyword()) :: String.t()
+  def get_new_address!(client, params, opts \\ []) do
     client
-    |> JRPC.call!(GetTransaction.new!(params), opts)
+    |> JRPC.call!(GetNewAddress.new!(params), opts)
     |> Map.fetch!(:result)
-    |> GetTransactionResult.new!()
   end
 
   @doc """
@@ -568,5 +579,67 @@ defmodule BTx.JRPC.Wallets do
     |> JRPC.call!(SendToAddress.new!(params), opts)
     |> Map.fetch!(:result)
     |> SendToAddressResult.new!()
+  end
+
+  @doc """
+  Get detailed information about in-wallet transaction `txid`.
+
+  ## Arguments
+
+  - `client` - Same as `BTx.JRPC.call/3`.
+  - `params` - A keyword list or map of parameters for the request.
+    See `BTx.JRPC.Wallets.GetTransaction` for more information about the
+    available parameters.
+  - `opts` - Same as `BTx.JRPC.call/3`.
+
+  ## Options
+
+  See `BTx.JRPC.call/3`.
+
+  ## Examples
+
+      # Get transaction information
+      iex> BTx.JRPC.Wallets.get_transaction(client, txid: "txid")
+      {:ok, %BTx.JRPC.Wallets.GetTransactionResult{
+        txid: "txid",
+        amount: 0.05000000,
+        confirmations: 6,
+        ...
+      }}
+
+      # Get transaction information with verbose option
+      iex> BTx.JRPC.Wallets.get_transaction(client, txid: "txid", verbose: true)
+      {:ok, %BTx.JRPC.Wallets.GetTransactionResult{
+        txid: "txid",
+        amount: 0.05000000,
+        decoded: %{"txid" => "txid", "version" => 2, ...},
+        ...
+      }}
+
+      # Get transaction information with wallet-specific RPC call
+      iex> BTx.JRPC.Wallets.get_transaction(client,
+      ...>   txid: "txid",
+      ...>   wallet_name: "my_wallet"
+      ...> )
+      {:ok, %BTx.JRPC.Wallets.GetTransactionResult{...}}
+
+  """
+  @spec get_transaction(JRPC.client(), params(), keyword()) :: response(GetTransactionResult.t())
+  def get_transaction(client, params, opts \\ []) do
+    with {:ok, request} <- GetTransaction.new(params),
+         {:ok, %Response{result: result}} <- JRPC.call(client, request, opts) do
+      GetTransactionResult.new(result)
+    end
+  end
+
+  @doc """
+  Same as `get_transaction/3` but raises on error.
+  """
+  @spec get_transaction!(JRPC.client(), params(), keyword()) :: GetTransactionResult.t()
+  def get_transaction!(client, params, opts \\ []) do
+    client
+    |> JRPC.call!(GetTransaction.new!(params), opts)
+    |> Map.fetch!(:result)
+    |> GetTransactionResult.new!()
   end
 end
