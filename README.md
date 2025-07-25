@@ -16,7 +16,7 @@ to expand into comprehensive Bitcoin tooling.
 ## Features
 
 - **Full JSON-RPC Compliance**: Complete implementation of Bitcoin Core's
-  JSON-RPC API.
+  JSON-RPC API (`BTx.RPC`).
 - **Idiomatic Elixir Interface**: Clean, functional API that feels natural
   in Elixir applications.
 - **Configurable Client**: Built on Tesla for flexible HTTP client
@@ -50,18 +50,22 @@ docker-compose up -d
 Now we can start using the JSON RPC API. Let's create a wallet:
 
 ```elixir
-iex> BTx.JRPC.client(
-...>   base_url: "http://127.0.0.1:18443",
-...>   username: "my-user",
-...>   password: "my-pass"
-...> )
-...> |> BTx.JRPC.Wallets.create_wallet!(
+# Create a new client
+iex> client =
+...>   BTx.RPC.client(
+...>     base_url: "http://127.0.0.1:18443",
+...>     username: "my-user",
+...>     password: "my-pass"
+...>   )
+
+# Create a wallet (using the `BTx.RPC.Wallets` context)
+iex> BTx.RPC.Wallets.create_wallet!(client,
 ...>   wallet_name: "my-wallet",
 ...>   passphrase: "my-passphrase",
 ...>   avoid_reuse: true,
 ...>   descriptors: true
 ...> )
-%BTx.JRPC.BTx.JRPC.Wallets.CreateWalletResult{
+%BTx.RPC.Wallets.CreateWalletResult{
   name: "my-wallet",
   warning: nil
 }

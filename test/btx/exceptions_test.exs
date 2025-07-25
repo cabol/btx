@@ -1,9 +1,9 @@
 defmodule BTx.ExceptionsTest do
   use ExUnit.Case, async: true
 
-  alias BTx.JRPC.{Error, MethodError}
+  alias BTx.RPC.{Error, MethodError}
 
-  describe "BTx.JRPC.Error exception" do
+  describe "BTx.RPC.Error exception" do
     test "formats RPC error messages correctly" do
       error_types = [
         {{:rpc, :bad_request}, "Bad Request"},
@@ -50,7 +50,7 @@ defmodule BTx.ExceptionsTest do
     end
   end
 
-  describe "BTx.JRPC.MethodError exception" do
+  describe "BTx.RPC.MethodError exception" do
     test "creates method error with required fields" do
       error = %MethodError{id: "test-id", code: -18, message: "Wallet not found"}
 

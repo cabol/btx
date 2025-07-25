@@ -1,4 +1,4 @@
-defmodule BTx.JRPC.Error do
+defmodule BTx.RPC.Error do
   @moduledoc """
   Error returned when a JSON RPC request fails.
 
@@ -30,7 +30,7 @@ defmodule BTx.JRPC.Error do
 
     * `:metadata` - the metadata contains the options given to the exception
       excluding the `:reason` that is part of the exception fields. For example,
-      in `raise BTx.JRPC.Error, reason: :test, foo: :bar`, the metadata will be
+      in `raise BTx.RPC.Error, reason: :test, foo: :bar`, the metadata will be
       `[foo: :bar]`.
 
   """
@@ -123,7 +123,7 @@ defmodule BTx.JRPC.Error do
   end
 end
 
-defmodule BTx.JRPC.MethodError do
+defmodule BTx.RPC.MethodError do
   @moduledoc """
   Error returned when a JSON RPC method cannot be executed.
   """

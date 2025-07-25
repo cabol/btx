@@ -118,26 +118,26 @@ defmodule BTx.MixProject do
       groups_for_extras: groups_for_extras(),
       groups_for_modules: [
         # BTx,
-        # BTx.JRPC,
-        # BTx.JRPC.Encodable,
-        # BTx.JRPC.Request,
-        # BTx.JRPC.Response,
+        # BTx.RPC,
+        # BTx.RPC.Encodable,
+        # BTx.RPC.Request,
+        # BTx.RPC.Response,
 
         "RPC APIs": [
-          BTx.JRPC.Mining,
-          BTx.JRPC.Wallets
+          BTx.RPC.Mining,
+          BTx.RPC.Wallets
         ],
         "Mining RPCs": [
-          BTx.JRPC.Mining.GenerateToAddress
+          BTx.RPC.Mining.GenerateToAddress
         ],
         "Wallet RPCs": [
-          BTx.JRPC.Wallets.CreateWallet,
-          BTx.JRPC.Wallets.GetNewAddress,
-          BTx.JRPC.Wallets.GetTransaction
+          BTx.RPC.Wallets.CreateWallet,
+          BTx.RPC.Wallets.GetNewAddress,
+          BTx.RPC.Wallets.GetTransaction
         ],
         Exceptions: [
-          BTx.JRPC.Error,
-          BTx.JRPC.MethodError
+          BTx.RPC.Error,
+          BTx.RPC.MethodError
         ]
       ]
     ]

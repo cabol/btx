@@ -4,12 +4,12 @@ defmodule BTx.TelemetryTest do
   import BTx.TestUtils
   import Tesla.Mock
 
-  alias BTx.JRPC
-  alias BTx.JRPC.Wallets.CreateWallet
+  alias BTx.RPC
+  alias BTx.RPC.Wallets.CreateWallet
   alias Ecto.UUID
 
-  describe "BTx.JRPC.call/2" do
-    @prefix [:btx, :jrpc, :call]
+  describe "BTx.RPC.call/2" do
+    @prefix [:btx, :rpc, :call]
     @start_event @prefix ++ [:start]
     @stop_event @prefix ++ [:stop]
     @exception_event @prefix ++ [:exception]
@@ -34,7 +34,7 @@ defmodule BTx.TelemetryTest do
         id = UUID.generate()
         request = CreateWallet.new!(wallet_name: id, passphrase: "test")
 
-        assert {:ok, _} = JRPC.call(client, request, id: id)
+        assert {:ok, _} = RPC.call(client, request, id: id)
 
         assert_receive {@start_event, %{system_time: _}, %{id: ^id} = meta}
 
@@ -64,7 +64,7 @@ defmodule BTx.TelemetryTest do
         request = CreateWallet.new!(wallet_name: "test", passphrase: "test")
 
         assert_raise RuntimeError, fn ->
-          JRPC.call(client, request, id: id)
+          RPC.call(client, request, id: id)
         end
 
         assert_receive {@start_event, %{system_time: _}, %{id: ^id} = meta}

@@ -24,21 +24,21 @@ defmodule BTx do
 
   Create a client and make your first call:
 
-      client = BTx.JRPC.client(
+      client = BTx.RPC.client(
         base_url: "http://127.0.0.1:18443",
         username: "btx-user",
         password: "btx-pass"
       )
 
-      BTx.JRPC.Wallets.create_wallet!(client,
+      BTx.RPC.Wallets.create_wallet!(client,
         wallet_name: "my-wallet",
         descriptors: true
       )
 
   ## Main Modules
 
-    * `BTx.JRPC` - JSON-RPC client and core functionality.
-    * `BTx.JRPC.Wallets` - Wallet-specific RPC methods.
+    * `BTx.RPC` - JSON-RPC client and core functionality.
+    * `BTx.RPC.Wallets` - Wallet-specific RPC methods.
 
   See individual module documentation for detailed examples and usage patterns.
 

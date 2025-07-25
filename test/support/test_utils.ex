@@ -1,13 +1,13 @@
 defmodule BTx.TestUtils do
   @moduledoc false
 
-  alias BTx.JRPC
+  alias BTx.RPC
   alias Ecto.Changeset
 
   @doc """
-  Creates a new JRPC client for the Bitcoin regtest node.
+  Creates a new RPC client for the Bitcoin regtest node.
   """
-  @spec new_client(keyword()) :: BTx.JRPC.client()
+  @spec new_client(keyword()) :: BTx.RPC.client()
   def new_client(opts \\ []) do
     [
       base_url: "http://localhost:18443/",
@@ -15,7 +15,7 @@ defmodule BTx.TestUtils do
       password: "btx-pass"
     ]
     |> Keyword.merge(opts)
-    |> JRPC.client()
+    |> RPC.client()
   end
 
   @doc """
