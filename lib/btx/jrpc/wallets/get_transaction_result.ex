@@ -11,6 +11,7 @@ defmodule BTx.JRPC.Wallets.GetTransactionResult do
   import Ecto.Changeset
 
   alias BTx.JRPC.Response
+  alias BTx.JRPC.Wallets.GetTransactionDetail
 
   ## Types & Schema
 
@@ -31,7 +32,7 @@ defmodule BTx.JRPC.Wallets.GetTransactionResult do
           timereceived: non_neg_integer() | nil,
           comment: String.t() | nil,
           bip125_replaceable: String.t() | nil,
-          details: [map()],
+          details: [GetTransactionDetail.t()],
           hex: String.t() | nil,
           decoded: map() | nil
         }
@@ -54,14 +55,14 @@ defmodule BTx.JRPC.Wallets.GetTransactionResult do
     field :timereceived, :integer
     field :comment, :string
     field :bip125_replaceable, :string
-    field :details, {:array, :map}, default: []
+    embeds_many :details, GetTransactionDetail
     field :hex, :string
     field :decoded, :map
   end
 
   @required_fields ~w(amount confirmations txid time timereceived hex)a
   @optional_fields ~w(fee generated trusted blockhash blockheight blockindex blocktime
-                      walletconflicts comment bip125_replaceable details decoded)a
+                      walletconflicts comment bip125_replaceable decoded)a
 
   ## API
 
@@ -98,6 +99,7 @@ defmodule BTx.JRPC.Wallets.GetTransactionResult do
   def changeset(t, attrs) do
     t
     |> cast(attrs, @required_fields ++ @optional_fields)
+    |> cast_embed(:details, with: &GetTransactionDetail.changeset/2)
     |> validate_required(@required_fields)
     |> validate_length(:txid, is: 64)
     |> validate_format(:txid, ~r/^[a-fA-F0-9]{64}$/)

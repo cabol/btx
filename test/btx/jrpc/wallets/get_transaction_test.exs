@@ -365,7 +365,8 @@ defmodule BTx.JRPC.Wallets.GetTransactionTest do
       # Negative for send
       assert result.amount == -0.10000000
       assert result.fee == -0.00002500
-      assert hd(result.details)["category"] == "send"
+      assert hd(result.details).category == "send"
+      assert hd(result.details).involves_watchonly == false
     end
 
     test "call with coinbase transaction fixture", %{client: client} do
@@ -391,7 +392,8 @@ defmodule BTx.JRPC.Wallets.GetTransactionTest do
       assert result.amount == 6.25000000
       assert result.generated == true
       assert result.confirmations == 150
-      assert hd(result.details)["category"] == "generate"
+      assert hd(result.details).category == "generate"
+      assert hd(result.details).involves_watchonly == false
     end
 
     test "call with unconfirmed transaction fixture", %{client: client} do

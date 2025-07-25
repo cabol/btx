@@ -36,5 +36,6 @@ defmodule BTx.Ecto.ChangesetUtils do
   # Handle field name mapping from Bitcoin Core JSON to our schema
   defp normalize_field({"bip125-replaceable", value}), do: {"bip125_replaceable", value}
   defp normalize_field({"fee reason", value}), do: {"fee_reason", value}
+  defp normalize_field({"involvesWatchonly", value}), do: {"involves_watchonly", value}
   defp normalize_field({key, value}), do: {key, value}
 end
