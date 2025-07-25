@@ -37,5 +37,6 @@ defmodule BTx.Ecto.ChangesetUtils do
   defp normalize_field({"bip125-replaceable", value}), do: {"bip125_replaceable", value}
   defp normalize_field({"fee reason", value}), do: {"fee_reason", value}
   defp normalize_field({"involvesWatchonly", value}), do: {"involves_watchonly", value}
+  defp normalize_field({"scriptPubKey", value}), do: {"script_pub_key", value}
   defp normalize_field({key, value}), do: {key, value}
 end

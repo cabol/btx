@@ -104,7 +104,7 @@ defmodule BTx.RPC.Wallets.GetNewAddress do
   def changeset(t, attrs) do
     t
     |> cast(attrs, @optional_fields)
-    |> validate_length(:label, max: 255)
+    |> validate_length(:label, max: 255, empty_values: [])
     |> validate_inclusion(:address_type, @valid_address_types)
     |> validate_length(:wallet_name, min: 1, max: 64)
   end

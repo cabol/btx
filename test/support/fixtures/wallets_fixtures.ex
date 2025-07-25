@@ -268,4 +268,180 @@ defmodule BTx.WalletsFixtures do
   defp deep_resolve(_key, _left, right) do
     right
   end
+
+  ## GetAddressInfo result
+
+  @doc """
+  Returns a fixture for getaddressinfo RPC result.
+
+  ## Options
+
+  You can override any field by passing a map with the desired values:
+
+  ## Examples
+
+      # Default bech32 address info
+      get_address_info_result_fixture()
+
+      # Override address and ownership
+      get_address_info_result_fixture(%{
+        "address" => "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
+        "ismine" => false,
+        "iswitness" => false
+      })
+
+      # Multisig address info
+      get_address_info_result_fixture(%{
+        "address" => "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",
+        "isscript" => true,
+        "script" => "multisig",
+        "sigsrequired" => 2,
+        "pubkeys" => ["033add1f0e...", "033b3636a8..."]
+      })
+
+      # Watch-only address
+      get_address_info_result_fixture(%{
+        "ismine" => false,
+        "iswatchonly" => true,
+        "labels" => ["watch_only"]
+      })
+
+  """
+  @spec get_address_info_result_fixture(map()) :: map()
+  def get_address_info_result_fixture(overrides \\ %{}) do
+    default_address_info_fixture()
+    |> deep_merge(overrides)
+  end
+
+  @doc """
+  Returns preset fixtures for common address info types.
+
+  ## Examples
+
+      get_address_info_preset(:bech32)
+      get_address_info_preset(:legacy)
+      get_address_info_preset(:p2sh)
+      get_address_info_preset(:multisig)
+      get_address_info_preset(:watch_only)
+      get_address_info_preset(:embedded_witness)
+
+  """
+  @spec get_address_info_preset(atom()) :: map()
+  def get_address_info_preset(type) do
+    case type do
+      :bech32 -> get_address_info_result_fixture()
+      :legacy -> get_address_info_result_fixture(legacy_overrides())
+      :p2sh -> get_address_info_result_fixture(p2sh_overrides())
+      :multisig -> get_address_info_result_fixture(multisig_overrides())
+      :watch_only -> get_address_info_result_fixture(watch_only_overrides())
+      :embedded_witness -> get_address_info_result_fixture(embedded_witness_overrides())
+    end
+  end
+
+  ## Private functions for GetAddressInfo
+
+  defp default_address_info_fixture do
+    %{
+      "address" => "bc1q09vm5lfy0j5reeulh4x5752q25uqqvz34hufdl",
+      "scriptPubKey" => "0014389ffce9cd9ae88dcc0631e88a821ffdbe9bfe26",
+      "ismine" => true,
+      "iswatchonly" => false,
+      "solvable" => true,
+      "desc" =>
+        "wpkh([d34db33f/0'/0'/0']03a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd)#8fhd9pwu",
+      "isscript" => false,
+      "ischange" => false,
+      "iswitness" => true,
+      "witness_version" => 0,
+      "witness_program" => "389ffce9cd9ae88dcc0631e88a821ffdbe9bfe26",
+      "pubkey" => "03a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd",
+      "iscompressed" => true,
+      "timestamp" => 1_640_995_200,
+      "hdkeypath" => "m/0'/0'/0'",
+      "hdseedid" => "d34db33f",
+      "hdmasterfingerprint" => "d34db33f",
+      "labels" => [""]
+    }
+  end
+
+  defp legacy_overrides do
+    %{
+      "address" => "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
+      "scriptPubKey" => "76a914389ffce9cd9ae88dcc0631e88a821ffdbe9bfe2688ac",
+      "ismine" => false,
+      "solvable" => true,
+      "desc" => nil,
+      "iswitness" => false,
+      "witness_version" => nil,
+      "witness_program" => nil,
+      "labels" => []
+    }
+  end
+
+  defp p2sh_overrides do
+    %{
+      "address" => "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",
+      "scriptPubKey" => "a914389ffce9cd9ae88dcc0631e88a821ffdbe9bfe2687",
+      "isscript" => true,
+      "iswitness" => false,
+      "witness_version" => nil,
+      "witness_program" => nil,
+      "script" => "scripthash",
+      "labels" => []
+    }
+  end
+
+  defp multisig_overrides do
+    %{
+      "address" => "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",
+      "scriptPubKey" => "a914389ffce9cd9ae88dcc0631e88a821ffdbe9bfe2687",
+      "isscript" => true,
+      "iswitness" => false,
+      "witness_version" => nil,
+      "witness_program" => nil,
+      "script" => "multisig",
+      "hex" =>
+        "5221033add1f0e8e3c3e5119d0e274283c498d149df99d98ac93724d6a5b3c4c589d0ae5121033b3636a87b7c9bb1a6c17c0f9aee64c3b8b6b87b8a5a7b1c8c5b9b2d6f3a1b2f52ae",
+      "pubkeys" => [
+        "033add1f0e8e3c3e5119d0e274283c498d149df99d98ac93724d6a5b3c4c589d0ae51",
+        "033b3636a87b7c9bb1a6c17c0f9aee64c3b8b6b87b8a5a7b1c8c5b9b2d6f3a1b2f"
+      ],
+      "sigsrequired" => 2,
+      "labels" => ["multisig_wallet"]
+    }
+  end
+
+  defp watch_only_overrides do
+    %{
+      "ismine" => false,
+      "iswatchonly" => true,
+      "desc" => nil,
+      "timestamp" => nil,
+      "hdkeypath" => nil,
+      "hdseedid" => nil,
+      "hdmasterfingerprint" => nil,
+      "labels" => ["watch_only"]
+    }
+  end
+
+  defp embedded_witness_overrides do
+    %{
+      "address" => "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",
+      "scriptPubKey" => "a914389ffce9cd9ae88dcc0631e88a821ffdbe9bfe2687",
+      "isscript" => true,
+      "iswitness" => false,
+      "witness_version" => nil,
+      "witness_program" => nil,
+      "script" => "witness_v0_keyhash",
+      "embedded" => %{
+        "address" => "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
+        "scriptPubKey" => "0014751e76dc81",
+        "isscript" => false,
+        "iswitness" => true,
+        "witness_version" => 0,
+        "witness_program" => "751e76dc81"
+      },
+      "labels" => []
+    }
+  end
 end

@@ -16,6 +16,7 @@ defmodule BTx.RPC.Wallets do
   - `BTx.RPC.Wallets.GetWalletInfo`
   - `BTx.RPC.Wallets.GetBalance`
   - `BTx.RPC.Wallets.GetNewAddress`
+  - `BTx.RPC.Wallets.GetAddressInfo`
   - `BTx.RPC.Wallets.GetReceivedByAddress`
   - `BTx.RPC.Wallets.SendToAddress`
   - `BTx.RPC.Wallets.GetTransaction`
@@ -42,6 +43,8 @@ defmodule BTx.RPC.Wallets do
   alias BTx.RPC.Wallets.{
     CreateWallet,
     CreateWalletResult,
+    GetAddressInfo,
+    GetAddressInfoResult,
     GetBalance,
     GetNewAddress,
     GetReceivedByAddress,
@@ -587,6 +590,92 @@ defmodule BTx.RPC.Wallets do
     client
     |> RPC.call!(GetNewAddress.new!(params), opts)
     |> Map.fetch!(:result)
+  end
+
+  @doc """
+  Return information about the given bitcoin address.
+
+  Some of the information will only be present if the address is in the active wallet.
+
+  ## Arguments
+
+  - `client` - Same as `BTx.RPC.call/3`.
+  - `params` - A keyword list or map of parameters for the request.
+    See `BTx.RPC.Wallets.GetAddressInfo` for more information about the
+    available parameters.
+  - `opts` - Same as `BTx.RPC.call/3`.
+
+  ## Options
+
+  See `BTx.RPC.call/3`.
+
+  ## Examples
+
+      # Get address information
+      iex> BTx.RPC.Wallets.get_address_info(client,
+      ...>   address: "bc1q09vm5lfy0j5reeulh4x5752q25uqqvz34hufdl"
+      ...> )
+      {:ok, %BTx.RPC.Wallets.GetAddressInfoResult{
+        address: "bc1q09vm5lfy0j5reeulh4x5752q25uqqvz34hufdl",
+        script_pub_key: "0014389ffce9cd9ae88dcc0631e88a821ffdbe9bfe26",
+        ismine: true,
+        iswatchonly: false,
+        solvable: true,
+        isscript: false,
+        ischange: false,
+        iswitness: true,
+        witness_version: 0,
+        witness_program: "389ffce9cd9ae88dcc0631e88a821ffdbe9bfe26",
+        labels: [""]
+      }}
+
+      # Get info for wallet-specific address
+      iex> BTx.RPC.Wallets.get_address_info(client,
+      ...>   address: "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
+      ...>   wallet_name: "my_wallet"
+      ...> )
+      {:ok, %BTx.RPC.Wallets.GetAddressInfoResult{
+        address: "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
+        ismine: false,
+        iswatchonly: false,
+        solvable: true,
+        isscript: false,
+        ischange: false,
+        iswitness: false,
+        labels: []
+      }}
+
+      # Get info for multisig address
+      iex> BTx.RPC.Wallets.get_address_info(client,
+      ...>   address: "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy"
+      ...> )
+      {:ok, %BTx.RPC.Wallets.GetAddressInfoResult{
+        address: "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",
+        isscript: true,
+        script: "multisig",
+        sigsrequired: 2,
+        pubkeys: ["03abc...", "03def..."],
+        ...
+      }}
+
+  """
+  @spec get_address_info(RPC.client(), params(), keyword()) :: response(GetAddressInfoResult.t())
+  def get_address_info(client, params, opts \\ []) do
+    with {:ok, request} <- GetAddressInfo.new(params),
+         {:ok, %Response{result: result}} <- RPC.call(client, request, opts) do
+      GetAddressInfoResult.new(result)
+    end
+  end
+
+  @doc """
+  Same as `get_address_info/3` but raises on error.
+  """
+  @spec get_address_info!(RPC.client(), params(), keyword()) :: GetAddressInfoResult.t()
+  def get_address_info!(client, params, opts \\ []) do
+    client
+    |> RPC.call!(GetAddressInfo.new!(params), opts)
+    |> Map.fetch!(:result)
+    |> GetAddressInfoResult.new!()
   end
 
   @doc """
