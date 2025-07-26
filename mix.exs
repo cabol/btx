@@ -124,16 +124,42 @@ defmodule BTx.MixProject do
         # BTx.RPC.Response,
 
         "RPC APIs": [
+          BTx.RPC.Blockchain,
           BTx.RPC.Mining,
           BTx.RPC.Wallets
+        ],
+        "Blockchain RPCs": [
+          BTx.RPC.Blockchain.GetMempoolEntry,
+          BTx.RPC.Blockchain.GetMempoolEntryFees,
+          BTx.RPC.Blockchain.GetMempoolEntryResult
         ],
         "Mining RPCs": [
           BTx.RPC.Mining.GenerateToAddress
         ],
         "Wallet RPCs": [
           BTx.RPC.Wallets.CreateWallet,
+          BTx.RPC.Wallets.CreateWalletResult,
+          BTx.RPC.Wallets.GetAddressInfo,
+          BTx.RPC.Wallets.GetAddressInfoResult,
+          BTx.RPC.Wallets.GetBalance,
           BTx.RPC.Wallets.GetNewAddress,
-          BTx.RPC.Wallets.GetTransaction
+          BTx.RPC.Wallets.GetReceivedByAddress,
+          BTx.RPC.Wallets.GetTransaction,
+          BTx.RPC.Wallets.GetTransactionResult,
+          BTx.RPC.Wallets.GetWalletInfo,
+          BTx.RPC.Wallets.GetWalletInfoResult,
+          BTx.RPC.Wallets.ListTransactions,
+          BTx.RPC.Wallets.ListTransactionsItem,
+          BTx.RPC.Wallets.ListUnspent,
+          BTx.RPC.Wallets.ListUnspentItem,
+          BTx.RPC.Wallets.ListWallets,
+          BTx.RPC.Wallets.LoadWallet,
+          BTx.RPC.Wallets.LoadWalletResult,
+          BTx.RPC.Wallets.SendToAddress,
+          BTx.RPC.Wallets.SendToAddressResult,
+          BTx.RPC.Wallets.UnloadWallet,
+          BTx.RPC.Wallets.UnloadWalletResult,
+          BTx.RPC.Wallets.WalletPassphrase
         ],
         Exceptions: [
           BTx.RPC.Error,

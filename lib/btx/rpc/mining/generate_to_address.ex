@@ -93,7 +93,6 @@ defmodule BTx.RPC.Mining.GenerateToAddress do
     |> validate_required(@required_fields)
     |> validate_number(:nblocks, greater_than: 0)
     |> validate_number(:maxtries, greater_than: 0)
-    |> validate_length(:address, min: 26, max: 90)
-    |> valid_address_format()
+    |> valid_address_format(:address)
   end
 end
