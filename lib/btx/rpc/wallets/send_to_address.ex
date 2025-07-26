@@ -176,8 +176,7 @@ defmodule BTx.RPC.Wallets.SendToAddress do
     t
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
-    |> validate_length(:address, min: 26, max: 90)
-    |> valid_address_format()
+    |> valid_address_format(:address)
     |> validate_number(:amount, greater_than: 0)
     |> validate_number(:conf_target, greater_than: 0)
     |> validate_number(:fee_rate, greater_than: 0)

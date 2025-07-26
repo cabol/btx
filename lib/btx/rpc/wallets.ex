@@ -22,6 +22,7 @@ defmodule BTx.RPC.Wallets do
   - `BTx.RPC.Wallets.GetTransaction`
   - `BTx.RPC.Wallets.ListTransactions`
   - `BTx.RPC.Wallets.WalletPassphrase`
+  - `BTx.RPC.Wallets.ListUnspent`
   - **More coming soon**
 
   ## Wallet-specific RPC calls
@@ -54,6 +55,8 @@ defmodule BTx.RPC.Wallets do
     GetWalletInfoResult,
     ListTransactions,
     ListTransactionsItem,
+    ListUnspent,
+    ListUnspentItem,
     ListWallets,
     LoadWallet,
     LoadWalletResult,
@@ -73,7 +76,7 @@ defmodule BTx.RPC.Wallets do
   @typedoc "Response from wallet-related RPC calls"
   @type response(t) :: {:ok, t} | {:error, Ecto.Changeset.t()} | RPC.rpc_error()
 
-  ## API
+  ## Wallet & Key Management
 
   @doc """
   Creates and loads a new wallet.
@@ -522,10 +525,10 @@ defmodule BTx.RPC.Wallets do
       ...> )
       {:ok, nil}
 
-  ## Notes
-
-  Issuing the walletpassphrase command while the wallet is already unlocked will
-  set a new unlock time that overrides the old one.
+  > #### `walletpassphrase` {: .info}
+  >
+  > Issuing the `walletpassphrase` command while the wallet is already unlocked
+  > will set a new unlock time that overrides the old one.
   """
   @spec wallet_passphrase(RPC.client(), params(), keyword()) :: response(nil)
   def wallet_passphrase(client, params, opts \\ []) do
@@ -544,6 +547,8 @@ defmodule BTx.RPC.Wallets do
     |> RPC.call!(WalletPassphrase.new!(params), opts)
     |> Map.fetch!(:result)
   end
+
+  ## Address Management
 
   @doc """
   Returns a new Bitcoin address for receiving payments.
@@ -677,6 +682,8 @@ defmodule BTx.RPC.Wallets do
     |> Map.fetch!(:result)
     |> GetAddressInfoResult.new!()
   end
+
+  ## Sending & Receiving Funds
 
   @doc """
   Returns the total amount received by the given address in transactions with
@@ -819,6 +826,8 @@ defmodule BTx.RPC.Wallets do
     |> SendToAddressResult.new!()
   end
 
+  ## Transactions
+
   @doc """
   Get detailed information about in-wallet transaction `txid`.
 
@@ -958,6 +967,92 @@ defmodule BTx.RPC.Wallets do
     |> parse_transaction_list!()
   end
 
+  ## UTXO Control
+
+  @doc """
+  Returns array of unspent transaction outputs with between minconf and maxconf
+  (inclusive) confirmations.
+
+  Optionally filter to only include txouts paid to specified addresses.
+
+  ## Arguments
+
+  - `client` - Same as `BTx.RPC.call/3`.
+  - `params` - A keyword list or map of parameters for the request.
+    See `BTx.RPC.Wallets.ListUnspent` for more information about the
+    available parameters.
+  - `opts` - Same as `BTx.RPC.call/3`.
+
+  ## Options
+
+  See `BTx.RPC.call/3`.
+
+  ## Examples
+
+      # List all unspent outputs
+      iex> BTx.RPC.Wallets.list_unspent(client)
+      {:ok, [
+        %BTx.RPC.Wallets.ListUnspentItem{
+          txid: "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+          vout: 0,
+          address: "bc1q09vm5lfy0j5reeulh4x5752q25uqqvz34hufdl",
+          amount: 0.05000000,
+          confirmations: 6,
+          spendable: true,
+          solvable: true,
+          safe: true
+        }
+      ]}
+
+      # List unspent outputs with at least 6 confirmations
+      iex> BTx.RPC.Wallets.list_unspent(client, minconf: 6)
+      {:ok, [%BTx.RPC.Wallets.ListUnspentItem{...}]}
+
+      # List unspent outputs for specific addresses
+      iex> BTx.RPC.Wallets.list_unspent(client,
+      ...>   addresses: ["bc1q09vm5lfy0j5reeulh4x5752q25uqqvz34hufdl"]
+      ...> )
+      {:ok, [%BTx.RPC.Wallets.ListUnspentItem{...}]}
+
+      # List with amount filtering
+      iex> BTx.RPC.Wallets.list_unspent(client,
+      ...>   query_options: %{
+      ...>     minimum_amount: 0.001,
+      ...>     maximum_amount: 1.0,
+      ...>     maximum_count: 50
+      ...>   }
+      ...> )
+      {:ok, [%BTx.RPC.Wallets.ListUnspentItem{...}]}
+
+      # List from specific wallet
+      iex> BTx.RPC.Wallets.list_unspent(client,
+      ...>   wallet_name: "my_wallet",
+      ...>   minconf: 1,
+      ...>   maxconf: 9999999,
+      ...>   include_unsafe: false
+      ...> )
+      {:ok, [%BTx.RPC.Wallets.ListUnspentItem{...}]}
+
+  """
+  @spec list_unspent(RPC.client(), params(), keyword()) :: response([ListUnspentItem.t()])
+  def list_unspent(client, params \\ [], opts \\ []) do
+    with {:ok, request} <- ListUnspent.new(params),
+         {:ok, %Response{result: result}} <- RPC.call(client, request, opts) do
+      parse_unspent_list(result)
+    end
+  end
+
+  @doc """
+  Same as `list_unspent/3` but raises on error.
+  """
+  @spec list_unspent!(RPC.client(), params(), keyword()) :: [ListUnspentItem.t()]
+  def list_unspent!(client, params \\ [], opts \\ []) do
+    client
+    |> RPC.call!(ListUnspent.new!(params), opts)
+    |> Map.fetch!(:result)
+    |> parse_unspent_list!()
+  end
+
   ## Private helper functions
 
   defp parse_transaction_list(transactions) do
@@ -987,5 +1082,34 @@ defmodule BTx.RPC.Wallets do
 
   defp assert_transaction_list!(transactions) do
     raise "Expected a list of transactions, got #{inspect(transactions)}"
+  end
+
+  defp parse_unspent_list(unspent_outputs) do
+    unspent_outputs
+    |> assert_unspent_list!()
+    |> Enum.reduce_while({:ok, []}, fn unspent, {:ok, acc} ->
+      case ListUnspentItem.new(unspent) do
+        {:ok, item} -> {:cont, {:ok, [item | acc]}}
+        {:error, changeset} -> {:halt, {:error, changeset}}
+      end
+    end)
+    |> case do
+      {:ok, items} -> {:ok, Enum.reverse(items)}
+      error -> error
+    end
+  end
+
+  defp parse_unspent_list!(unspent_outputs) do
+    unspent_outputs
+    |> assert_unspent_list!()
+    |> Enum.map(&ListUnspentItem.new!/1)
+  end
+
+  defp assert_unspent_list!(unspent_outputs) when is_list(unspent_outputs) do
+    unspent_outputs
+  end
+
+  defp assert_unspent_list!(unspent_outputs) do
+    raise "Expected a list of unspent outputs, got #{inspect(unspent_outputs)}"
   end
 end

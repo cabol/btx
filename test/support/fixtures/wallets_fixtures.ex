@@ -444,4 +444,188 @@ defmodule BTx.WalletsFixtures do
       "labels" => []
     }
   end
+
+  ## ListUnspent fixtures
+
+  @doc """
+  Returns a fixture for listunspent RPC result item.
+
+  ## Options
+
+  You can override any field by passing a map with the desired values:
+
+  ## Examples
+
+      # Default unspent output
+      list_unspent_item_fixture()
+
+      # Override amount and confirmations
+      list_unspent_item_fixture(%{
+        "amount" => 1.50000000,
+        "confirmations" => 100
+      })
+
+      # P2SH output with redeem script
+      list_unspent_item_fixture(%{
+        "address" => "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",
+        "redeemScript" => "522103abc...52ae",
+        "spendable" => false
+      })
+
+      # Watch-only output
+      list_unspent_item_fixture(%{
+        "spendable" => false,
+        "solvable" => true,
+        "safe" => true
+      })
+
+  """
+  @spec list_unspent_item_fixture(map()) :: map()
+  def list_unspent_item_fixture(overrides \\ %{}) do
+    default_unspent_item_fixture()
+    |> deep_merge(overrides)
+  end
+
+  @doc """
+  Returns preset fixtures for common unspent output types.
+
+  ## Examples
+
+      list_unspent_preset(:confirmed)
+      list_unspent_preset(:unconfirmed)
+      list_unspent_preset(:large_amount)
+      list_unspent_preset(:p2sh)
+      list_unspent_preset(:watch_only)
+      list_unspent_preset(:unsafe)
+
+  """
+  @spec list_unspent_preset(atom()) :: map()
+  def list_unspent_preset(type) do
+    case type do
+      :confirmed -> list_unspent_item_fixture()
+      :unconfirmed -> list_unspent_item_fixture(list_unspent_unconfirmed_overrides())
+      :large_amount -> list_unspent_item_fixture(large_amount_overrides())
+      :p2sh -> list_unspent_item_fixture(p2sh_unspent_overrides())
+      :watch_only -> list_unspent_item_fixture(watch_only_unspent_overrides())
+      :unsafe -> list_unspent_item_fixture(unsafe_overrides())
+    end
+  end
+
+  @doc """
+  Returns a list of unspent output fixtures.
+
+  ## Examples
+
+      # Default list with various outputs
+      list_unspent_list_fixture()
+
+      # Custom list
+      list_unspent_list_fixture([
+        list_unspent_preset(:confirmed),
+        list_unspent_preset(:unconfirmed)
+      ])
+
+  """
+  @spec list_unspent_list_fixture(list() | nil) :: [map()]
+  def list_unspent_list_fixture(custom_items \\ nil) do
+    custom_items ||
+      [
+        list_unspent_preset(:confirmed),
+        list_unspent_preset(:unconfirmed),
+        list_unspent_preset(:large_amount)
+      ]
+  end
+
+  ## Private functions for ListUnspent
+
+  defp default_unspent_item_fixture do
+    %{
+      "txid" => "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+      "vout" => 0,
+      "address" => "bc1q09vm5lfy0j5reeulh4x5752q25uqqvz34hufdl",
+      "label" => "",
+      "scriptPubKey" => "0014389ffce9cd9ae88dcc0631e88a821ffdbe9bfe26",
+      "amount" => 0.05000000,
+      "confirmations" => 6,
+      "spendable" => true,
+      "solvable" => true,
+      "desc" =>
+        "wpkh([d34db33f/0'/0'/0']03a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd)#8fhd9pwu",
+      "safe" => true
+    }
+  end
+
+  defp list_unspent_unconfirmed_overrides do
+    %{
+      "txid" => "fedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321",
+      "vout" => 1,
+      "address" => "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
+      "scriptPubKey" => "0014751e76dc81",
+      "amount" => 0.01000000,
+      "confirmations" => 0,
+      "safe" => false
+    }
+  end
+
+  defp large_amount_overrides do
+    %{
+      "txid" => "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+      "vout" => 2,
+      "address" => "bc1q02ad21edsxd23d32dfgqqsz4vv4nmtfzuklhy3",
+      "scriptPubKey" => "001403ad21edsxd23d32dfgqqsz4vv4nmtfzuklhy3",
+      "amount" => 1.50000000,
+      "confirmations" => 100,
+      "label" => "savings"
+    }
+  end
+
+  defp p2sh_unspent_overrides do
+    %{
+      "txid" => "9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba",
+      "vout" => 0,
+      "address" => "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",
+      "scriptPubKey" => "a914389ffce9cd9ae88dcc0631e88a821ffdbe9bfe2687",
+      "amount" => 0.25000000,
+      "confirmations" => 50,
+      "redeemScript" =>
+        "5221033add1f0e8e3c3e5119d0e274283c498d149df99d98ac93724d6a5b3c4c589d0ae5121033b3636a87b7c9bb1a6c17c0f9aee64c3b8b6b87b8a5a7b1c8c5b9b2d6f3a1b2f52ae",
+      "witnessScript" =>
+        "5221033add1f0e8e3c3e5119d0e274283c498d149df99d98ac93724d6a5b3c4c589d0ae5121033b3636a87b7c9bb1a6c17c0f9aee64c3b8b6b87b8a5a7b1c8c5b9b2d6f3a1b2f52ae",
+      "spendable" => true,
+      "solvable" => true,
+      "desc" => "sh(multi(2,03add1f0e8e3c...,033b3636a87b...))#xyz123ab",
+      "safe" => true
+    }
+  end
+
+  defp watch_only_unspent_overrides do
+    %{
+      "txid" => "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "vout" => 3,
+      "address" => "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
+      "scriptPubKey" => "76a914389ffce9cd9ae88dcc0631e88a821ffdbe9bfe2688ac",
+      "amount" => 0.10000000,
+      "confirmations" => 25,
+      "spendable" => false,
+      "solvable" => true,
+      "desc" => nil,
+      "safe" => true,
+      "label" => "watch_only"
+    }
+  end
+
+  defp unsafe_overrides do
+    %{
+      "txid" => "deadbeef12345678deadbeef12345678deadbeef12345678deadbeef12345678",
+      "vout" => 1,
+      "address" => "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
+      "scriptPubKey" => "0014e8df018c7e326cc253faac7e46cdc51e68542c42",
+      "amount" => 0.02500000,
+      "confirmations" => 1,
+      "spendable" => true,
+      "solvable" => true,
+      "safe" => false,
+      "label" => "unsafe_tx"
+    }
+  end
 end
