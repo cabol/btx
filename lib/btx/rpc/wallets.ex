@@ -7,26 +7,6 @@ defmodule BTx.RPC.Wallets do
   transactions. It wraps the lower-level `BTx.RPC` functionality with
   wallet-specific conveniences.
 
-  ## Wallet requests
-
-  - `BTx.RPC.Wallets.CreateWallet`
-  - `BTx.RPC.Wallets.LoadWallet`
-  - `BTx.RPC.Wallets.UnloadWallet`
-  - `BTx.RPC.Wallets.ListWallets`
-  - `BTx.RPC.Wallets.GetWalletInfo`
-  - `BTx.RPC.Wallets.GetBalance`
-  - `BTx.RPC.Wallets.GetNewAddress`
-  - `BTx.RPC.Wallets.GetAddressInfo`
-  - `BTx.RPC.Wallets.GetAddressesByLabel`
-  - `BTx.RPC.Wallets.GetReceivedByAddress`
-  - `BTx.RPC.Wallets.SendToAddress`
-  - `BTx.RPC.Wallets.GetTransaction`
-  - `BTx.RPC.Wallets.ListTransactions`
-  - `BTx.RPC.Wallets.WalletPassphrase`
-  - `BTx.RPC.Wallets.WalletLock`
-  - `BTx.RPC.Wallets.ListUnspent`
-  - **More coming soon**
-
   ## Wallet-specific RPC calls
 
   Bitcoin Core requires wallet-specific RPC calls to be made using the
@@ -615,7 +595,7 @@ defmodule BTx.RPC.Wallets do
     |> Map.fetch!(:result)
   end
 
-  ## Address Management
+  ## Address & Key Generation
 
   @doc """
   Returns a new Bitcoin address for receiving payments.

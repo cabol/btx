@@ -5,12 +5,6 @@ defmodule BTx.RPC.Blockchain do
   This module provides convenient functions for blockchain operations like
   querying mempool information, block data, and network status. It wraps the
   lower-level `BTx.RPC` functionality with blockchain-specific conveniences.
-
-  ## Blockchain requests
-
-  - `BTx.RPC.Blockchain.GetMempoolEntry`
-  - **More coming soon**
-
   """
 
   alias BTx.RPC

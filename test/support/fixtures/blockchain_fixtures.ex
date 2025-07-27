@@ -3,6 +3,8 @@ defmodule BTx.BlockchainFixtures do
   Test fixtures for Bitcoin Blockchain RPC responses and test data.
   """
 
+  import BTx.TestUtils
+
   ## GetMempoolEntry result
 
   @doc """
@@ -192,18 +194,5 @@ defmodule BTx.BlockchainFixtures do
       "bip125-replaceable" => true,
       "unbroadcast" => true
     }
-  end
-
-  # Deep merge helper function
-  defp deep_merge(left, right) when is_map(left) and is_map(right) do
-    Map.merge(left, right, &deep_resolve/3)
-  end
-
-  defp deep_resolve(_key, left, right) when is_map(left) and is_map(right) do
-    deep_merge(left, right)
-  end
-
-  defp deep_resolve(_key, _left, right) do
-    right
   end
 end

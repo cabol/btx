@@ -6,11 +6,6 @@ defmodule BTx.RPC.Mining do
   generating blocks to specified addresses. It wraps the lower-level
   `BTx.RPC` functionality with mining-specific conveniences.
 
-  ## Mining requests
-
-  - `BTx.RPC.Mining.GenerateToAddress`
-  - **More coming soon**
-
   ## Mining Operations
 
   Mining operations in Bitcoin Core are typically used for testing and
