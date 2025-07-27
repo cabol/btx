@@ -18,6 +18,7 @@ defmodule BTx.RPC.Wallets.GetWalletInfo do
 
   use Ecto.Schema
 
+  import BTx.Ecto.ChangesetUtils
   import Ecto.Changeset
 
   alias BTx.RPC.Request
@@ -87,6 +88,6 @@ defmodule BTx.RPC.Wallets.GetWalletInfo do
   def changeset(t, attrs) do
     t
     |> cast(attrs, @optional_fields)
-    |> validate_length(:wallet_name, min: 1, max: 64)
+    |> validate_wallet_name()
   end
 end

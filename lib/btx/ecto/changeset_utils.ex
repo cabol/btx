@@ -6,8 +6,19 @@ defmodule BTx.Ecto.ChangesetUtils do
 
   @bitcoin_address_regex ~r/^[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]+$/
   @bech32_address_regex ~r/^[a-z0-9]+$/
+  @wallet_name_regex ~r/^(?![-])(?!(\.{1,2})$)(?!.*[-.]$)[a-zA-Z0-9._-]{1,64}$/
 
   ## API
+
+  @doc """
+  Validates the format of a wallet name.
+  """
+  @spec validate_wallet_name(Ecto.Changeset.t(), atom()) :: Ecto.Changeset.t()
+  def validate_wallet_name(changeset, field \\ :wallet_name) do
+    changeset
+    |> validate_length(field, min: 1, max: 64)
+    |> validate_format(field, @wallet_name_regex)
+  end
 
   @doc """
   Validates the format of a Bitcoin address.

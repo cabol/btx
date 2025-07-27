@@ -98,6 +98,6 @@ defmodule BTx.RPC.Wallets.GetAddressInfo do
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
     |> valid_address_format(:address)
-    |> validate_length(:wallet_name, min: 1, max: 64)
+    |> validate_wallet_name()
   end
 end

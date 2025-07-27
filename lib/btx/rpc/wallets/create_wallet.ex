@@ -36,6 +36,7 @@ defmodule BTx.RPC.Wallets.CreateWallet do
 
   use Ecto.Schema
 
+  import BTx.Ecto.ChangesetUtils
   import Ecto.Changeset
 
   alias BTx.RPC.Request
@@ -132,7 +133,7 @@ defmodule BTx.RPC.Wallets.CreateWallet do
     t
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
-    |> validate_length(:wallet_name, min: 1, max: 64)
+    |> validate_wallet_name()
     |> validate_length(:passphrase, min: 1, max: 1024)
     |> validate_format(:wallet_name, ~r/^[a-zA-Z0-9\-_]{1,64}$/)
   end

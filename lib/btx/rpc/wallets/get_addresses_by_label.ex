@@ -1,16 +1,10 @@
-defmodule BTx.RPC.Wallets.GetNewAddress do
+defmodule BTx.RPC.Wallets.GetAddressesByLabel do
   @moduledoc """
-  Returns a new Bitcoin address for receiving payments.
+  Returns the list of addresses assigned the specified label.
 
   ## Schema fields (a.k.a "Arguments")
 
-  - `:label` - (optional) The label name for the address to be linked to.
-    It can also be set to the empty string “” to represent the default label.
-    The label does not need to exist, it will be created if there is no label
-    by the given name. Defaults to `""`.
-
-  - `:address_type` - (optional) The type of address to use.
-    The default is "bech32".
+  - `:label` - (required) The label.
 
   - `:wallet_name` - (optional) When is present, the `:wallet_name` is used
     to build the path for the request. See
@@ -18,8 +12,8 @@ defmodule BTx.RPC.Wallets.GetNewAddress do
 
   [wallet-rpc]: http://hexdocs.pm/btx/BTx.RPC.Wallets.html#module-wallet-specific-rpc-calls
 
-  See [Bitcoin RPC API Reference `getnewaddress`][getnewaddress].
-  [getnewaddress]: https://developer.bitcoin.org/reference/rpc/getnewaddress.html
+  See [Bitcoin RPC API Reference `getaddressesbylabel`][getaddressesbylabel].
+  [getaddressesbylabel]: https://developer.bitcoin.org/reference/rpc/getaddressesbylabel.html
   """
 
   use Ecto.Schema
@@ -31,31 +25,27 @@ defmodule BTx.RPC.Wallets.GetNewAddress do
 
   ## Types & Schema
 
-  @typedoc "GetNewAddress request"
+  @typedoc "GetAddressesByLabel request"
   @type t() :: %__MODULE__{
           method: String.t(),
           wallet_name: String.t() | nil,
-          label: String.t() | nil,
-          address_type: String.t() | nil
+          label: String.t() | nil
         }
 
   @primary_key false
   embedded_schema do
     # Predefined fields
-    field :method, :string, default: "getnewaddress"
+    field :method, :string, default: "getaddressesbylabel"
 
     # For optional path parameter `/wallet/<wallet_name>`
     field :wallet_name, :string
 
     # Method fields
-    field :label, :string, default: ""
-    field :address_type, :string
+    field :label, :string
   end
 
-  @optional_fields ~w(label address_type wallet_name)a
-
-  # Valid address types in Bitcoin Core
-  @valid_address_types ~w(legacy p2sh-segwit bech32 bech32m)
+  @required_fields ~w(label)a
+  @optional_fields ~w(wallet_name)a
 
   ## Encodable protocol
 
@@ -63,7 +53,6 @@ defmodule BTx.RPC.Wallets.GetNewAddress do
     def encode(%{
           method: method,
           label: label,
-          address_type: address_type,
           wallet_name: wallet_name
         }) do
       path = if wallet_name, do: "/wallet/#{wallet_name}", else: "/"
@@ -71,7 +60,7 @@ defmodule BTx.RPC.Wallets.GetNewAddress do
       Request.new(
         method: method,
         path: path,
-        params: [label, address_type]
+        params: [label]
       )
     end
   end
@@ -79,34 +68,43 @@ defmodule BTx.RPC.Wallets.GetNewAddress do
   ## API
 
   @doc """
-  Creates a new `GetNewAddress` request.
+  Creates a new `GetAddressesByLabel` request.
   """
   @spec new(keyword() | map()) :: {:ok, t()} | {:error, Ecto.Changeset.t()}
-  def new(attrs \\ %{}) do
+  def new(attrs) do
     %__MODULE__{}
     |> changeset(Enum.into(attrs, %{}))
-    |> apply_action(:getnewaddress)
+    |> apply_action(:getaddressesbylabel)
   end
 
   @doc """
-  Creates a new `GetNewAddress` request.
+  Creates a new `GetAddressesByLabel` request.
   """
   @spec new!(keyword() | map()) :: t()
-  def new!(attrs \\ %{}) do
+  def new!(attrs) do
     %__MODULE__{}
     |> changeset(Enum.into(attrs, %{}))
-    |> apply_action!(:getnewaddress)
+    |> apply_action!(:getaddressesbylabel)
   end
 
   @doc """
-  Creates a changeset for the `GetNewAddress` request.
+  Creates a changeset for the `GetAddressesByLabel` request.
   """
   @spec changeset(t(), map()) :: Ecto.Changeset.t()
   def changeset(t, attrs) do
     t
-    |> cast(attrs, @optional_fields)
-    |> validate_length(:label, max: 255, empty_values: [])
-    |> validate_inclusion(:address_type, @valid_address_types)
+    |> cast(attrs, @required_fields ++ @optional_fields, empty_values: [])
+    |> validate_required_label()
+    |> validate_length(:label, max: 64)
     |> validate_wallet_name()
+  end
+
+  ## Private functions
+
+  defp validate_required_label(changeset) do
+    case fetch_change(changeset, :label) do
+      {:ok, _label} -> changeset
+      :error -> add_error(changeset, :label, "can't be blank", validation: :required)
+    end
   end
 end

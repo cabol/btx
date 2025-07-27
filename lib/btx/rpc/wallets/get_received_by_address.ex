@@ -104,6 +104,6 @@ defmodule BTx.RPC.Wallets.GetReceivedByAddress do
     |> validate_required(@required_fields)
     |> valid_address_format(:address)
     |> validate_number(:minconf, greater_than_or_equal_to: 0)
-    |> validate_length(:wallet_name, min: 1, max: 64)
+    |> validate_wallet_name()
   end
 end

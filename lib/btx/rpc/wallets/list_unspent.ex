@@ -142,7 +142,7 @@ defmodule BTx.RPC.Wallets.ListUnspent do
     |> validate_number(:minconf, greater_than_or_equal_to: 0)
     |> validate_number(:maxconf, greater_than_or_equal_to: 0)
     |> validate_addresses_format()
-    |> validate_length(:wallet_name, min: 1, max: 64)
+    |> validate_wallet_name()
   end
 
   ## Private functions

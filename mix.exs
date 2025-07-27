@@ -139,6 +139,7 @@ defmodule BTx.MixProject do
         "Wallet RPCs": [
           BTx.RPC.Wallets.CreateWallet,
           BTx.RPC.Wallets.CreateWalletResult,
+          BTx.RPC.Wallets.GetAddressesByLabel,
           BTx.RPC.Wallets.GetAddressInfo,
           BTx.RPC.Wallets.GetAddressInfoResult,
           BTx.RPC.Wallets.GetBalance,

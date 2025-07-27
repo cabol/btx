@@ -35,6 +35,7 @@ defmodule BTx.RPC.Wallets.GetBalance do
 
   use Ecto.Schema
 
+  import BTx.Ecto.ChangesetUtils
   import Ecto.Changeset
 
   alias BTx.RPC.Request
@@ -120,6 +121,6 @@ defmodule BTx.RPC.Wallets.GetBalance do
     |> cast(attrs, @optional_fields)
     |> validate_inclusion(:dummy, ["*"])
     |> validate_number(:minconf, greater_than_or_equal_to: 0)
-    |> validate_length(:wallet_name, min: 1, max: 64)
+    |> validate_wallet_name()
   end
 end

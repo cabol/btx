@@ -17,6 +17,7 @@ defmodule BTx.RPC.Wallets do
   - `BTx.RPC.Wallets.GetBalance`
   - `BTx.RPC.Wallets.GetNewAddress`
   - `BTx.RPC.Wallets.GetAddressInfo`
+  - `BTx.RPC.Wallets.GetAddressesByLabel`
   - `BTx.RPC.Wallets.GetReceivedByAddress`
   - `BTx.RPC.Wallets.SendToAddress`
   - `BTx.RPC.Wallets.GetTransaction`
@@ -44,6 +45,7 @@ defmodule BTx.RPC.Wallets do
   alias BTx.RPC.Wallets.{
     CreateWallet,
     CreateWalletResult,
+    GetAddressesByLabel,
     GetAddressInfo,
     GetAddressInfoResult,
     GetBalance,
@@ -681,6 +683,75 @@ defmodule BTx.RPC.Wallets do
     |> RPC.call!(GetAddressInfo.new!(params), opts)
     |> Map.fetch!(:result)
     |> GetAddressInfoResult.new!()
+  end
+
+  @doc """
+  Returns the list of addresses assigned the specified label.
+
+  ## Arguments
+
+  - `client` - Same as `BTx.RPC.call/3`.
+  - `params` - A keyword list or map of parameters for the request.
+    See `BTx.RPC.Wallets.GetAddressesByLabel` for more information about the
+    available parameters.
+  - `opts` - Same as `BTx.RPC.call/3`.
+
+  ## Options
+
+  See `BTx.RPC.call/3`.
+
+  ## Result
+
+  Returns a map where each key is a Bitcoin address (string) and each value
+  is a map containing the address purpose information:
+
+  ```elixir
+  %{
+    "bc1qxyz8a7zv50vvv4cnz0g44ux6a6q7gfqq0w0uhx" => %{"purpose" => "receive"},
+    "bc1qkl4c9j8f8vy4h9kk9pr5n7frwx30r9kvppnnxz" => %{"purpose" => "receive"}
+  }
+  ```
+
+  ## Examples
+
+      # Get addresses for a specific label
+      iex> BTx.RPC.Wallets.get_addresses_by_label(client, label: "tabby")
+      {:ok, %{
+        "bc1qxyz8a7zv50vvv4cnz0g44ux6a6q7gfqq0w0uhx" => %{"purpose" => "receive"},
+        "bc1qkl4c9j8f8vy4h9kk9pr5n7frwx30r9kvppnnxz" => %{"purpose" => "receive"}
+      }}
+
+      # Get addresses from specific wallet
+      iex> BTx.RPC.Wallets.get_addresses_by_label(client,
+      ...>   label: "savings",
+      ...>   wallet_name: "my_wallet"
+      ...> )
+      {:ok, %{
+        "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2" => %{"purpose" => "send"},
+        "bc1q09vm5lfy0j5reeulh4x5752q25uqqvz34hufdl" => %{"purpose" => "receive"}
+      }}
+
+      # Label with no addresses returns empty map
+      iex> BTx.RPC.Wallets.get_addresses_by_label(client, label: "nonexistent")
+      {:ok, %{}}
+
+  """
+  @spec get_addresses_by_label(RPC.client(), params(), keyword()) :: response(map())
+  def get_addresses_by_label(client, params, opts \\ []) do
+    with {:ok, request} <- GetAddressesByLabel.new(params),
+         {:ok, %Response{result: result}} <- RPC.call(client, request, opts) do
+      {:ok, result}
+    end
+  end
+
+  @doc """
+  Same as `get_addresses_by_label/3` but raises on error.
+  """
+  @spec get_addresses_by_label!(RPC.client(), params(), keyword()) :: map()
+  def get_addresses_by_label!(client, params, opts \\ []) do
+    client
+    |> RPC.call!(GetAddressesByLabel.new!(params), opts)
+    |> Map.fetch!(:result)
   end
 
   ## Sending & Receiving Funds

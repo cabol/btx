@@ -628,4 +628,82 @@ defmodule BTx.WalletsFixtures do
       "label" => "unsafe_tx"
     }
   end
+
+  ## GetAddressesByLabel fixtures
+
+  @doc """
+  Returns a fixture for getaddressesbylabel RPC result.
+
+  Returns a map where keys are Bitcoin addresses and values are maps with purpose info.
+
+  ## Options
+
+  You can override the default addresses by passing a map with custom addresses:
+
+  ## Examples
+
+      # Default addresses for a label
+      get_addresses_by_label_result_fixture()
+
+      # Custom addresses
+      get_addresses_by_label_result_fixture(%{
+        "1MyCustomAddress123" => %{"purpose" => "send"},
+        "bc1qcustomaddress456" => %{"purpose" => "receive"}
+      })
+
+      # Empty result (no addresses for label)
+      get_addresses_by_label_result_fixture(%{})
+
+  """
+  @spec get_addresses_by_label_result_fixture(map() | nil) :: map()
+  def get_addresses_by_label_result_fixture(overrides \\ nil) do
+    overrides || default_addresses_by_label_fixture()
+  end
+
+  @doc """
+  Returns preset fixtures for common address label scenarios.
+
+  ## Examples
+
+      get_addresses_by_label_preset(:mixed_purposes)
+      get_addresses_by_label_preset(:receive_only)
+      get_addresses_by_label_preset(:send_only)
+      get_addresses_by_label_preset(:empty)
+
+  """
+  @spec get_addresses_by_label_preset(atom()) :: map()
+  def get_addresses_by_label_preset(type) do
+    case type do
+      :mixed_purposes -> get_addresses_by_label_result_fixture()
+      :receive_only -> get_addresses_by_label_result_fixture(receive_only_addresses())
+      :send_only -> get_addresses_by_label_result_fixture(send_only_addresses())
+      :empty -> get_addresses_by_label_result_fixture(%{})
+    end
+  end
+
+  ## Private functions for GetAddressesByLabel
+
+  defp default_addresses_by_label_fixture do
+    %{
+      "bc1qxyz8a7zv50vvv4cnz0g44ux6a6q7gfqq0w0uhx" => %{"purpose" => "receive"},
+      "bc1qkl4c9j8f8vy4h9kk9pr5n7frwx30r9kvppnnxz" => %{"purpose" => "receive"},
+      "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2" => %{"purpose" => "send"},
+      "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy" => %{"purpose" => "send"}
+    }
+  end
+
+  defp receive_only_addresses do
+    %{
+      "bc1q09vm5lfy0j5reeulh4x5752q25uqqvz34hufdl" => %{"purpose" => "receive"},
+      "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4" => %{"purpose" => "receive"},
+      "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq" => %{"purpose" => "receive"}
+    }
+  end
+
+  defp send_only_addresses do
+    %{
+      "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa" => %{"purpose" => "send"},
+      "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2" => %{"purpose" => "send"}
+    }
+  end
 end

@@ -30,6 +30,7 @@ defmodule BTx.RPC.Wallets.ListTransactions do
 
   use Ecto.Schema
 
+  import BTx.Ecto.ChangesetUtils
   import Ecto.Changeset
 
   alias BTx.RPC.Request
@@ -116,6 +117,6 @@ defmodule BTx.RPC.Wallets.ListTransactions do
     |> validate_number(:count, greater_than: 0)
     |> validate_number(:skip, greater_than_or_equal_to: 0)
     |> validate_length(:label, max: 255)
-    |> validate_length(:wallet_name, min: 1, max: 64)
+    |> validate_wallet_name()
   end
 end

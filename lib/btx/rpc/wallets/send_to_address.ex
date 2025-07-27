@@ -181,7 +181,7 @@ defmodule BTx.RPC.Wallets.SendToAddress do
     |> validate_number(:conf_target, greater_than: 0)
     |> validate_number(:fee_rate, greater_than: 0)
     |> validate_inclusion(:estimate_mode, @valid_estimate_modes)
-    |> validate_length(:wallet_name, min: 1, max: 64)
+    |> validate_wallet_name()
     |> validate_length(:comment, max: 1024)
     |> validate_length(:comment_to, max: 1024)
   end
