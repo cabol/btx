@@ -160,6 +160,7 @@ defmodule BTx.MixProject do
           BTx.RPC.Wallets.SendToAddressResult,
           BTx.RPC.Wallets.UnloadWallet,
           BTx.RPC.Wallets.UnloadWalletResult,
+          BTx.RPC.Wallets.WalletLock,
           BTx.RPC.Wallets.WalletPassphrase
         ],
         Exceptions: [

@@ -23,6 +23,7 @@ defmodule BTx.RPC.Wallets do
   - `BTx.RPC.Wallets.GetTransaction`
   - `BTx.RPC.Wallets.ListTransactions`
   - `BTx.RPC.Wallets.WalletPassphrase`
+  - `BTx.RPC.Wallets.WalletLock`
   - `BTx.RPC.Wallets.ListUnspent`
   - **More coming soon**
 
@@ -66,6 +67,7 @@ defmodule BTx.RPC.Wallets do
     SendToAddressResult,
     UnloadWallet,
     UnloadWalletResult,
+    WalletLock,
     WalletPassphrase
   }
 
@@ -547,6 +549,69 @@ defmodule BTx.RPC.Wallets do
   def wallet_passphrase!(client, params, opts \\ []) do
     client
     |> RPC.call!(WalletPassphrase.new!(params), opts)
+    |> Map.fetch!(:result)
+  end
+
+  @doc """
+  Removes the wallet encryption key from memory, locking the wallet.
+
+  After calling this method, you will need to call walletpassphrase again
+  before being able to call any methods which require the wallet to be unlocked.
+
+  ## Arguments
+
+  - `client` - Same as `BTx.RPC.call/3`.
+  - `params` - A keyword list or map of parameters for the request.
+    See `BTx.RPC.Wallets.WalletLock` for more information about the
+    available parameters.
+  - `opts` - Same as `BTx.RPC.call/3`.
+
+  ## Options
+
+  See `BTx.RPC.call/3`.
+
+  ## Examples
+
+      # Lock the default wallet
+      iex> BTx.RPC.Wallets.wallet_lock(client)
+      {:ok, nil}
+
+      # Lock a specific wallet
+      iex> BTx.RPC.Wallets.wallet_lock(client, wallet_name: "my_wallet")
+      {:ok, nil}
+
+      # Lock after performing transactions
+      iex> BTx.RPC.Wallets.wallet_passphrase(client,
+      ...>   passphrase: "my_secure_passphrase",
+      ...>   timeout: 120
+      ...> )
+      {:ok, nil}
+
+      iex> # ... perform transactions that require unlocked wallet ...
+
+      iex> BTx.RPC.Wallets.wallet_lock(client)
+      {:ok, nil}
+
+  ## Notes
+
+  This method is only applicable to encrypted wallets. If the wallet is not
+  encrypted, this method will return an error.
+  """
+  @spec wallet_lock(RPC.client(), params(), keyword()) :: response(nil)
+  def wallet_lock(client, params \\ [], opts \\ []) do
+    with {:ok, request} <- WalletLock.new(params),
+         {:ok, %Response{result: result}} <- RPC.call(client, request, opts) do
+      {:ok, result}
+    end
+  end
+
+  @doc """
+  Same as `wallet_lock/3` but raises on error.
+  """
+  @spec wallet_lock!(RPC.client(), params(), keyword()) :: nil
+  def wallet_lock!(client, params \\ [], opts \\ []) do
+    client
+    |> RPC.call!(WalletLock.new!(params), opts)
     |> Map.fetch!(:result)
   end
 
