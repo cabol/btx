@@ -13,6 +13,7 @@ defmodule BTx.RPC.Blockchain do
   alias BTx.RPC.Blockchain.{
     GetBlockchainInfo,
     GetBlockchainInfoResult,
+    GetBlockCount,
     GetMempoolEntry,
     GetMempoolEntryResult
   }
@@ -157,5 +158,52 @@ defmodule BTx.RPC.Blockchain do
     |> RPC.call!(GetBlockchainInfo.new!(), opts)
     |> Map.fetch!(:result)
     |> GetBlockchainInfoResult.new!()
+  end
+
+  @doc """
+  Returns the height of the most-work fully-validated chain.
+
+  The genesis block has height 0.
+
+  ## Arguments
+
+  - `client` - Same as `BTx.RPC.call/3`.
+  - `opts` - Same as `BTx.RPC.call/3`.
+
+  ## Options
+
+  See `BTx.RPC.call/3`.
+
+  ## Examples
+
+      # Get current block count
+      iex> BTx.RPC.Blockchain.get_block_count(client)
+      {:ok, 750000}
+
+      # For regtest (typically lower block count)
+      iex> BTx.RPC.Blockchain.get_block_count(client)
+      {:ok, 150}
+
+      # Genesis block has height 0, so first block after genesis is 1
+      iex> BTx.RPC.Blockchain.get_block_count(client)
+      {:ok, 1}
+
+  """
+  @spec get_block_count(RPC.client(), keyword()) :: response(non_neg_integer())
+  def get_block_count(client, opts \\ []) do
+    with {:ok, request} <- GetBlockCount.new(),
+         {:ok, %Response{result: result}} <- RPC.call(client, request, opts) do
+      {:ok, result}
+    end
+  end
+
+  @doc """
+  Same as `get_block_count/2` but raises on error.
+  """
+  @spec get_block_count!(RPC.client(), keyword()) :: non_neg_integer()
+  def get_block_count!(client, opts \\ []) do
+    client
+    |> RPC.call!(GetBlockCount.new!(), opts)
+    |> Map.fetch!(:result)
   end
 end

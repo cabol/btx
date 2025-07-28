@@ -129,6 +129,12 @@ defmodule BTx.MixProject do
           BTx.RPC.Wallets
         ],
         "Blockchain RPCs": [
+          BTx.RPC.Blockchain.GetBlockchainInfo,
+          BTx.RPC.Blockchain.GetBlockchainInfo.Softfork,
+          BTx.RPC.Blockchain.GetBlockchainInfo.Softfork.Bip9,
+          BTx.RPC.Blockchain.GetBlockchainInfo.Softfork.Bip9.Statistics,
+          BTx.RPC.Blockchain.GetBlockchainInfoResult,
+          BTx.RPC.Blockchain.GetBlockCount,
           BTx.RPC.Blockchain.GetMempoolEntry,
           BTx.RPC.Blockchain.GetMempoolEntryFees,
           BTx.RPC.Blockchain.GetMempoolEntryResult
