@@ -7,6 +7,7 @@ defmodule BTx.Ecto.ChangesetUtils do
   @bitcoin_address_regex ~r/^[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]+$/
   @bech32_address_regex ~r/^[a-z0-9]+$/
   @wallet_name_regex ~r/^(?![-])(?!(\.{1,2})$)(?!.*[-.]$)[a-zA-Z0-9._-]{1,64}$/
+  @hex_64_regex ~r/^[a-fA-F0-9]{64}$/
 
   ## API
 
@@ -40,6 +41,26 @@ defmodule BTx.Ecto.ChangesetUtils do
   end
 
   @doc """
+  Validates the format of a transaction id.
+  """
+  @spec validate_txid(Ecto.Changeset.t(), atom()) :: Ecto.Changeset.t()
+  def validate_txid(changeset, field \\ :txid) do
+    changeset
+    |> validate_length(field, is: 64)
+    |> validate_format(field, @hex_64_regex)
+  end
+
+  @doc """
+  Validates the format of a 64 character hex string.
+  """
+  @spec validate_hex64(Ecto.Changeset.t(), atom()) :: Ecto.Changeset.t()
+  def validate_hex64(changeset, field) do
+    changeset
+    |> validate_length(field, is: 64)
+    |> validate_format(field, @hex_64_regex)
+  end
+
+  @doc """
   Validates if a given address is a valid Bitcoin address.
 
   ## Examples
@@ -60,6 +81,42 @@ defmodule BTx.Ecto.ChangesetUtils do
 
   @doc """
   Normalizes the attributes of a schema.
+
+  ## Examples
+
+      iex> BTx.Ecto.ChangesetUtils.normalize_attrs(%{"bip125-replaceable" => true})
+      %{"bip125_replaceable" => true}
+
+      iex> BTx.Ecto.ChangesetUtils.normalize_attrs(%{"fee reason" => "test"})
+      %{"fee_reason" => "test"}
+
+      iex> BTx.Ecto.ChangesetUtils.normalize_attrs(%{"scriptPubKey" => %{"asm" => "test"}})
+      %{"script_pub_key" => %{"asm" => "test"}}
+
+      iex> BTx.Ecto.ChangesetUtils.normalize_attrs(%{"scriptSig" => %{"asm" => "test"}})
+      %{"script_sig" => %{"asm" => "test"}}
+
+      iex> BTx.Ecto.ChangesetUtils.normalize_attrs(%{"reqSigs" => 1})
+      %{"req_sigs" => 1}
+
+      iex> BTx.Ecto.ChangesetUtils.normalize_attrs(%{"minimumAmount" => 1})
+      %{"minimum_amount" => 1}
+
+      iex> BTx.Ecto.ChangesetUtils.normalize_attrs(%{"maximumAmount" => 1})
+      %{"maximum_amount" => 1}
+
+      iex> BTx.Ecto.ChangesetUtils.normalize_attrs(%{"maximumCount" => 1})
+      %{"maximum_count" => 1}
+
+      iex> BTx.Ecto.ChangesetUtils.normalize_attrs(%{"minimumSumAmount" => 1})
+      %{"minimum_sum_amount" => 1}
+
+      iex> BTx.Ecto.ChangesetUtils.normalize_attrs(%{"redeemScript" => "test"})
+      %{"redeem_script" => "test"}
+
+      iex> BTx.Ecto.ChangesetUtils.normalize_attrs(%{"witnessScript" => "test"})
+      %{"witness_script" => "test"}
+
   """
   @spec normalize_attrs(map()) :: map()
   def normalize_attrs(attrs) when is_map(attrs) do
@@ -73,6 +130,8 @@ defmodule BTx.Ecto.ChangesetUtils do
   defp normalize_field({"fee reason", value}), do: {"fee_reason", value}
   defp normalize_field({"involvesWatchonly", value}), do: {"involves_watchonly", value}
   defp normalize_field({"scriptPubKey", value}), do: {"script_pub_key", value}
+  defp normalize_field({"scriptSig", value}), do: {"script_sig", value}
+  defp normalize_field({"reqSigs", value}), do: {"req_sigs", value}
   defp normalize_field({"minimumAmount", value}), do: {"minimum_amount", value}
   defp normalize_field({"maximumAmount", value}), do: {"maximum_amount", value}
   defp normalize_field({"maximumCount", value}), do: {"maximum_count", value}

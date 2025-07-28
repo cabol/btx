@@ -142,6 +142,13 @@ defmodule BTx.MixProject do
         "Mining RPCs": [
           BTx.RPC.Mining.GenerateToAddress
         ],
+        "Raw Transactions RPCs": [
+          BTx.RPC.RawTransactions.GetRawTransaction,
+          BTx.RPC.RawTransactions.GetRawTransactionResult,
+          BTx.RPC.RawTransactions.GetRawTransactionResult.Vin,
+          BTx.RPC.RawTransactions.GetRawTransactionResult.Vout,
+          BTx.RPC.RawTransactions.GetRawTransactionResult.Vout.ScriptPubKey
+        ],
         "Wallet RPCs": [
           BTx.RPC.Wallets.CreateWallet,
           BTx.RPC.Wallets.CreateWalletResult,

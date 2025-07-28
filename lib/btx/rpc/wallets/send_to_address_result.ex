@@ -80,7 +80,6 @@ defmodule BTx.RPC.Wallets.SendToAddressResult do
     t
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
-    |> validate_length(:txid, is: 64)
-    |> validate_format(:txid, ~r/^[a-fA-F0-9]{64}$/)
+    |> validate_txid()
   end
 end

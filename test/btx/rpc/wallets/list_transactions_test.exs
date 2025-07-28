@@ -223,7 +223,8 @@ defmodule BTx.RPC.Wallets.ListTransactionsTest do
       }
 
       assert {:error, %Changeset{} = changeset} = ListTransactionsItem.new(attrs)
-      assert "must be a 64-character hexadecimal string" in errors_on(changeset).blockhash
+      assert "has invalid format" in errors_on(changeset).blockhash
+      assert "should be 64 character(s)" in errors_on(changeset).blockhash
     end
 
     test "validates empty blockhash" do

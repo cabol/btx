@@ -109,7 +109,7 @@ defmodule BTx.RPC.Wallets.GetTransaction do
     t
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
-    |> validate_length(:txid, is: 64)
+    |> validate_txid()
     |> validate_wallet_name()
   end
 end

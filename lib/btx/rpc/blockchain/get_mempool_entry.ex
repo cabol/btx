@@ -12,6 +12,7 @@ defmodule BTx.RPC.Blockchain.GetMempoolEntry do
 
   use Ecto.Schema
 
+  import BTx.Ecto.ChangesetUtils
   import Ecto.Changeset
 
   alias BTx.RPC.Request
@@ -79,7 +80,6 @@ defmodule BTx.RPC.Blockchain.GetMempoolEntry do
     entry
     |> cast(attrs, @required_fields)
     |> validate_required(@required_fields)
-    |> validate_length(:txid, is: 64)
-    |> validate_format(:txid, ~r/^[a-fA-F0-9]{64}$/)
+    |> validate_txid()
   end
 end

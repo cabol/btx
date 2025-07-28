@@ -103,8 +103,7 @@ defmodule BTx.RPC.Wallets.ListTransactionsItem do
     t
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
-    |> validate_length(:txid, is: 64)
-    |> validate_format(:txid, ~r/^[a-fA-F0-9]{64}$/)
+    |> validate_txid()
     |> validate_inclusion(:category, ["send", "receive", "generate", "immature", "orphan"])
     |> validate_number(:vout, greater_than_or_equal_to: 0)
     |> validate_number(:blockheight, greater_than_or_equal_to: 0)
@@ -113,19 +112,6 @@ defmodule BTx.RPC.Wallets.ListTransactionsItem do
     |> validate_number(:time, greater_than_or_equal_to: 0)
     |> validate_number(:timereceived, greater_than_or_equal_to: 0)
     |> validate_inclusion(:bip125_replaceable, ["yes", "no", "unknown"])
-    |> validate_blockhash_format()
-  end
-
-  ## Private functions
-
-  # Custom validation for blockhash format (64 character hex string)
-  defp validate_blockhash_format(changeset) do
-    validate_change(changeset, :blockhash, fn :blockhash, blockhash when is_binary(blockhash) ->
-      if String.length(blockhash) == 64 and String.match?(blockhash, ~r/^[a-fA-F0-9]{64}$/) do
-        []
-      else
-        [blockhash: "must be a 64-character hexadecimal string"]
-      end
-    end)
+    |> validate_hex64(:blockhash)
   end
 end
