@@ -11,6 +11,8 @@ defmodule BTx.RPC.Blockchain do
   alias BTx.RPC.Response
 
   alias BTx.RPC.Blockchain.{
+    GetBlockchainInfo,
+    GetBlockchainInfoResult,
     GetMempoolEntry,
     GetMempoolEntryResult
   }
@@ -92,5 +94,68 @@ defmodule BTx.RPC.Blockchain do
     |> RPC.call!(GetMempoolEntry.new!(params), opts)
     |> Map.fetch!(:result)
     |> GetMempoolEntryResult.new!()
+  end
+
+  @doc """
+  Returns an object containing various state info regarding blockchain processing.
+
+  ## Arguments
+
+  - `client` - Same as `BTx.RPC.call/3`.
+  - `opts` - Same as `BTx.RPC.call/3`.
+
+  ## Options
+
+  See `BTx.RPC.call/3`.
+
+  ## Examples
+
+      # Get blockchain information
+      iex> BTx.RPC.Blockchain.get_blockchain_info(client)
+      {:ok, %BTx.RPC.Blockchain.GetBlockchainInfoResult{
+        chain: "regtest",
+        blocks: 150,
+        headers: 150,
+        bestblockhash: "0000000000000a...",
+        difficulty: 4.656542373906925e-10,
+        mediantime: 1640995200,
+        verificationprogress: 1.0,
+        initialblockdownload: false,
+        chainwork: "0000000000000000000000000000000000000000000000000000012e012e012e",
+        size_on_disk: 45123,
+        pruned: false,
+        softforks: %{
+          "csv" => %BTx.RPC.Blockchain.Commons.Softfork{
+            type: "buried",
+            active: true,
+            height: 0
+          },
+          "segwit" => %BTx.RPC.Blockchain.Commons.Softfork{
+            type: "buried",
+            active: true,
+            height: 0
+          }
+        },
+        warnings: ""
+      }}
+
+  """
+  @spec get_blockchain_info(RPC.client(), keyword()) :: response(GetBlockchainInfoResult.t())
+  def get_blockchain_info(client, opts \\ []) do
+    with {:ok, request} <- GetBlockchainInfo.new(),
+         {:ok, %Response{result: result}} <- RPC.call(client, request, opts) do
+      GetBlockchainInfoResult.new(result)
+    end
+  end
+
+  @doc """
+  Same as `get_blockchain_info/2` but raises on error.
+  """
+  @spec get_blockchain_info!(RPC.client(), keyword()) :: GetBlockchainInfoResult.t()
+  def get_blockchain_info!(client, opts \\ []) do
+    client
+    |> RPC.call!(GetBlockchainInfo.new!(), opts)
+    |> Map.fetch!(:result)
+    |> GetBlockchainInfoResult.new!()
   end
 end
