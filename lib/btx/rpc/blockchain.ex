@@ -11,9 +11,12 @@ defmodule BTx.RPC.Blockchain do
   alias BTx.RPC.Response
 
   alias BTx.RPC.Blockchain.{
+    GetBlock,
     GetBlockchainInfo,
     GetBlockchainInfoResult,
     GetBlockCount,
+    GetBlockResultV1,
+    GetBlockResultV2,
     GetMempoolEntry,
     GetMempoolEntryResult
   }
@@ -206,4 +209,99 @@ defmodule BTx.RPC.Blockchain do
     |> RPC.call!(GetBlockCount.new!(), opts)
     |> Map.fetch!(:result)
   end
+
+  @doc """
+  Returns block data by block hash.
+
+  If verbosity is 0, returns a hex-encoded string.
+  If verbosity is 1, returns a structured object with transaction IDs as strings.
+  If verbosity is 2, returns a structured object with full transaction details.
+
+  ## Arguments
+
+  - `client` - Same as `BTx.RPC.call/3`.
+  - `params` - A keyword list or map of parameters for the request.
+    See `BTx.RPC.Blockchain.GetBlock` for more information about the
+    available parameters.
+  - `opts` - Same as `BTx.RPC.call/3`.
+
+  ## Options
+
+  See `BTx.RPC.call/3`.
+
+  ## Examples
+
+      # Get block as hex string (verbosity=0)
+      iex> BTx.RPC.Blockchain.get_block(client,
+      ...>   blockhash: "0000000000000a1b2c3d4e5f6789abcdef0123456789abcdef0123456789abcdef",
+      ...>   verbosity: 0
+      ...> )
+      {:ok, "0100000000000000000000..."}
+
+      # Get block with transaction IDs (verbosity=1, default)
+      iex> BTx.RPC.Blockchain.get_block(client,
+      ...>   blockhash: "0000000000000a1b2c3d4e5f6789abcdef0123456789abcdef0123456789abcdef"
+      ...> )
+      {:ok, %BTx.RPC.Blockchain.GetBlockResultV1{
+        hash: "0000000000000a1b2c3d4e5f6789abcdef0123456789abcdef0123456789abcdef",
+        confirmations: 100,
+        size: 1024,
+        height: 750123,
+        tx: ["abc123...", "def456..."],
+        time: 1640995200,
+        ...
+      }}
+
+      # Get block with full transaction details (verbosity=2)
+      iex> BTx.RPC.Blockchain.get_block(client,
+      ...>   blockhash: "0000000000000a1b2c3d4e5f6789abcdef0123456789abcdef0123456789abcdef",
+      ...>   verbosity: 2
+      ...> )
+      {:ok, %BTx.RPC.Blockchain.GetBlockResultV2{
+        hash: "0000000000000a1b2c3d4e5f6789abcdef0123456789abcdef0123456789abcdef",
+        confirmations: 100,
+        tx: [
+          %BTx.RPC.RawTransactions.GetRawTransactionResult{...},
+          %BTx.RPC.RawTransactions.GetRawTransactionResult{...}
+        ],
+        ...
+      }}
+
+      # Handle block not found
+      iex> BTx.RPC.Blockchain.get_block(client,
+      ...>   blockhash: "nonexistent0000000000000a1b2c3d4e5f6789abcdef0123456789abcdef012345"
+      ...> )
+      {:error, %BTx.RPC.MethodError{
+        code: -5,
+        message: "Block not found"
+      }}
+
+  """
+  @spec get_block(RPC.client(), params(), keyword()) ::
+          response(String.t()) | response(GetBlockResultV1.t()) | response(GetBlockResultV2.t())
+  def get_block(client, params, opts \\ []) do
+    with {:ok, request} <- GetBlock.new(params),
+         {:ok, %Response{result: result}} <- RPC.call(client, request, opts) do
+      {:ok, get_block_result(result, request.verbosity)}
+    end
+  end
+
+  @doc """
+  Same as `get_block/3` but raises on error.
+  """
+  @spec get_block!(RPC.client(), params(), keyword()) ::
+          String.t() | GetBlockResultV1.t() | GetBlockResultV2.t()
+  def get_block!(client, params, opts \\ []) do
+    request = GetBlock.new!(params)
+
+    client
+    |> RPC.call!(GetBlock.new!(params), opts)
+    |> Map.fetch!(:result)
+    |> get_block_result(request.verbosity)
+  end
+
+  # Return based on verbosity parameter
+  defp get_block_result(result, 0), do: result
+  defp get_block_result(result, 1), do: GetBlockResultV1.new!(result)
+  defp get_block_result(result, 2), do: GetBlockResultV2.new!(result)
 end

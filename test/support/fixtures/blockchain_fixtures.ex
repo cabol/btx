@@ -3,6 +3,7 @@ defmodule BTx.BlockchainFixtures do
   Test fixtures for Bitcoin Blockchain RPC responses and test data.
   """
 
+  import BTx.RawTransactionsFixtures
   import BTx.TestUtils
 
   ## GetMempoolEntry result
@@ -386,6 +387,214 @@ defmodule BTx.BlockchainFixtures do
       "initialblockdownload" => true,
       "warnings" =>
         "Warning: We do not appear to fully agree with our peers! You may need to upgrade, or other nodes may need to upgrade."
+    }
+  end
+
+  ## GetBlock result fixtures
+
+  @doc """
+  Returns a fixture for getblock RPC result (verbosity=0).
+
+  ## Examples
+
+      # Default hex string result
+      get_block_hex_fixture()
+
+      # Custom hex string
+      get_block_hex_fixture("0100000001...")
+
+  """
+  @spec get_block_hex_fixture(String.t() | nil) :: String.t()
+  def get_block_hex_fixture(hex \\ nil) do
+    hex ||
+      "010000000000000000000000000000000000000000000000000000000000000000000000 " <>
+        "3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a29ab5f49ffff001d1dac2b7c"
+  end
+
+  @doc """
+  Returns a fixture for getblock RPC result (verbosity=1).
+
+  ## Options
+
+  You can override any field by passing a map with the desired values:
+
+  ## Examples
+
+      # Default block result V1
+      get_block_result_v1_fixture()
+
+      # Override specific fields
+      get_block_result_v1_fixture(%{
+        "height" => 800000,
+        "confirmations" => 200
+      })
+
+      # Block with more transactions
+      get_block_result_v1_fixture(%{
+        "nTx" => 5,
+        "tx" => [
+          "3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a",
+          "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b",
+          "5b6f2f5cbbc9a4b43f6294ac8d67871839d2fd4f434c3b8ccfdf8bb25dcfef5c",
+          "6c7e3e6dccda57d54e8305bd9e78982a4fe3fe5e545d4c9eddfe9cc36ecfff6d",
+          "7d8f4f7eddeb68e65f9416ce0e89093b5ff4ff6f656e5daeeff0ade47fd0007e"
+        ]
+      })
+
+  """
+  @spec get_block_result_v1_fixture(map()) :: map()
+  def get_block_result_v1_fixture(overrides \\ %{}) do
+    default_block_result_v1_fixture()
+    |> deep_merge(overrides)
+  end
+
+  @doc """
+  Returns a fixture for getblock RPC result (verbosity=2).
+
+  ## Options
+
+  You can override any field by passing a map with the desired values:
+
+  ## Examples
+
+      # Default block result V2
+      get_block_result_v2_fixture()
+
+      # Override specific fields
+      get_block_result_v2_fixture(%{
+        "height" => 800000,
+        "confirmations" => 200
+      })
+
+      # Block with custom transaction data
+      get_block_result_v2_fixture(%{
+        "tx" => [
+          get_raw_transaction_result_fixture(%{"confirmations" => 100}),
+          get_raw_transaction_result_fixture(%{"confirmations" => 100})
+        ]
+      })
+
+  """
+  @spec get_block_result_v2_fixture(map()) :: map()
+  def get_block_result_v2_fixture(overrides \\ %{}) do
+    default_block_result_v2_fixture()
+    |> deep_merge(overrides)
+  end
+
+  @doc """
+  Returns preset fixtures for common block scenarios.
+
+  ## Examples
+
+      get_block_preset(:genesis)
+      get_block_preset(:recent)
+      get_block_preset(:with_many_transactions)
+      get_block_preset(:mainnet)
+
+  """
+  @spec get_block_preset(atom()) :: map()
+  def get_block_preset(type) do
+    case type do
+      :genesis -> get_block_result_v1_fixture(genesis_block_overrides())
+      :recent -> get_block_result_v1_fixture(recent_block_overrides())
+      :with_many_transactions -> get_block_result_v1_fixture(many_tx_overrides())
+      :mainnet -> get_block_result_v1_fixture(mainnet_block_overrides())
+    end
+  end
+
+  ## Private functions for GetBlock fixtures
+
+  defp default_block_result_v1_fixture do
+    %{
+      "hash" => "0000000000000a1b2c3d4e5f6789abcdef0123456789abcdef0123456789abcd",
+      "confirmations" => 100,
+      "size" => 285,
+      "strippedsize" => 249,
+      "weight" => 1140,
+      "height" => 750_123,
+      "version" => 1,
+      "versionHex" => "00000001",
+      "merkleroot" => "3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a",
+      "tx" => [
+        "3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a",
+        "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"
+      ],
+      "time" => 1_640_995_200,
+      "mediantime" => 1_640_995_000,
+      "nonce" => 486_604_799,
+      "bits" => "1d00ffff",
+      "difficulty" => 1.0,
+      "chainwork" => "0000000000000000000000000000000000000000000000000000000100010001",
+      "nTx" => 2,
+      "previousblockhash" => "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f",
+      "nextblockhash" => "00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048"
+    }
+  end
+
+  defp default_block_result_v2_fixture do
+    base_v1 = default_block_result_v1_fixture()
+
+    %{
+      base_v1
+      | "tx" => [
+          get_raw_transaction_result_fixture(%{
+            "txid" => "3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a",
+            "blockhash" => "0000000000000a1b2c3d4e5f6789abcdef0123456789abcdef0123456789abcd",
+            "confirmations" => 100
+          }),
+          get_raw_transaction_result_fixture(%{
+            "txid" => "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b",
+            "blockhash" => "0000000000000a1b2c3d4e5f6789abcdef0123456789abcdef0123456789abcd",
+            "confirmations" => 100
+          })
+        ]
+    }
+  end
+
+  defp genesis_block_overrides do
+    %{
+      "hash" => "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f",
+      "height" => 0,
+      "previousblockhash" => nil,
+      "confirmations" => 750_123,
+      "nTx" => 1,
+      "tx" => ["4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"]
+    }
+  end
+
+  defp recent_block_overrides do
+    %{
+      "height" => 800_000,
+      "confirmations" => 1,
+      # More recent timestamp
+      "time" => 1_672_531_200,
+      "mediantime" => 1_672_530_000
+    }
+  end
+
+  defp many_tx_overrides do
+    %{
+      "nTx" => 500,
+      "size" => 1_024_000,
+      "strippedsize" => 900_000,
+      "weight" => 4_000_000,
+      "tx" =>
+        Enum.map(1..500, fn i ->
+          # Generate realistic looking transaction IDs
+          i |> Integer.to_string() |> String.pad_leading(64, "0")
+        end)
+    }
+  end
+
+  defp mainnet_block_overrides do
+    %{
+      "hash" => "00000000000000000008a89e854d57e5667df88f1cdef6fde2fbca1de5b639ad",
+      "height" => 750_000,
+      "confirmations" => 5000,
+      "difficulty" => 30_283_852_313_128.25,
+      "chainwork" => "00000000000000000000000000000000000000001f057509fecbf3e4baffffff",
+      "version" => 4,
+      "versionHex" => "00000004"
     }
   end
 end

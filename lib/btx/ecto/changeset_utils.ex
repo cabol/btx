@@ -8,6 +8,7 @@ defmodule BTx.Ecto.ChangesetUtils do
   @bech32_address_regex ~r/^[a-z0-9]+$/
   @wallet_name_regex ~r/^(?![-])(?!(\.{1,2})$)(?!.*[-.]$)[a-zA-Z0-9._-]{1,64}$/
   @hex_64_regex ~r/^[a-fA-F0-9]{64}$/
+  @hex_8_regex ~r/^[a-fA-F0-9]{8}$/
 
   ## API
 
@@ -58,6 +59,16 @@ defmodule BTx.Ecto.ChangesetUtils do
     changeset
     |> validate_length(field, is: 64)
     |> validate_format(field, @hex_64_regex)
+  end
+
+  @doc """
+  Validates the format of a 8 character hex string.
+  """
+  @spec validate_hex8(Ecto.Changeset.t(), atom()) :: Ecto.Changeset.t()
+  def validate_hex8(changeset, field) do
+    changeset
+    |> validate_length(field, is: 8)
+    |> validate_format(field, @hex_8_regex)
   end
 
   @doc """
@@ -117,6 +128,12 @@ defmodule BTx.Ecto.ChangesetUtils do
       iex> BTx.Ecto.ChangesetUtils.normalize_attrs(%{"witnessScript" => "test"})
       %{"witness_script" => "test"}
 
+      iex> BTx.Ecto.ChangesetUtils.normalize_attrs(%{"versionHex" => "test"})
+      %{"version_hex" => "test"}
+
+      iex> BTx.Ecto.ChangesetUtils.normalize_attrs(%{"nTx" => 1})
+      %{"n_tx" => 1}
+
   """
   @spec normalize_attrs(map()) :: map()
   def normalize_attrs(attrs) when is_map(attrs) do
@@ -138,5 +155,7 @@ defmodule BTx.Ecto.ChangesetUtils do
   defp normalize_field({"minimumSumAmount", value}), do: {"minimum_sum_amount", value}
   defp normalize_field({"redeemScript", value}), do: {"redeem_script", value}
   defp normalize_field({"witnessScript", value}), do: {"witness_script", value}
+  defp normalize_field({"versionHex", value}), do: {"version_hex", value}
+  defp normalize_field({"nTx", value}), do: {"n_tx", value}
   defp normalize_field({key, value}), do: {key, value}
 end
