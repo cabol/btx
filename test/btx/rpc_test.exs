@@ -170,16 +170,16 @@ defmodule BTx.RPCTest do
       mock(fn
         %{method: :post, url: @url} ->
           %Tesla.Env{
-            status: 502,
-            body: "Bad Gateway"
+            status: 599,
+            body: "Unknown Error"
           }
       end)
 
       assert {:error, %BTx.RPC.Error{reason: {:rpc, :unknown_error}, metadata: metadata}} =
                RPC.call(client, method)
 
-      assert Keyword.get(metadata, :status) == 502
-      assert Keyword.get(metadata, :body) == "Bad Gateway"
+      assert Keyword.get(metadata, :status) == 599
+      assert Keyword.get(metadata, :body) == "Unknown Error"
     end
 
     test "Tesla adapter error returns error", %{client: client, method: method} do
@@ -201,6 +201,26 @@ defmodule BTx.RPCTest do
       end)
 
       assert {:error, %BTx.RPC.Error{reason: :econnrefused}} = RPC.call(client, method)
+    end
+
+    test "retryable error", %{client: client, method: method} do
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{status: 503, body: "Service Unavailable"}
+      end)
+
+      assert {:error, %BTx.RPC.Error{reason: {:rpc, :service_unavailable}}} =
+               RPC.call(client, method, retries: 2, retry_delay: 1)
+    end
+
+    test "retryable error with function retry delay", %{client: client, method: method} do
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{status: 503, body: "Service Unavailable"}
+      end)
+
+      assert {:error, %BTx.RPC.Error{reason: {:rpc, :service_unavailable}}} =
+               RPC.call(client, method, retries: 3, retry_delay: fn n -> n end)
     end
   end
 
@@ -279,10 +299,10 @@ defmodule BTx.RPCTest do
       # This should work if regtest is running
       # You can skip this test if regtest is not available
       assert %Response{id: ^wallet_name, result: %{"name" => ^wallet_name}} =
-               RPC.call!(client, method, id: wallet_name)
+               RPC.call!(client, method, id: wallet_name, retries: 10)
 
       assert_raise BTx.RPC.MethodError, ~r/already exists/, fn ->
-        RPC.call!(client, method, id: wallet_name)
+        RPC.call!(client, method, id: wallet_name, retries: 10)
       end
     end
   end

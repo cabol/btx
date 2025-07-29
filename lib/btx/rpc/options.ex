@@ -76,6 +76,32 @@ defmodule BTx.RPC.Options do
       > documentation to check if `:wallet_name` is supported before using this
       > option.
       """
+    ],
+    retries: [
+      type: :pos_integer,
+      required: false,
+      default: 1,
+      doc: """
+      The number of times to retry the request if it fails.
+
+      > #### Retryable errors {: .info}
+      >
+      > The following errors are retryable:
+      >
+      > - `:service_unavailable` (503)
+      > - `:bad_gateway` (502)
+      > - `:gateway_timeout` (504)
+      """
+    ],
+    retry_delay: [
+      type: {:or, [:pos_integer, {:fun, 1}]},
+      required: false,
+      default: :timer.seconds(1),
+      doc: """
+      The delay between retries in milliseconds. the value can be a positive
+      integer or a function that receives the number of retries and returns a
+      positive integer (the delay in milliseconds).
+      """
     ]
   ]
 

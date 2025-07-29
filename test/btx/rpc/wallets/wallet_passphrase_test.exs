@@ -637,24 +637,24 @@ defmodule BTx.RPC.Wallets.WalletPassphraseTest do
       %BTx.RPC.Wallets.CreateWalletResult{name: ^wallet_name} =
         Wallets.create_wallet!(
           real_client,
-          wallet_name: wallet_name,
-          passphrase: "test_passphrase_123"
+          [wallet_name: wallet_name, passphrase: "test_passphrase_123"],
+          retries: 10
         )
 
       # The wallet should now be encrypted and locked
       # Try to unlock it
-      assert Wallets.wallet_passphrase(real_client,
-               passphrase: "test_passphrase_123",
-               timeout: 60,
-               wallet_name: wallet_name
+      assert Wallets.wallet_passphrase(
+               real_client,
+               [passphrase: "test_passphrase_123", timeout: 60, wallet_name: wallet_name],
+               retries: 10
              ) == {:ok, nil}
 
       # Try with wrong passphrase (should fail)
       assert {:error, %BTx.RPC.MethodError{code: -14}} =
-               Wallets.wallet_passphrase(real_client,
-                 passphrase: "wrong_passphrase",
-                 timeout: 60,
-                 wallet_name: wallet_name
+               Wallets.wallet_passphrase(
+                 real_client,
+                 [passphrase: "wrong_passphrase", timeout: 60, wallet_name: wallet_name],
+                 retries: 10
                )
     end
   end

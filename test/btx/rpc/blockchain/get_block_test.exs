@@ -296,15 +296,16 @@ defmodule BTx.RPC.Blockchain.GetBlockTest do
       # This test requires a real Bitcoin regtest node
       real_client = new_client()
 
-      assert {:ok, blockchain_info} = Blockchain.get_blockchain_info(real_client)
-
+      # Get the best block hash first
+      assert {:ok, blockchain_info} = Blockchain.get_blockchain_info(real_client, retries: 10)
       blockhash = blockchain_info.bestblockhash
 
       # Test hex format (verbosity=0)
       assert {:ok, hex_string} =
-               Blockchain.get_block(real_client,
-                 blockhash: blockhash,
-                 verbosity: 0
+               Blockchain.get_block(
+                 real_client,
+                 [blockhash: blockhash, verbosity: 0],
+                 retries: 10
                )
 
       assert is_binary(hex_string)
@@ -312,9 +313,10 @@ defmodule BTx.RPC.Blockchain.GetBlockTest do
 
       # Test block with transaction IDs (verbosity=1)
       assert {:ok, %GetBlockResultV1{} = result_v1} =
-               Blockchain.get_block(real_client,
-                 blockhash: blockhash,
-                 verbosity: 1
+               Blockchain.get_block(
+                 real_client,
+                 [blockhash: blockhash, verbosity: 1],
+                 retries: 10
                )
 
       assert result_v1.hash == blockhash
@@ -325,9 +327,10 @@ defmodule BTx.RPC.Blockchain.GetBlockTest do
 
       # Test block with transaction details (verbosity=2)
       assert {:ok, %GetBlockResultV2{} = result_v2} =
-               Blockchain.get_block(real_client,
-                 blockhash: blockhash,
-                 verbosity: 2
+               Blockchain.get_block(
+                 real_client,
+                 [blockhash: blockhash, verbosity: 2],
+                 retries: 10
                )
 
       assert result_v2.hash == blockhash

@@ -456,13 +456,12 @@ defmodule BTx.RPC.Wallets.GetWalletInfoTest do
       %BTx.RPC.Wallets.CreateWalletResult{name: ^wallet_name} =
         Wallets.create_wallet!(
           real_client,
-          wallet_name: wallet_name,
-          passphrase: "test",
-          avoid_reuse: true
+          [wallet_name: wallet_name, passphrase: "test", avoid_reuse: true],
+          retries: 10
         )
 
       assert {:ok, %GetWalletInfoResult{walletname: ^wallet_name}} =
-               Wallets.get_wallet_info(real_client, wallet_name: wallet_name)
+               Wallets.get_wallet_info(real_client, [wallet_name: wallet_name], retries: 10)
     end
   end
 

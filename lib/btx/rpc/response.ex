@@ -58,9 +58,19 @@ defmodule BTx.RPC.Response do
     wrap_error BTx.RPC.Error, reason: {:rpc, :method_not_allowed}
   end
 
+  # HTTP 502 - Bad Gateway (node is overloaded)
+  def new(%Tesla.Env{status: 502}) do
+    wrap_error BTx.RPC.Error, reason: {:rpc, :bad_gateway}
+  end
+
   # HTTP 503 - Service Unavailable (node is starting, stopping, or overloaded)
   def new(%Tesla.Env{status: 503}) do
     wrap_error BTx.RPC.Error, reason: {:rpc, :service_unavailable}
+  end
+
+  # HTTP 504 - Gateway Timeout (node is taking too long to respond)
+  def new(%Tesla.Env{status: 504}) do
+    wrap_error BTx.RPC.Error, reason: {:rpc, :gateway_timeout}
   end
 
   # HTTP 200, 500, or any other status with JSON-RPC error in body

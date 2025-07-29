@@ -705,18 +705,19 @@ defmodule BTx.RPC.Wallets.GetAddressInfoTest do
       wallet_name =
         Wallets.create_wallet!(
           real_client,
-          wallet_name: "address-info-test-#{UUID.generate()}",
-          passphrase: "test"
+          [wallet_name: "address-info-test-#{UUID.generate()}", passphrase: "test"],
+          retries: 10
         ).name
 
       # Get a new address from our wallet
-      address = Wallets.get_new_address!(real_client, wallet_name: wallet_name)
+      address = Wallets.get_new_address!(real_client, [wallet_name: wallet_name], retries: 10)
 
       # Get address info
       assert {:ok, %GetAddressInfoResult{} = result} =
-               Wallets.get_address_info(real_client,
-                 address: address,
-                 wallet_name: wallet_name
+               Wallets.get_address_info(
+                 real_client,
+                 [address: address, wallet_name: wallet_name],
+                 retries: 10
                )
 
       # Verify the address info has expected fields

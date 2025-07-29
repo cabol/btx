@@ -424,7 +424,7 @@ defmodule BTx.RPC.Utils.ValidateAddressTest do
 
       for address <- test_addresses do
         assert {:ok, %ValidateAddressResult{} = result} =
-                 Utils.validate_address(real_client, address: address)
+                 Utils.validate_address(real_client, [address: address], retries: 10)
 
         assert is_boolean(result.isvalid)
 

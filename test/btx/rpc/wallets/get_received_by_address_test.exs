@@ -680,18 +680,19 @@ defmodule BTx.RPC.Wallets.GetReceivedByAddressTest do
       %BTx.RPC.Wallets.CreateWalletResult{name: ^wallet_name} =
         Wallets.create_wallet!(
           real_client,
-          wallet_name: wallet_name,
-          passphrase: "test"
+          [wallet_name: wallet_name, passphrase: "test"],
+          retries: 10
         )
 
       # Get a new address
-      address = Wallets.get_new_address!(real_client, wallet_name: wallet_name)
+      address = Wallets.get_new_address!(real_client, [wallet_name: wallet_name], retries: 10)
 
       # Check received amount (should be 0.0 for new address)
       assert {:ok, amount} =
-               Wallets.get_received_by_address(real_client,
-                 address: address,
-                 wallet_name: wallet_name
+               Wallets.get_received_by_address(
+                 real_client,
+                 [address: address, wallet_name: wallet_name],
+                 retries: 10
                )
 
       assert is_number(amount)

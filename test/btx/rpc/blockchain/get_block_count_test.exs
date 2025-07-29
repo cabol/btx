@@ -102,7 +102,7 @@ defmodule BTx.RPC.Blockchain.GetBlockCountTest do
       # This test requires a real Bitcoin regtest node
       real_client = new_client()
 
-      assert {:ok, block_count} = Blockchain.get_block_count(real_client)
+      assert {:ok, block_count} = Blockchain.get_block_count(real_client, retries: 10)
       assert is_integer(block_count)
       assert block_count >= 0
     end

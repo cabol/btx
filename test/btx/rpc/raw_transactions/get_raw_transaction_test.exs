@@ -5,7 +5,7 @@ defmodule BTx.RPC.RawTransactions.GetRawTransactionTest do
   import BTx.RawTransactionsFixtures
   import Tesla.Mock
 
-  alias BTx.RPC.{Encodable, RawTransactions, Request}
+  alias BTx.RPC.{Blockchain, Encodable, RawTransactions, Request}
   alias BTx.RPC.RawTransactions.{GetRawTransaction, GetRawTransactionResult}
   alias BTx.RPC.RawTransactions.GetRawTransaction.{Vin, Vout}
   alias BTx.RPC.RawTransactions.GetRawTransaction.Vout.ScriptPubKey
@@ -378,46 +378,41 @@ defmodule BTx.RPC.RawTransactions.GetRawTransactionTest do
 
     @tag :integration
     test "real Bitcoin regtest integration" do
-      # TODO: Uncomment when `BTx.RPC.Blockchain.get_block` is implemented
-      # # This test requires a real Bitcoin regtest node with transactions
-      # real_client = new_client()
+      # This test requires a real Bitcoin regtest node with transactions
+      real_client = new_client()
 
-      # # First, try to get a transaction from the blockchain
-      # # In regtest, we can try getting the genesis block coinbase transaction
-      # genesis_block_hash = "0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"
+      # Get the best block hash first
+      assert {:ok, blockchain_info} = Blockchain.get_blockchain_info(real_client, retries: 10)
+      blockhash = blockchain_info.bestblockhash
 
-      # # Get the block to find a transaction ID
-      # case BTx.RPC.Blockchain.get_block(real_client, blockhash: genesis_block_hash) do
-      #   {:ok, %{result: %{"tx" => [first_tx | _]}}} when is_map(first_tx) ->
-      #     txid = first_tx["txid"]
+      # Get the first transaction from the block
+      {:ok, %{tx: [txid | _]}} =
+        Blockchain.get_block(real_client, [blockhash: blockhash], retries: 10)
 
-      #     # Test hex format (verbose=false)
-      #     assert {:ok, hex_string} =
-      #              RawTransactions.get_raw_transaction(real_client,
-      #                txid: txid,
-      #                verbose: false
-      #              )
+      # Test hex format (verbose=false)
+      assert {:ok, hex_string} =
+               RawTransactions.get_raw_transaction(
+                 real_client,
+                 [txid: txid, verbose: false],
+                 retries: 10
+               )
 
-      #     assert is_binary(hex_string)
-      #     assert String.match?(hex_string, ~r/^[a-fA-F0-9]+$/)
+      assert is_binary(hex_string)
+      assert String.match?(hex_string, ~r/^[a-fA-F0-9]+$/)
 
-      #     # Test verbose format (verbose=true)
-      #     assert {:ok, %GetRawTransactionResult{} = result} =
-      #              RawTransactions.get_raw_transaction(real_client,
-      #                txid: txid,
-      #                verbose: true
-      #              )
+      # Test verbose format (verbose=true)
+      assert {:ok, %GetRawTransactionResult{} = result} =
+               RawTransactions.get_raw_transaction(
+                 real_client,
+                 [txid: txid, verbose: true],
+                 retries: 10
+               )
 
-      #     assert result.txid == txid
-      #     assert is_list(result.vin)
-      #     assert is_list(result.vout)
-      #     assert is_integer(result.size)
-      #     assert result.size > 0
-
-      #   _ ->
-      #     # Skip integration test if we can't get block data
-      #     :skip
-      # end
+      assert result.txid == txid
+      assert is_list(result.vin)
+      assert is_list(result.vout)
+      assert is_integer(result.size)
+      assert result.size > 0
     end
   end
 

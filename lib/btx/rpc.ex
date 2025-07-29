@@ -193,6 +193,9 @@ defmodule BTx.RPC do
   @typedoc "Response from the JSON RPC API"
   @type rpc_response() :: {:ok, BTx.RPC.Response.t()} | rpc_error()
 
+  # Retryable errors
+  @retryable_errors ~w(service_unavailable bad_gateway gateway_timeout)a
+
   ## API
 
   @doc """
@@ -381,6 +384,8 @@ defmodule BTx.RPC do
     # Extract options
     {id, opts} = Keyword.pop(opts, :id)
     {path, opts} = Keyword.pop(opts, :path)
+    {retries, opts} = Keyword.pop!(opts, :retries)
+    {retry_delay, opts} = Keyword.pop!(opts, :retry_delay)
 
     # Encode method and add ID if provided
     request = Encodable.encode(method_object)
@@ -399,14 +404,7 @@ defmodule BTx.RPC do
 
     :telemetry.span([:btx, :rpc, :call], metadata, fn ->
       client
-      |> Tesla.post(path, request, opts: opts)
-      |> case do
-        {:ok, %Tesla.Env{} = response} ->
-          Response.new(response)
-
-        {:error, reason} ->
-          wrap_error BTx.RPC.Error, reason: reason, method: method, method_object: method_object
-      end
+      |> with_retry(path, request, opts, method_object, retry_delay, retries)
       |> handle_response(metadata)
     end)
   end
@@ -423,6 +421,46 @@ defmodule BTx.RPC do
   end
 
   ## Private functions
+
+  defp with_retry(client, path, request, opts, method_object, retry_delay, retries) do
+    with_retry(client, path, request, opts, method_object, retry_delay, retries, 1)
+  end
+
+  defp with_retry(client, path, request, opts, method_object, _retry_delay, retries, count)
+       when count >= retries do
+    post(client, path, request, opts, method_object)
+  end
+
+  defp with_retry(client, path, request, opts, method_object, retry_delay, retries, count) do
+    with {:error, %BTx.RPC.Error{reason: {:rpc, error}}} when error in @retryable_errors <-
+           post(client, path, request, opts, method_object) do
+      apply_retry_delay(retry_delay, count)
+
+      with_retry(client, path, request, opts, method_object, retry_delay, retries, count + 1)
+    end
+  end
+
+  defp apply_retry_delay(retry_delay, _retries) when is_integer(retry_delay) do
+    Process.sleep(retry_delay)
+  end
+
+  defp apply_retry_delay(retry_delay, retries) when is_function(retry_delay, 1) do
+    retries
+    |> retry_delay.()
+    |> Process.sleep()
+  end
+
+  defp post(client, path, request, opts, %_t{method: method} = method_object) do
+    client
+    |> Tesla.post(path, request, opts: opts)
+    |> case do
+      {:ok, %Tesla.Env{} = response} ->
+        Response.new(response)
+
+      {:error, reason} ->
+        wrap_error BTx.RPC.Error, reason: reason, method: method, method_object: method_object
+    end
+  end
 
   defp handle_response({:ok, response} = ok, metadata) do
     {ok, Map.merge(metadata, %{status: :ok, result: response})}

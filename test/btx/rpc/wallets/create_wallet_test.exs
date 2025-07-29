@@ -563,7 +563,7 @@ defmodule BTx.RPC.Wallets.CreateWalletTest do
 
       params = [wallet_name: wallet_name, passphrase: "test_pass", descriptors: true]
 
-      assert Wallets.create_wallet!(client, params, id: wallet_name) ==
+      assert Wallets.create_wallet!(client, params, id: wallet_name, retries: 10) ==
                CreateWalletResult.new!(%{name: wallet_name})
 
       assert_raise BTx.RPC.MethodError, ~r/already exists/, fn ->

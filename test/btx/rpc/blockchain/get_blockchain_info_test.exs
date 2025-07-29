@@ -389,7 +389,7 @@ defmodule BTx.RPC.Blockchain.GetBlockchainInfoTest do
       real_client = new_client()
 
       assert {:ok, %GetBlockchainInfoResult{} = result} =
-               Blockchain.get_blockchain_info(real_client)
+               Blockchain.get_blockchain_info(real_client, retries: 10)
 
       # Verify basic structure
       assert is_binary(result.chain)

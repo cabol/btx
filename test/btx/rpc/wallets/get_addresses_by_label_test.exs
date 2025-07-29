@@ -498,9 +498,10 @@ defmodule BTx.RPC.Wallets.GetAddressesByLabelTest do
       wallet_name = "getaddressesbylabel-test-#{UUID.generate()}"
 
       wallet =
-        Wallets.create_wallet!(real_client,
-          wallet_name: wallet_name,
-          passphrase: "test"
+        Wallets.create_wallet!(
+          real_client,
+          [wallet_name: wallet_name, passphrase: "test"],
+          retries: 10
         )
 
       # Create some addresses with labels
@@ -508,23 +509,26 @@ defmodule BTx.RPC.Wallets.GetAddressesByLabelTest do
 
       # Get a new address with our test label
       address1 =
-        Wallets.get_new_address!(real_client,
-          label: test_label,
-          wallet_name: wallet.name
+        Wallets.get_new_address!(
+          real_client,
+          [label: test_label, wallet_name: wallet.name],
+          retries: 10
         )
 
       # Get another address with the same label
       address2 =
-        Wallets.get_new_address!(real_client,
-          label: test_label,
-          wallet_name: wallet.name
+        Wallets.get_new_address!(
+          real_client,
+          [label: test_label, wallet_name: wallet.name],
+          retries: 10
         )
 
       # Now get addresses by label
       assert {:ok, addresses} =
-               Wallets.get_addresses_by_label(real_client,
-                 label: test_label,
-                 wallet_name: wallet.name
+               Wallets.get_addresses_by_label(
+                 real_client,
+                 [label: test_label, wallet_name: wallet.name],
+                 retries: 10
                )
 
       assert is_map(addresses)
@@ -542,9 +546,10 @@ defmodule BTx.RPC.Wallets.GetAddressesByLabelTest do
 
       # Test with non-existent label
       assert_raise BTx.RPC.MethodError, "No addresses with label nonexistent_label", fn ->
-        Wallets.get_addresses_by_label!(real_client,
-          label: "nonexistent_label",
-          wallet_name: wallet.name
+        Wallets.get_addresses_by_label!(
+          real_client,
+          [label: "nonexistent_label", wallet_name: wallet.name],
+          retries: 10
         )
       end
     end

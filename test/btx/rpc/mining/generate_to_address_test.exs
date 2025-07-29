@@ -879,18 +879,19 @@ defmodule BTx.RPC.Mining.GenerateToAddressTest do
       wallet_name =
         Wallets.create_wallet!(
           real_client,
-          wallet_name: "mining-test-#{UUID.generate()}",
-          passphrase: "test"
+          [wallet_name: "mining-test-#{UUID.generate()}", passphrase: "test"],
+          retries: 10
         ).name
 
       # Get a new address for mining
-      address = Wallets.get_new_address!(real_client, wallet_name: wallet_name)
+      address = Wallets.get_new_address!(real_client, wallet_name: wallet_name, retries: 10)
 
       # Mine a block
       assert {:ok, blocks} =
-               Mining.generate_to_address(real_client,
-                 nblocks: 1,
-                 address: address
+               Mining.generate_to_address(
+                 real_client,
+                 [nblocks: 1, address: address],
+                 retries: 10
                )
 
       assert is_list(blocks)

@@ -316,21 +316,23 @@ defmodule BTx.RPC.Wallets.UnloadWalletResultTest do
 
       # Create wallet
       assert {:ok, %CreateWalletResult{}} =
-               Wallets.create_wallet(client,
-                 wallet_name: wallet_name,
-                 passphrase: "test_pass"
+               Wallets.create_wallet(
+                 client,
+                 [wallet_name: wallet_name, passphrase: "test_pass"],
+                 retries: 10
                )
 
       # Unload the wallet
       assert {:ok, %UnloadWalletResult{}} =
-               Wallets.unload_wallet(client,
-                 wallet_name: wallet_name,
-                 load_on_startup: false
+               Wallets.unload_wallet(
+                 client,
+                 [wallet_name: wallet_name, load_on_startup: false],
+                 retries: 10
                )
 
       # Try to unload again (should fail)
       assert {:error, %BTx.RPC.MethodError{code: -18}} =
-               Wallets.unload_wallet(client, wallet_name: wallet_name)
+               Wallets.unload_wallet(client, [wallet_name: wallet_name], retries: 10)
     end
   end
 

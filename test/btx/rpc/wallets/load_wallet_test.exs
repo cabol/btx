@@ -361,20 +361,20 @@ defmodule BTx.RPC.Wallets.LoadWalletTest do
       %BTx.RPC.Wallets.CreateWalletResult{name: ^wallet_name} =
         Wallets.create_wallet!(
           client,
-          wallet_name: wallet_name,
-          passphrase: "test",
-          avoid_reuse: true
+          [wallet_name: wallet_name, passphrase: "test", avoid_reuse: true],
+          retries: 10
         )
 
       # Unload the wallet
       {:ok, %BTx.RPC.Wallets.UnloadWalletResult{}} =
-        Wallets.unload_wallet(client,
-          wallet_name: wallet_name,
-          load_on_startup: false
+        Wallets.unload_wallet(
+          client,
+          [wallet_name: wallet_name, load_on_startup: false],
+          retries: 10
         )
 
       assert {:ok, %LoadWalletResult{name: ^wallet_name}} =
-               Wallets.load_wallet(client, filename: wallet_name)
+               Wallets.load_wallet(client, [filename: wallet_name], retries: 10)
     end
   end
 

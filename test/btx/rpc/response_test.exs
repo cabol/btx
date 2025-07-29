@@ -24,7 +24,9 @@ defmodule BTx.RPC.ResponseTest do
         {403, {:rpc, :forbidden}},
         {404, :not_found},
         {405, {:rpc, :method_not_allowed}},
-        {503, {:rpc, :service_unavailable}}
+        {502, {:rpc, :bad_gateway}},
+        {503, {:rpc, :service_unavailable}},
+        {504, {:rpc, :gateway_timeout}}
       ]
 
       for {status, expected_reason} <- statuses_and_reasons do

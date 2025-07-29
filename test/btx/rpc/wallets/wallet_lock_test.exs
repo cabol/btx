@@ -326,22 +326,22 @@ defmodule BTx.RPC.Wallets.WalletLockTest do
       %BTx.RPC.Wallets.CreateWalletResult{name: ^wallet_name} =
         Wallets.create_wallet!(
           real_client,
-          wallet_name: wallet_name,
-          passphrase: "test_passphrase_123"
+          [wallet_name: wallet_name, passphrase: "test_passphrase_123"],
+          retries: 10
         )
 
       # The wallet should be encrypted and locked by default
       # First unlock it
       assert {:ok, nil} =
-               Wallets.wallet_passphrase(real_client,
-                 passphrase: "test_passphrase_123",
-                 timeout: 60,
-                 wallet_name: wallet_name
+               Wallets.wallet_passphrase(
+                 real_client,
+                 [passphrase: "test_passphrase_123", timeout: 60, wallet_name: wallet_name],
+                 retries: 10
                )
 
       # Now lock it again
       assert {:ok, nil} =
-               Wallets.wallet_lock(real_client, wallet_name: wallet_name)
+               Wallets.wallet_lock(real_client, [wallet_name: wallet_name], retries: 10)
 
       # Try to lock an unencrypted wallet (should fail)
       unencrypted_wallet_name = "unencrypted-wallet-#{UUID.generate()}"
@@ -349,13 +349,17 @@ defmodule BTx.RPC.Wallets.WalletLockTest do
       %BTx.RPC.Wallets.CreateWalletResult{name: ^unencrypted_wallet_name} =
         Wallets.create_wallet!(
           real_client,
-          wallet_name: unencrypted_wallet_name
-          # No passphrase = unencrypted
+          [wallet_name: unencrypted_wallet_name],
+          retries: 10
         )
 
       # This should fail since the wallet is not encrypted
       assert {:error, %BTx.RPC.MethodError{code: -15}} =
-               Wallets.wallet_lock(real_client, wallet_name: unencrypted_wallet_name)
+               Wallets.wallet_lock(
+                 real_client,
+                 [wallet_name: unencrypted_wallet_name],
+                 retries: 10
+               )
     end
   end
 

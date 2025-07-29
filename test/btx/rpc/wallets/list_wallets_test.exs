@@ -244,7 +244,7 @@ defmodule BTx.RPC.Wallets.ListWalletsTest do
       # This test requires a real Bitcoin regtest node running
       real_client = new_client()
 
-      assert {:ok, wallets} = Wallets.list_wallets(real_client)
+      assert {:ok, wallets} = Wallets.list_wallets(real_client, retries: 10)
       assert is_list(wallets)
     end
   end

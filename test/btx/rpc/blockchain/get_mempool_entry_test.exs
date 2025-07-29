@@ -506,10 +506,14 @@ defmodule BTx.RPC.Blockchain.GetMempoolEntryTest do
 
       # Step 1: Create a destination address (different wallet or address)
       destination_address =
-        Wallets.get_new_address!(real_client, wallet_name: wallet_name, label: "destination")
+        Wallets.get_new_address!(
+          real_client,
+          [wallet_name: wallet_name, label: "destination"],
+          retries: 10
+        )
 
       # Step 2: Get balance
-      balance = Wallets.get_balance!(real_client, wallet_name: wallet_name)
+      balance = Wallets.get_balance!(real_client, [wallet_name: wallet_name], retries: 10)
       assert balance > 0.0
 
       # Step 3: Send a transaction (this will create a mempool entry)
@@ -518,11 +522,15 @@ defmodule BTx.RPC.Blockchain.GetMempoolEntryTest do
 
       # Step 4: Send a transaction
       {:ok, send_result} =
-        Wallets.send_to_address(real_client,
-          address: destination_address,
-          amount: send_amount,
-          wallet_name: wallet_name,
-          comment: "Integration test transaction"
+        Wallets.send_to_address(
+          real_client,
+          [
+            address: destination_address,
+            amount: send_amount,
+            wallet_name: wallet_name,
+            comment: "Integration test transaction"
+          ],
+          retries: 10
         )
 
       txid = send_result.txid
@@ -530,7 +538,7 @@ defmodule BTx.RPC.Blockchain.GetMempoolEntryTest do
       # Step 5: Verify the mempool entry
       assert_eventually do
         assert {:ok, %GetMempoolEntryResult{} = result} =
-                 Blockchain.get_mempool_entry(real_client, txid: txid)
+                 Blockchain.get_mempool_entry(real_client, txid: txid, retries: 10)
 
         # Verify the mempool entry has expected fields
         assert is_integer(result.vsize)

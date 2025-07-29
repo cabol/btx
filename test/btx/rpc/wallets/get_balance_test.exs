@@ -479,13 +479,12 @@ defmodule BTx.RPC.Wallets.GetBalanceTest do
       wallet_name =
         Wallets.create_wallet!(
           real_client,
-          wallet_name: "test-wallet-#{UUID.generate()}",
-          passphrase: "test",
-          avoid_reuse: true
+          [wallet_name: "test-wallet-#{UUID.generate()}", passphrase: "test", avoid_reuse: true],
+          retries: 10
         ).name
 
       assert {:ok, balance} =
-               Wallets.get_balance(real_client, wallet_name: wallet_name)
+               Wallets.get_balance(real_client, [wallet_name: wallet_name], retries: 10)
 
       assert is_number(balance)
       assert balance >= 0.0

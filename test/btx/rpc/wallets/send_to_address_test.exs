@@ -708,15 +708,21 @@ defmodule BTx.RPC.Wallets.SendToAddressTest do
 
       # Step 1: Create a destination address (different wallet or address)
       address =
-        Wallets.get_new_address!(real_client, wallet_name: wallet_name, label: "destination")
+        Wallets.get_new_address!(real_client, [wallet_name: wallet_name, label: "destination"],
+          retries: 10
+        )
 
       # Step 2: Send a transaction
       {:ok, send_result} =
-        Wallets.send_to_address(real_client,
-          address: address,
-          amount: 0.001,
-          wallet_name: wallet_name,
-          comment: "Integration test transaction"
+        Wallets.send_to_address(
+          real_client,
+          [
+            address: address,
+            amount: 0.001,
+            wallet_name: wallet_name,
+            comment: "Integration test transaction"
+          ],
+          retries: 10
         )
 
       # Step 3: Verify the transaction

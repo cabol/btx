@@ -468,13 +468,13 @@ defmodule BTx.RPC.Wallets.GetNewAddressTest do
       wallet_name =
         Wallets.create_wallet!(
           real_client,
-          wallet_name: "test-wallet-#{UUID.generate()}",
-          passphrase: "test"
+          [wallet_name: "test-wallet-#{UUID.generate()}", passphrase: "test"],
+          retries: 10
         ).name
 
       # Now try to get a new address
       assert {:ok, address} =
-               Wallets.get_new_address(real_client, wallet_name: wallet_name)
+               Wallets.get_new_address(real_client, [wallet_name: wallet_name], retries: 10)
 
       assert is_binary(address)
       # Bitcoin addresses are long

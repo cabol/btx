@@ -572,7 +572,7 @@ defmodule BTx.RPC.Wallets.ListUnspentTest do
 
       # Now we should have unspent outputs
       assert {:ok, outputs} =
-               Wallets.list_unspent(real_client, wallet_name: wallet_name)
+               Wallets.list_unspent(real_client, [wallet_name: wallet_name], retries: 10)
 
       if first_output = List.first(outputs) do
         assert %ListUnspentItem{} = first_output
