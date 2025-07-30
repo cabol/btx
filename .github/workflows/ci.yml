@@ -24,6 +24,7 @@ jobs:
             os: 'ubuntu-latest'
             lint: true
             coverage: true
+            integration: true
             sobelow: true
             dialyzer: true
           - elixir: 1.17.x
@@ -99,12 +100,16 @@ jobs:
         if: ${{ matrix.lint }}
 
       - name: Run tests
-        run: mix test --trace
-        if: ${{ !matrix.coverage }}
+        run: mix test --exclude integration
+        if: ${{ !matrix.coverage && !matrix.integration }}
 
       - name: Run tests with coverage
-        run: mix coveralls.json
+        run: mix coveralls.json --exclude integration
         if: ${{ matrix.coverage }}
+
+      - name: Run integration tests
+        run: mix test --only integration
+        if: ${{ matrix.integration }}
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
