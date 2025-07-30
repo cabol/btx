@@ -1,4 +1,4 @@
-defmodule BTx.RPC.Blockchain.Commons.Softfork.Bip9.Statistics do
+defmodule BTx.RPC.Blockchain.Softfork.Bip9.Statistics do
   @moduledoc """
   Embedded schema for BIP9 softfork statistics.
 
@@ -45,7 +45,7 @@ defmodule BTx.RPC.Blockchain.Commons.Softfork.Bip9.Statistics do
   end
 end
 
-defmodule BTx.RPC.Blockchain.Commons.Softfork.Bip9 do
+defmodule BTx.RPC.Blockchain.Softfork.Bip9 do
   @moduledoc """
   Embedded schema for BIP9 softfork information.
 
@@ -56,7 +56,7 @@ defmodule BTx.RPC.Blockchain.Commons.Softfork.Bip9 do
 
   import Ecto.Changeset
 
-  alias BTx.RPC.Blockchain.Commons.Softfork.Bip9.Statistics
+  alias BTx.RPC.Blockchain.Softfork.Bip9.Statistics
 
   ## Types & Schema
 
@@ -101,7 +101,7 @@ defmodule BTx.RPC.Blockchain.Commons.Softfork.Bip9 do
   end
 end
 
-defmodule BTx.RPC.Blockchain.Commons.Softfork do
+defmodule BTx.RPC.Blockchain.Softfork do
   @moduledoc """
   Embedded schema for softfork information.
 
@@ -112,7 +112,7 @@ defmodule BTx.RPC.Blockchain.Commons.Softfork do
 
   import Ecto.Changeset
 
-  alias BTx.RPC.Blockchain.Commons.Softfork.Bip9
+  alias BTx.RPC.Blockchain.Softfork.Bip9
 
   ## Types & Schema
 

@@ -6,10 +6,15 @@ defmodule BTx.RPC.Blockchain.GetBlockchainInfoTest do
   import Tesla.Mock
 
   alias BTx.RPC.{Blockchain, Encodable, Request}
-  alias BTx.RPC.Blockchain.Commons.Softfork
-  alias BTx.RPC.Blockchain.Commons.Softfork.Bip9
-  alias BTx.RPC.Blockchain.Commons.Softfork.Bip9.Statistics
-  alias BTx.RPC.Blockchain.{GetBlockchainInfo, GetBlockchainInfoResult}
+
+  alias BTx.RPC.Blockchain.{
+    GetBlockchainInfo,
+    GetBlockchainInfoResult,
+    Softfork,
+    Softfork.Bip9,
+    Softfork.Bip9.Statistics
+  }
+
   alias Ecto.Changeset
 
   @url "http://localhost:18443/"

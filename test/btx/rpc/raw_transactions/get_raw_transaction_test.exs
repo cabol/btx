@@ -7,8 +7,7 @@ defmodule BTx.RPC.RawTransactions.GetRawTransactionTest do
 
   alias BTx.RPC.{Blockchain, Encodable, RawTransactions, Request}
   alias BTx.RPC.RawTransactions.{GetRawTransaction, GetRawTransactionResult}
-  alias BTx.RPC.RawTransactions.GetRawTransaction.{Vin, Vout}
-  alias BTx.RPC.RawTransactions.GetRawTransaction.Vout.ScriptPubKey
+  alias BTx.RPC.RawTransactions.RawTransaction.{Vin, Vin.ScriptSig, Vout, Vout.ScriptPubKey}
   alias Ecto.Changeset
 
   @url "http://localhost:18443/"
@@ -137,6 +136,10 @@ defmodule BTx.RPC.RawTransactions.GetRawTransactionTest do
       attrs = vin_fixture()
       changeset = Vin.changeset(%Vin{}, attrs)
       assert changeset.valid?
+
+      # Check that the field was normalized and embedded properly
+      vin = Changeset.apply_changes(changeset)
+      assert %ScriptSig{} = vin.script_sig
     end
 
     test "validates txid format" do
@@ -325,6 +328,8 @@ defmodule BTx.RPC.RawTransactions.GetRawTransactionTest do
       assert result.txid == "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
       assert length(result.vin) == 1
       assert length(result.vout) == 2
+      assert [%Vin{script_sig: %ScriptSig{}} | _] = result.vin
+      assert [%Vout{script_pub_key: %ScriptPubKey{}} | _] = result.vout
     end
 
     test "call with blockhash parameter", %{client: client} do

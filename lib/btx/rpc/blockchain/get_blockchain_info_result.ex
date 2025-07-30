@@ -9,7 +9,7 @@ defmodule BTx.RPC.Blockchain.GetBlockchainInfoResult do
 
   import Ecto.Changeset
 
-  alias BTx.RPC.Blockchain.Commons.Softfork
+  alias BTx.RPC.Blockchain.Softfork
   alias BTx.RPC.Response
 
   ## Types & Schema

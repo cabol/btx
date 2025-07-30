@@ -130,14 +130,17 @@ defmodule BTx.MixProject do
         ],
         "Blockchain RPCs": [
           BTx.RPC.Blockchain.GetBlockchainInfo,
-          BTx.RPC.Blockchain.GetBlockchainInfo.Softfork,
-          BTx.RPC.Blockchain.GetBlockchainInfo.Softfork.Bip9,
-          BTx.RPC.Blockchain.GetBlockchainInfo.Softfork.Bip9.Statistics,
           BTx.RPC.Blockchain.GetBlockchainInfoResult,
+          BTx.RPC.Blockchain.GetBlock,
           BTx.RPC.Blockchain.GetBlockCount,
+          BTx.RPC.Blockchain.GetBlockResultV1,
+          BTx.RPC.Blockchain.GetBlockResultV2,
           BTx.RPC.Blockchain.GetMempoolEntry,
           BTx.RPC.Blockchain.GetMempoolEntryFees,
-          BTx.RPC.Blockchain.GetMempoolEntryResult
+          BTx.RPC.Blockchain.GetMempoolEntryResult,
+          BTx.RPC.Blockchain.Softfork,
+          BTx.RPC.Blockchain.Softfork.Bip9,
+          BTx.RPC.Blockchain.Softfork.Bip9.Statistics
         ],
         "Mining RPCs": [
           BTx.RPC.Mining.GenerateToAddress
@@ -145,9 +148,14 @@ defmodule BTx.MixProject do
         "Raw Transactions RPCs": [
           BTx.RPC.RawTransactions.GetRawTransaction,
           BTx.RPC.RawTransactions.GetRawTransactionResult,
-          BTx.RPC.RawTransactions.GetRawTransactionResult.Vin,
-          BTx.RPC.RawTransactions.GetRawTransactionResult.Vout,
-          BTx.RPC.RawTransactions.GetRawTransactionResult.Vout.ScriptPubKey
+          BTx.RPC.RawTransactions.RawTransaction.Vin,
+          BTx.RPC.RawTransactions.RawTransaction.Vin.ScriptSig,
+          BTx.RPC.RawTransactions.RawTransaction.Vout,
+          BTx.RPC.RawTransactions.RawTransaction.Vout.ScriptPubKey
+        ],
+        "Utils RPC": [
+          BTx.RPC.Utils.ValidateAddress,
+          BTx.RPC.Utils.ValidateAddressResult
         ],
         "Wallet RPCs": [
           BTx.RPC.Wallets.CreateWallet,
@@ -159,6 +167,7 @@ defmodule BTx.MixProject do
           BTx.RPC.Wallets.GetNewAddress,
           BTx.RPC.Wallets.GetReceivedByAddress,
           BTx.RPC.Wallets.GetTransaction,
+          BTx.RPC.Wallets.GetTransactionDetail,
           BTx.RPC.Wallets.GetTransactionResult,
           BTx.RPC.Wallets.GetWalletInfo,
           BTx.RPC.Wallets.GetWalletInfoResult,
