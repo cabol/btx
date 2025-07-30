@@ -238,4 +238,54 @@ defmodule BTx.RawTransactionsFixtures do
       "blocktime" => nil
     }
   end
+
+  @doc """
+  Returns a fixture for decoderawtransaction RPC result.
+
+  ## Options
+
+  You can override any field by passing a map with the desired values:
+
+  ## Examples
+
+      # Default decoded transaction result
+      decode_raw_transaction_result_fixture()
+
+      # Override specific fields
+      decode_raw_transaction_result_fixture(%{
+        "version" => 1,
+        "locktime" => 500000
+      })
+
+      # Transaction with different vin/vout
+      decode_raw_transaction_result_fixture(%{
+        "vin" => [
+          vin_fixture(%{"txid" => "abcd..."}),
+          vin_fixture(%{"txid" => "efgh..."})
+        ],
+        "vout" => [
+          vout_fixture(%{"value" => 2.5}),
+          vout_fixture(%{"value" => 0.5, "n" => 1})
+        ]
+      })
+
+  """
+  @spec decode_raw_transaction_result_fixture(map()) :: map()
+  def decode_raw_transaction_result_fixture(overrides \\ %{}) do
+    %{
+      "txid" => "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+      "hash" => "fedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321",
+      "size" => 225,
+      "vsize" => 144,
+      "weight" => 573,
+      "version" => 2,
+      "locktime" => 0,
+      "vin" => [vin_fixture()],
+      "vout" => [
+        vout_fixture(%{"value" => 0.99, "n" => 0}),
+        vout_fixture(%{"value" => 0.01, "n" => 1})
+      ]
+    }
+    |> deep_merge(overrides)
+  end
 end

@@ -72,6 +72,15 @@ defmodule BTx.Ecto.ChangesetUtils do
   end
 
   @doc """
+  Validates the format of a hex string.
+  """
+  @spec validate_hexstring(Ecto.Changeset.t(), atom()) :: Ecto.Changeset.t()
+  def validate_hexstring(changeset, field) do
+    changeset
+    |> validate_format(field, ~r/^[a-fA-F0-9]*$/, message: "must be a valid hex string")
+  end
+
+  @doc """
   Validates if a given address is a valid Bitcoin address.
 
   ## Examples

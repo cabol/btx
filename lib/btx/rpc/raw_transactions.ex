@@ -11,6 +11,8 @@ defmodule BTx.RPC.RawTransactions do
   alias BTx.RPC
 
   alias BTx.RPC.RawTransactions.{
+    DecodeRawTransaction,
+    DecodeRawTransactionResult,
     GetRawTransaction,
     GetRawTransactionResult
   }
@@ -131,5 +133,70 @@ defmodule BTx.RPC.RawTransactions do
       # result is a hex string
       _false_or_nil -> result
     end
+  end
+
+  @doc """
+  Return a JSON object representing the serialized, hex-encoded transaction.
+
+  This function accepts a hex-encoded transaction string and returns detailed
+  information about the transaction structure including inputs, outputs, and metadata.
+
+  ## Arguments
+
+  - `client` - Same as `BTx.RPC.call/3`.
+  - `params` - A keyword list or map of parameters for the request.
+    See `BTx.RPC.RawTransactions.DecodeRawTransaction` for more information about the
+    available parameters.
+  - `opts` - Same as `BTx.RPC.call/3`.
+
+  ## Options
+
+  See `BTx.RPC.call/3`.
+
+  ## Examples
+
+      # Decode a raw transaction hex string
+      iex> BTx.RPC.RawTransactions.decode_raw_transaction(client,
+      ...>   hexstring: "02000000010123456789abcdef...")
+      {:ok, %BTx.RPC.RawTransactions.DecodeRawTransactionResult{
+        txid: "abcdef1234567890...",
+        hash: "fedcba0987654321...",
+        size: 225,
+        vsize: 144,
+        weight: 573,
+        version: 2,
+        locktime: 0,
+        vin: [...],
+        vout: [...]
+      }}
+
+      # Decode with witness flag
+      iex> BTx.RPC.RawTransactions.decode_raw_transaction(client,
+      ...>   hexstring: "02000000010123456789abcdef...",
+      ...>   iswitness: true)
+      {:ok, %BTx.RPC.RawTransactions.DecodeRawTransactionResult{...}}
+
+  """
+  @spec decode_raw_transaction(RPC.client(), params(), keyword()) ::
+          response(DecodeRawTransactionResult.t())
+  def decode_raw_transaction(client, params, opts \\ []) do
+    with {:ok, request} <- DecodeRawTransaction.new(params) do
+      case RPC.call(client, request, opts) do
+        {:ok, %Response{result: result}} -> DecodeRawTransactionResult.new(result)
+        error -> error
+      end
+    end
+  end
+
+  @doc """
+  Same as `decode_raw_transaction/3` but raises on error.
+  """
+  @spec decode_raw_transaction!(RPC.client(), params(), keyword()) ::
+          DecodeRawTransactionResult.t()
+  def decode_raw_transaction!(client, params, opts \\ []) do
+    client
+    |> RPC.call!(DecodeRawTransaction.new!(params), opts)
+    |> Map.fetch!(:result)
+    |> DecodeRawTransactionResult.new!()
   end
 end
