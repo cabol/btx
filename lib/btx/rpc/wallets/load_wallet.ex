@@ -20,6 +20,7 @@ defmodule BTx.RPC.Wallets.LoadWallet do
   use Ecto.Schema
 
   import Ecto.Changeset
+  import BTx.Helpers, only: [trim_trailing_nil: 1]
 
   alias BTx.RPC.Request
 
@@ -55,7 +56,7 @@ defmodule BTx.RPC.Wallets.LoadWallet do
         }) do
       Request.new(
         method: method,
-        params: [filename, load_on_startup]
+        params: trim_trailing_nil([filename, load_on_startup])
       )
     end
   end

@@ -27,6 +27,7 @@ defmodule BTx.RPC.Wallets.GetTransaction do
   use Ecto.Schema
 
   import BTx.Ecto.ChangesetUtils
+  import BTx.Helpers, only: [trim_trailing_nil: 1]
   import Ecto.Changeset
 
   alias BTx.RPC.Request
@@ -74,7 +75,7 @@ defmodule BTx.RPC.Wallets.GetTransaction do
       Request.new(
         method: method,
         path: path,
-        params: [txid, include_watchonly, verbose]
+        params: trim_trailing_nil([txid, include_watchonly, verbose])
       )
     end
   end

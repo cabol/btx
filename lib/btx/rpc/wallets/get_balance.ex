@@ -36,6 +36,7 @@ defmodule BTx.RPC.Wallets.GetBalance do
   use Ecto.Schema
 
   import BTx.Ecto.ChangesetUtils
+  import BTx.Helpers, only: [trim_trailing_nil: 1]
   import Ecto.Changeset
 
   alias BTx.RPC.Request
@@ -85,7 +86,7 @@ defmodule BTx.RPC.Wallets.GetBalance do
       Request.new(
         method: method,
         path: path,
-        params: [dummy, minconf, include_watchonly, avoid_reuse]
+        params: trim_trailing_nil([dummy, minconf, include_watchonly, avoid_reuse])
       )
     end
   end

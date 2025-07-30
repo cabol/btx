@@ -250,7 +250,7 @@ defmodule BTx.RPC.Wallets.ListUnspentTest do
   describe "ListUnspent encodable" do
     test "encodes minimal request" do
       assert %Request{
-               params: [1, 9_999_999, [], true, nil],
+               params: [1, 9_999_999, [], true],
                method: "listunspent",
                jsonrpc: "1.0",
                path: "/"
@@ -259,7 +259,7 @@ defmodule BTx.RPC.Wallets.ListUnspentTest do
 
     test "encodes request with custom minconf/maxconf" do
       assert %Request{
-               params: [6, 100, [], true, nil],
+               params: [6, 100, [], true],
                method: "listunspent",
                jsonrpc: "1.0",
                path: "/"
@@ -270,7 +270,7 @@ defmodule BTx.RPC.Wallets.ListUnspentTest do
       addresses = [@valid_bech32_address, @valid_legacy_address]
 
       assert %Request{
-               params: [1, 9_999_999, ^addresses, true, nil],
+               params: [1, 9_999_999, ^addresses, true],
                method: "listunspent",
                jsonrpc: "1.0",
                path: "/"
@@ -279,7 +279,7 @@ defmodule BTx.RPC.Wallets.ListUnspentTest do
 
     test "encodes request with include_unsafe false" do
       assert %Request{
-               params: [1, 9_999_999, [], false, nil],
+               params: [1, 9_999_999, [], false],
                method: "listunspent",
                jsonrpc: "1.0",
                path: "/"
@@ -307,7 +307,7 @@ defmodule BTx.RPC.Wallets.ListUnspentTest do
 
     test "encodes request with wallet name" do
       assert %Request{
-               params: [1, 9_999_999, [], true, nil],
+               params: [1, 9_999_999, [], true],
                method: "listunspent",
                jsonrpc: "1.0",
                path: "/wallet/my_wallet"
@@ -352,7 +352,7 @@ defmodule BTx.RPC.Wallets.ListUnspentTest do
         %{method: :post, url: @url, body: body} ->
           assert %{
                    "method" => "listunspent",
-                   "params" => [1, 9_999_999, [], true, nil],
+                   "params" => [1, 9_999_999, [], true],
                    "jsonrpc" => "1.0",
                    "id" => id
                  } = BTx.json_module().decode!(body)
@@ -387,7 +387,7 @@ defmodule BTx.RPC.Wallets.ListUnspentTest do
         %{method: :post, url: @url, body: body} ->
           assert %{
                    "method" => "listunspent",
-                   "params" => [6, 100, ^addresses, false, nil],
+                   "params" => [6, 100, ^addresses, false],
                    "jsonrpc" => "1.0"
                  } = BTx.json_module().decode!(body)
 
@@ -458,7 +458,7 @@ defmodule BTx.RPC.Wallets.ListUnspentTest do
         %{method: :post, url: ^url, body: body} ->
           assert %{
                    "method" => "listunspent",
-                   "params" => [1, 9_999_999, [], true, nil],
+                   "params" => [1, 9_999_999, [], true],
                    "jsonrpc" => "1.0"
                  } = BTx.json_module().decode!(body)
 

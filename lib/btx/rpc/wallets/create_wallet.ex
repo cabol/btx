@@ -37,6 +37,7 @@ defmodule BTx.RPC.Wallets.CreateWallet do
   use Ecto.Schema
 
   import BTx.Ecto.ChangesetUtils
+  import BTx.Helpers, only: [trim_trailing_nil: 1]
   import Ecto.Changeset
 
   alias BTx.RPC.Request
@@ -86,15 +87,17 @@ defmodule BTx.RPC.Wallets.CreateWallet do
           descriptors: descriptors,
           load_on_startup: load_on_startup
         }) do
-      params = [
-        wallet_name,
-        disable_private_keys,
-        blank,
-        passphrase,
-        avoid_reuse,
-        descriptors,
-        load_on_startup
-      ]
+      params =
+        [
+          wallet_name,
+          disable_private_keys,
+          blank,
+          passphrase,
+          avoid_reuse,
+          descriptors,
+          load_on_startup
+        ]
+        |> trim_trailing_nil()
 
       Request.new(
         method: method,

@@ -35,11 +35,6 @@ defmodule BTx do
         descriptors: true
       )
 
-  ## Main Modules
-
-    * `BTx.RPC` - JSON-RPC client and core functionality.
-    * `BTx.RPC.Wallets` - Wallet-specific RPC methods.
-
   See individual module documentation for detailed examples and usage patterns.
 
   ## Development Status

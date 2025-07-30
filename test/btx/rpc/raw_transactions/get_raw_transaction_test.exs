@@ -79,7 +79,7 @@ defmodule BTx.RPC.RawTransactions.GetRawTransactionTest do
   describe "GetRawTransaction encodable" do
     test "encodes method with required fields only" do
       assert %Request{
-               params: [@valid_txid, false, nil],
+               params: [@valid_txid, false],
                method: "getrawtransaction",
                jsonrpc: "1.0",
                path: "/"
@@ -90,7 +90,7 @@ defmodule BTx.RPC.RawTransactions.GetRawTransactionTest do
 
     test "encodes method with verbose parameter" do
       assert %Request{
-               params: [@valid_txid, true, nil],
+               params: [@valid_txid, true],
                method: "getrawtransaction",
                jsonrpc: "1.0",
                path: "/"
@@ -280,7 +280,7 @@ defmodule BTx.RPC.RawTransactions.GetRawTransactionTest do
         %{method: :post, url: @url, body: body} ->
           assert %{
                    "method" => "getrawtransaction",
-                   "params" => [@valid_txid, false, nil],
+                   "params" => [@valid_txid, false],
                    "jsonrpc" => "1.0",
                    "id" => id
                  } = BTx.json_module().decode!(body)
@@ -308,7 +308,7 @@ defmodule BTx.RPC.RawTransactions.GetRawTransactionTest do
         %{method: :post, url: @url, body: body} ->
           assert %{
                    "method" => "getrawtransaction",
-                   "params" => [@valid_txid, true, nil],
+                   "params" => [@valid_txid, true],
                    "jsonrpc" => "1.0"
                  } = BTx.json_module().decode!(body)
 

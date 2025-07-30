@@ -25,6 +25,7 @@ defmodule BTx.RPC.Wallets.GetNewAddress do
   use Ecto.Schema
 
   import BTx.Ecto.ChangesetUtils
+  import BTx.Helpers, only: [trim_trailing_nil: 1]
   import Ecto.Changeset
 
   alias BTx.RPC.Request
@@ -71,7 +72,7 @@ defmodule BTx.RPC.Wallets.GetNewAddress do
       Request.new(
         method: method,
         path: path,
-        params: [label, address_type]
+        params: trim_trailing_nil([label, address_type])
       )
     end
   end

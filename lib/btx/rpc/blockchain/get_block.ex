@@ -21,6 +21,7 @@ defmodule BTx.RPC.Blockchain.GetBlock do
   use Ecto.Schema
 
   import BTx.Ecto.ChangesetUtils
+  import BTx.Helpers, only: [trim_trailing_nil: 1]
   import Ecto.Changeset
 
   alias BTx.RPC.Request
@@ -61,7 +62,7 @@ defmodule BTx.RPC.Blockchain.GetBlock do
       Request.new(
         method: method,
         path: "/",
-        params: [blockhash, verbosity]
+        params: trim_trailing_nil([blockhash, verbosity])
       )
     end
   end

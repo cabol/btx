@@ -29,6 +29,7 @@ defmodule BTx.RPC.Wallets.UnloadWallet do
   use Ecto.Schema
 
   import BTx.Ecto.ChangesetUtils
+  import BTx.Helpers, only: [trim_trailing_nil: 1]
   import Ecto.Changeset
 
   alias BTx.RPC.Request
@@ -65,7 +66,7 @@ defmodule BTx.RPC.Wallets.UnloadWallet do
         }) do
       Request.new(
         method: method,
-        params: [wallet_name, load_on_startup]
+        params: trim_trailing_nil([wallet_name, load_on_startup])
       )
     end
   end

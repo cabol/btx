@@ -215,7 +215,7 @@ defmodule BTx.RPC.Wallets.CreateWalletTest do
   describe "encodable" do
     test "encodes method with default options" do
       assert %Request{
-               params: ["test_wallet", false, false, "test_pass", false, false, nil],
+               params: ["test_wallet", false, false, "test_pass", false, false],
                method: "createwallet",
                jsonrpc: "1.0"
              } =
@@ -261,7 +261,7 @@ defmodule BTx.RPC.Wallets.CreateWalletTest do
 
     test "encodes method with load_on_startup as nil" do
       assert %Request{
-               params: ["nil_startup_wallet", false, false, "nil_pass", false, false, nil],
+               params: ["nil_startup_wallet", false, false, "nil_pass", false, false],
                method: "createwallet",
                jsonrpc: "1.0"
              } =
@@ -391,7 +391,7 @@ defmodule BTx.RPC.Wallets.CreateWalletTest do
           # Verify the method body structure
           assert %{
                    "method" => "createwallet",
-                   "params" => ["test_wallet", false, false, "secure_pass", false, true, nil],
+                   "params" => ["test_wallet", false, false, "secure_pass", false, true],
                    "jsonrpc" => "1.0",
                    "id" => id
                  } = BTx.json_module().decode!(body)
@@ -431,7 +431,7 @@ defmodule BTx.RPC.Wallets.CreateWalletTest do
           # Verify custom ID is used
           assert %{
                    "method" => "createwallet",
-                   "params" => ["custom_id_wallet", false, false, "test_pass", false, false, nil],
+                   "params" => ["custom_id_wallet", false, false, "test_pass", false, false],
                    "jsonrpc" => "1.0"
                  } = BTx.json_module().decode!(body)
 

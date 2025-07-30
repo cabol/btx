@@ -133,7 +133,7 @@ defmodule BTx.RPC.Wallets.UnloadWalletResultTest do
           # Verify the method body structure
           assert %{
                    "method" => "unloadwallet",
-                   "params" => ["test_wallet", nil],
+                   "params" => ["test_wallet"],
                    "jsonrpc" => "1.0",
                    "id" => id
                  } = BTx.json_module().decode!(body)
@@ -215,7 +215,7 @@ defmodule BTx.RPC.Wallets.UnloadWalletResultTest do
           # Verify custom ID is used
           assert %{
                    "method" => "unloadwallet",
-                   "params" => ["test_wallet", nil],
+                   "params" => ["test_wallet"],
                    "jsonrpc" => "1.0",
                    "id" => ^custom_id
                  } = BTx.json_module().decode!(body)

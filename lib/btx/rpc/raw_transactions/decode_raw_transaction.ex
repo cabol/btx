@@ -20,6 +20,7 @@ defmodule BTx.RPC.RawTransactions.DecodeRawTransaction do
   use Ecto.Schema
 
   import BTx.Ecto.ChangesetUtils
+  import BTx.Helpers, only: [trim_trailing_nil: 1]
   import Ecto.Changeset
 
   alias BTx.RPC.Request
@@ -58,13 +59,10 @@ defmodule BTx.RPC.RawTransactions.DecodeRawTransaction do
           hexstring: hexstring,
           iswitness: iswitness
         }) do
-      params = [hexstring]
-      params = if iswitness != nil, do: params ++ [iswitness], else: params
-
       Request.new(
         method: method,
         path: "/",
-        params: params
+        params: trim_trailing_nil([hexstring, iswitness])
       )
     end
   end

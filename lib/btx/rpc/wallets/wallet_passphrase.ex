@@ -30,6 +30,7 @@ defmodule BTx.RPC.Wallets.WalletPassphrase do
   use Ecto.Schema
 
   import BTx.Ecto.ChangesetUtils
+  import BTx.Helpers, only: [trim_trailing_nil: 1]
   import Ecto.Changeset
 
   alias BTx.RPC.Request
@@ -79,7 +80,7 @@ defmodule BTx.RPC.Wallets.WalletPassphrase do
       Request.new(
         method: method,
         path: path,
-        params: [passphrase, timeout]
+        params: trim_trailing_nil([passphrase, timeout])
       )
     end
   end

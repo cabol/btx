@@ -133,7 +133,7 @@ defmodule BTx.RPC.Wallets.GetNewAddressTest do
   describe "encodable" do
     test "encodes method with default values" do
       assert %Request{
-               params: ["", nil],
+               params: [""],
                method: "getnewaddress",
                jsonrpc: "1.0",
                path: "/"
@@ -142,7 +142,7 @@ defmodule BTx.RPC.Wallets.GetNewAddressTest do
 
     test "encodes method with custom label only" do
       assert %Request{
-               params: ["test_label", nil],
+               params: ["test_label"],
                method: "getnewaddress",
                jsonrpc: "1.0",
                path: "/"
@@ -312,7 +312,7 @@ defmodule BTx.RPC.Wallets.GetNewAddressTest do
           # Verify default values are sent
           assert %{
                    "method" => "getnewaddress",
-                   "params" => ["", nil],
+                   "params" => [""],
                    "jsonrpc" => "1.0"
                  } = BTx.json_module().decode!(body)
 
@@ -336,7 +336,7 @@ defmodule BTx.RPC.Wallets.GetNewAddressTest do
           # Verify label is sent with default address_type
           assert %{
                    "method" => "getnewaddress",
-                   "params" => ["savings", nil],
+                   "params" => ["savings"],
                    "jsonrpc" => "1.0"
                  } = BTx.json_module().decode!(body)
 
@@ -496,7 +496,7 @@ defmodule BTx.RPC.Wallets.GetNewAddressTest do
           # Verify the method body structure
           assert %{
                    "method" => "getnewaddress",
-                   "params" => ["", nil],
+                   "params" => [""],
                    "jsonrpc" => "1.0"
                  } = BTx.json_module().decode!(body)
 

@@ -93,7 +93,7 @@ defmodule BTx.RPC.Wallets.ListTransactionsTest do
   describe "encodable" do
     test "encodes method with default values" do
       assert %Request{
-               params: [nil, 10, 0, nil],
+               params: [nil, 10, 0],
                method: "listtransactions",
                jsonrpc: "1.0",
                path: "/"
@@ -102,7 +102,7 @@ defmodule BTx.RPC.Wallets.ListTransactionsTest do
 
     test "encodes method with wallet name" do
       assert %Request{
-               params: [nil, 10, 0, nil],
+               params: [nil, 10, 0],
                method: "listtransactions",
                jsonrpc: "1.0",
                path: "/wallet/test_wallet"
@@ -292,7 +292,7 @@ defmodule BTx.RPC.Wallets.ListTransactionsTest do
         %{method: :post, url: ^url, body: body} ->
           assert %{
                    "method" => "listtransactions",
-                   "params" => [nil, 10, 0, nil],
+                   "params" => [nil, 10, 0],
                    "jsonrpc" => "1.0",
                    "id" => id
                  } = BTx.json_module().decode!(body)
@@ -322,7 +322,7 @@ defmodule BTx.RPC.Wallets.ListTransactionsTest do
         %{method: :post, url: ^url, body: body} ->
           assert %{
                    "method" => "listtransactions",
-                   "params" => ["customer_payments", 10, 0, nil],
+                   "params" => ["customer_payments", 10, 0],
                    "jsonrpc" => "1.0"
                  } = BTx.json_module().decode!(body)
 

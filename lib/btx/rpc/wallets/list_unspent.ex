@@ -31,6 +31,7 @@ defmodule BTx.RPC.Wallets.ListUnspent do
   use Ecto.Schema
 
   import BTx.Ecto.ChangesetUtils
+  import BTx.Helpers, only: [trim_trailing_nil: 1]
   import Ecto.Changeset
 
   alias BTx.RPC.Request
@@ -90,13 +91,15 @@ defmodule BTx.RPC.Wallets.ListUnspent do
       Request.new(
         method: method,
         path: path,
-        params: [
-          minconf,
-          maxconf,
-          addresses,
-          include_unsafe,
-          encode_query_options(query_options)
-        ]
+        params:
+          [
+            minconf,
+            maxconf,
+            addresses,
+            include_unsafe,
+            encode_query_options(query_options)
+          ]
+          |> trim_trailing_nil()
       )
     end
 

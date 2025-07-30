@@ -121,7 +121,7 @@ defmodule BTx.RPC.Wallets.LoadWalletTest do
   describe "encodable" do
     test "encodes method with required filename only" do
       assert %Request{
-               params: ["test.dat", nil],
+               params: ["test.dat"],
                method: "loadwallet",
                jsonrpc: "1.0",
                path: "/"
@@ -146,10 +146,10 @@ defmodule BTx.RPC.Wallets.LoadWalletTest do
 
     test "encodes method with all parameter combinations" do
       test_cases = [
-        {%{filename: "test.dat"}, ["test.dat", nil]},
+        {%{filename: "test.dat"}, ["test.dat"]},
         {%{filename: "test.dat", load_on_startup: true}, ["test.dat", true]},
         {%{filename: "test.dat", load_on_startup: false}, ["test.dat", false]},
-        {%{filename: "wallet_dir", load_on_startup: nil}, ["wallet_dir", nil]}
+        {%{filename: "wallet_dir", load_on_startup: nil}, ["wallet_dir"]}
       ]
 
       for {params, expected_params} <- test_cases do
@@ -211,7 +211,7 @@ defmodule BTx.RPC.Wallets.LoadWalletTest do
           # Verify the method body structure
           assert %{
                    "method" => "loadwallet",
-                   "params" => ["test.dat", nil],
+                   "params" => ["test.dat"],
                    "jsonrpc" => "1.0",
                    "id" => id
                  } = BTx.json_module().decode!(body)

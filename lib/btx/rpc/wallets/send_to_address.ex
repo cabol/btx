@@ -53,6 +53,7 @@ defmodule BTx.RPC.Wallets.SendToAddress do
   use Ecto.Schema
 
   import BTx.Ecto.ChangesetUtils
+  import BTx.Helpers, only: [trim_trailing_nil: 1]
   import Ecto.Changeset
 
   alias BTx.RPC.Request
@@ -129,19 +130,21 @@ defmodule BTx.RPC.Wallets.SendToAddress do
       Request.new(
         method: method,
         path: path,
-        params: [
-          address,
-          amount,
-          comment,
-          comment_to,
-          subtract_fee_from_amount,
-          replaceable,
-          conf_target,
-          estimate_mode,
-          avoid_reuse,
-          fee_rate,
-          verbose
-        ]
+        params:
+          [
+            address,
+            amount,
+            comment,
+            comment_to,
+            subtract_fee_from_amount,
+            replaceable,
+            conf_target,
+            estimate_mode,
+            avoid_reuse,
+            fee_rate,
+            verbose
+          ]
+          |> trim_trailing_nil()
       )
     end
   end
