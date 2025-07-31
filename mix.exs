@@ -146,8 +146,12 @@ defmodule BTx.MixProject do
           BTx.RPC.Mining.GenerateToAddress
         ],
         "Raw Transactions RPCs": [
+          BTx.RPC.RawTransactions.CreateRawTransaction,
           BTx.RPC.RawTransactions.GetRawTransaction,
           BTx.RPC.RawTransactions.GetRawTransactionResult,
+          BTx.RPC.RawTransactions.RawTransaction.Input,
+          BTx.RPC.RawTransactions.RawTransaction.Output,
+          BTx.RPC.RawTransactions.RawTransaction.Output.Address,
           BTx.RPC.RawTransactions.RawTransaction.Vin,
           BTx.RPC.RawTransactions.RawTransaction.Vin.ScriptSig,
           BTx.RPC.RawTransactions.RawTransaction.Vout,

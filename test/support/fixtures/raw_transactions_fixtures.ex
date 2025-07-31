@@ -5,6 +5,189 @@ defmodule BTx.RawTransactionsFixtures do
 
   import BTx.TestUtils
 
+  ## CreateRawTransaction result
+
+  @doc """
+  Returns a fixture for createrawtransaction inputs.
+
+  ## Options
+
+  You can override any field by passing a map with the desired values:
+
+  ## Examples
+
+      # Default input
+      create_raw_transaction_input_fixture()
+
+      # Override specific fields
+      create_raw_transaction_input_fixture(%{
+        "sequence" => 1000
+      })
+
+  """
+  @spec create_raw_transaction_input_fixture(map()) :: map()
+  def create_raw_transaction_input_fixture(overrides \\ %{}) do
+    %{
+      "txid" => "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+      "vout" => 0,
+      "sequence" => 4_294_967_295
+    }
+    |> deep_merge(overrides)
+  end
+
+  @doc """
+  Returns a fixture for createrawtransaction address outputs.
+
+  ## Options
+
+  You can override any field by passing a map with the desired values:
+
+  ## Examples
+
+      # Default address output
+      create_raw_transaction_address_output_fixture()
+
+      # Override specific fields
+      create_raw_transaction_address_output_fixture(%{
+        "amount" => 2.5
+      })
+
+  """
+  @spec create_raw_transaction_address_output_fixture(map()) :: map()
+  def create_raw_transaction_address_output_fixture(overrides \\ %{}) do
+    %{
+      "address" => "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
+      "amount" => 1.0
+    }
+    |> deep_merge(overrides)
+  end
+
+  @doc """
+  Returns a fixture for createrawtransaction outputs.
+
+  ## Options
+
+  You can override any field by passing a map with the desired values:
+
+  ## Examples
+
+      # Default output with addresses
+      create_raw_transaction_output_fixture()
+
+      # Output with data
+      create_raw_transaction_output_fixture(%{
+        "addresses" => [],
+        "data" => "deadbeef"
+      })
+
+      # Mixed output
+      create_raw_transaction_output_fixture(%{
+        "data" => "cafebabe"
+      })
+
+  """
+  @spec create_raw_transaction_output_fixture(map()) :: map()
+  def create_raw_transaction_output_fixture(overrides \\ %{}) do
+    %{
+      "addresses" => [create_raw_transaction_address_output_fixture()],
+      "data" => nil
+    }
+    |> deep_merge(overrides)
+  end
+
+  @doc """
+  Returns a fixture for createrawtransaction request.
+
+  ## Options
+
+  You can override any field by passing a map with the desired values:
+
+  ## Examples
+
+      # Default create raw transaction request
+      create_raw_transaction_fixture()
+
+      # Override specific fields
+      create_raw_transaction_fixture(%{
+        "locktime" => 500000,
+        "replaceable" => true
+      })
+
+  """
+  @spec create_raw_transaction_fixture(map()) :: map()
+  def create_raw_transaction_fixture(overrides \\ %{}) do
+    %{
+      "inputs" => [create_raw_transaction_input_fixture()],
+      "outputs" => create_raw_transaction_output_fixture(),
+      "locktime" => 0,
+      "replaceable" => false
+    }
+    |> deep_merge(overrides)
+  end
+
+  @doc """
+  Returns preset fixtures for common createrawtransaction scenarios.
+
+  ## Examples
+
+      create_raw_transaction_preset(:address_only)
+      create_raw_transaction_preset(:data_only)
+      create_raw_transaction_preset(:mixed_outputs)
+      create_raw_transaction_preset(:with_locktime)
+
+  """
+  @spec create_raw_transaction_preset(atom()) :: map()
+  def create_raw_transaction_preset(type) do
+    case type do
+      :address_only -> create_raw_transaction_fixture()
+      :data_only -> create_raw_transaction_fixture(data_only_overrides())
+      :mixed_outputs -> create_raw_transaction_fixture(mixed_outputs_overrides())
+      :with_locktime -> create_raw_transaction_fixture(with_locktime_overrides())
+    end
+  end
+
+  ## Private functions for createrawtransaction presets
+
+  defp data_only_overrides do
+    %{
+      "outputs" => %{
+        "addresses" => [],
+        "data" => "deadbeef"
+      }
+    }
+  end
+
+  defp mixed_outputs_overrides do
+    %{
+      "outputs" => %{
+        "addresses" => [
+          create_raw_transaction_address_output_fixture(),
+          create_raw_transaction_address_output_fixture(%{
+            "address" => "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+            "amount" => 0.5
+          })
+        ],
+        "data" => "cafebabe"
+      }
+    }
+  end
+
+  defp with_locktime_overrides do
+    %{
+      "inputs" => [
+        create_raw_transaction_input_fixture(%{"sequence" => 1000})
+      ],
+      "outputs" =>
+        create_raw_transaction_output_fixture(%{
+          "addresses" => [
+            create_raw_transaction_address_output_fixture(%{"amount" => 2.0})
+          ]
+        }),
+      "locktime" => 500_000,
+      "replaceable" => true
+    }
+  end
+
   ## GetRawTransaction result
 
   @doc """

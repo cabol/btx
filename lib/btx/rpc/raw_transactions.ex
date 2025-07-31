@@ -11,6 +11,7 @@ defmodule BTx.RPC.RawTransactions do
   alias BTx.RPC
 
   alias BTx.RPC.RawTransactions.{
+    CreateRawTransaction,
     DecodeRawTransaction,
     DecodeRawTransactionResult,
     GetRawTransaction,
@@ -29,6 +30,100 @@ defmodule BTx.RPC.RawTransactions do
   @type response(t) :: {:ok, t} | {:error, Ecto.Changeset.t()} | RPC.rpc_error()
 
   ## API
+
+  # Add this to the alias list in raw_transactions.ex:
+  alias BTx.RPC.RawTransactions.{
+    # <- ADD THIS LINE
+    CreateRawTransaction,
+    DecodeRawTransaction,
+    DecodeRawTransactionResult,
+    GetRawTransaction,
+    GetRawTransactionResult
+  }
+
+  # Add these functions at the end of the raw_transactions.ex module:
+
+  @doc """
+  Create a transaction spending the given inputs and creating new outputs.
+
+  Outputs can be addresses or data. Returns hex-encoded raw transaction.
+
+  Note that the transaction's inputs are not signed, and it is not stored in the
+  wallet or transmitted to the network.
+
+  ## Arguments
+
+  - `client` - Same as `BTx.RPC.call/3`.
+  - `params` - A keyword list or map of parameters for the request.
+    See `BTx.RPC.RawTransactions.CreateRawTransaction` for more information about the
+    available parameters.
+  - `opts` - Same as `BTx.RPC.call/3`.
+
+  ## Options
+
+  See `BTx.RPC.call/3`.
+
+  ## Examples
+
+      # Create transaction with address output
+      iex> BTx.RPC.RawTransactions.create_raw_transaction(client,
+      ...>   inputs: [%{txid: "abc123...", vout: 0}],
+      ...>   outputs: %{
+      ...>     addresses: [%{address: "bc1q...", amount: 1.0}]
+      ...>   }
+      ...> )
+      {:ok, "0200000001abc123..."}
+
+      # Create transaction with data output
+      iex> BTx.RPC.RawTransactions.create_raw_transaction(client,
+      ...>   inputs: [%{txid: "abc123...", vout: 0}],
+      ...>   outputs: %{
+      ...>     data: "deadbeef"
+      ...>   }
+      ...> )
+      {:ok, "0200000001abc123..."}
+
+      # Create transaction with mixed outputs
+      iex> BTx.RPC.RawTransactions.create_raw_transaction(client,
+      ...>   inputs: [%{txid: "abc123...", vout: 0}],
+      ...>   outputs: %{
+      ...>     addresses: [%{address: "bc1q...", amount: 1.0}],
+      ...>     data: "deadbeef"
+      ...>   }
+      ...> )
+      {:ok, "0200000001abc123..."}
+
+      # Create transaction with locktime and replaceable
+      iex> BTx.RPC.RawTransactions.create_raw_transaction(client,
+      ...>   inputs: [%{txid: "abc123...", vout: 0, sequence: 1000}],
+      ...>   outputs: %{
+      ...>     addresses: [%{address: "bc1q...", amount: 1.0}]
+      ...>   },
+      ...>   locktime: 500000,
+      ...>   replaceable: true
+      ...> )
+      {:ok, "0200000001abc123..."}
+
+  """
+  @spec create_raw_transaction(RPC.client(), params(), keyword()) :: response(String.t())
+  def create_raw_transaction(client, params, opts \\ []) do
+    with {:ok, request} <- CreateRawTransaction.new(params) do
+      case RPC.call(client, request, opts) do
+        {:ok, %Response{result: result}} -> {:ok, result}
+        error -> error
+      end
+    end
+  end
+
+  @doc """
+  Same as `create_raw_transaction/3` but raises on error.
+  """
+  @spec create_raw_transaction!(RPC.client(), params(), keyword()) :: String.t()
+  def create_raw_transaction!(client, params, opts \\ []) do
+    client
+    |> RPC.call!(CreateRawTransaction.new!(params), opts)
+    |> Map.fetch!(:result)
+  end
 
   @doc """
   Return the raw transaction data.
