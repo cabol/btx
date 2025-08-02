@@ -152,10 +152,14 @@ defmodule BTx.MixProject do
           BTx.RPC.RawTransactions.RawTransaction.Input,
           BTx.RPC.RawTransactions.RawTransaction.Output,
           BTx.RPC.RawTransactions.RawTransaction.Output.Address,
+          BTx.RPC.RawTransactions.RawTransaction.PrevTx,
+          BTx.RPC.RawTransactions.RawTransaction.ScriptVerificationError,
           BTx.RPC.RawTransactions.RawTransaction.Vin,
           BTx.RPC.RawTransactions.RawTransaction.Vin.ScriptSig,
           BTx.RPC.RawTransactions.RawTransaction.Vout,
-          BTx.RPC.RawTransactions.RawTransaction.Vout.ScriptPubKey
+          BTx.RPC.RawTransactions.RawTransaction.Vout.ScriptPubKey,
+          BTx.RPC.RawTransactions.SignRawTransactionWithKey,
+          BTx.RPC.RawTransactions.SignRawTransactionWithKeyResult
         ],
         "Utils RPC": [
           BTx.RPC.Utils.ValidateAddress,

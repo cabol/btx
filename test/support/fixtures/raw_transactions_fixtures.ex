@@ -471,4 +471,189 @@ defmodule BTx.RawTransactionsFixtures do
     }
     |> deep_merge(overrides)
   end
+
+  ## SignRawTransactionWithKey result
+
+  @doc """
+  Returns a fixture for signrawtransactionwithkey prevtx.
+
+  ## Options
+
+  You can override any field by passing a map with the desired values:
+
+  ## Examples
+
+      # Default prevtx
+      sign_raw_transaction_prevtx_fixture()
+
+      # Override specific fields
+      sign_raw_transaction_prevtx_fixture(%{
+        "amount" => 2.5,
+        "redeemScript" => "522103..."
+      })
+
+  """
+  @spec sign_raw_transaction_prevtx_fixture(map()) :: map()
+  def sign_raw_transaction_prevtx_fixture(overrides \\ %{}) do
+    %{
+      "txid" => "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+      "vout" => 0,
+      "scriptPubKey" => "76a914abcdef0123456789abcdef0123456789abcdef0188ac",
+      "redeemScript" => "76a914abcdef0123456789abcdef0123456789abcdef0188ac",
+      "witnessScript" => "76a914abcdef0123456789abcdef0123456789abcdef0188ac",
+      "amount" => 1.0
+    }
+    |> deep_merge(overrides)
+  end
+
+  @doc """
+  Returns a fixture for signrawtransactionwithkey script verification error.
+
+  ## Options
+
+  You can override any field by passing a map with the desired values:
+
+  ## Examples
+
+      # Default error
+      sign_raw_transaction_error_fixture()
+
+      # Override specific fields
+      sign_raw_transaction_error_fixture(%{
+        "error" => "Missing redeemScript"
+      })
+
+  """
+  @spec sign_raw_transaction_error_fixture(map()) :: map()
+  def sign_raw_transaction_error_fixture(overrides \\ %{}) do
+    %{
+      "txid" => "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+      "vout" => 0,
+      "scriptSig" =>
+        "47304402203f16c6f40162ab686621ef3000b04e75418a0c0cb2d8aebeac894ae360ac1e780220ddc15ecdfc3507ac48e1681a33eb60996631bf6bf5bc0a0682c4db743ce7ca2b01",
+      "sequence" => 4_294_967_295,
+      "error" => "Script verification failed"
+    }
+    |> deep_merge(overrides)
+  end
+
+  @doc """
+  Returns a fixture for signrawtransactionwithkey result.
+
+  ## Options
+
+  You can override any field by passing a map with the desired values:
+
+  ## Examples
+
+      # Default successful result
+      sign_raw_transaction_with_key_result_fixture()
+
+      # Result with errors
+      sign_raw_transaction_with_key_result_fixture(%{
+        "complete" => false,
+        "errors" => [sign_raw_transaction_error_fixture()]
+      })
+
+  """
+  @spec sign_raw_transaction_with_key_result_fixture(map()) :: map()
+  def sign_raw_transaction_with_key_result_fixture(overrides \\ %{}) do
+    %{
+      "hex" => "0200000001#{String.duplicate("00", 100)}",
+      "complete" => true,
+      "errors" => []
+    }
+    |> deep_merge(overrides)
+  end
+
+  @doc """
+  Returns a fixture for signrawtransactionwithkey request.
+
+  ## Options
+
+  You can override any field by passing a map with the desired values:
+
+  ## Examples
+
+      # Default sign request
+      sign_raw_transaction_with_key_fixture()
+
+      # With prevtxs
+      sign_raw_transaction_with_key_fixture(%{
+        "prevtxs" => [sign_raw_transaction_prevtx_fixture()]
+      })
+
+  """
+  @spec sign_raw_transaction_with_key_fixture(map()) :: map()
+  def sign_raw_transaction_with_key_fixture(overrides \\ %{}) do
+    %{
+      "hexstring" => get_raw_transaction_hex_fixture(),
+      "privkeys" => ["L1aW4aubDFB7yfras2S1mME3bFqiXgYF73PvvrLXa8hT8VwQDfV3"],
+      "prevtxs" => [],
+      "sighashtype" => "ALL"
+    }
+    |> deep_merge(overrides)
+  end
+
+  @doc """
+  Returns preset fixtures for common signrawtransactionwithkey scenarios.
+
+  ## Examples
+
+      sign_raw_transaction_with_key_preset(:simple)
+      sign_raw_transaction_with_key_preset(:with_prevtxs)
+      sign_raw_transaction_with_key_preset(:incomplete_signing)
+      sign_raw_transaction_with_key_preset(:custom_sighash)
+
+  """
+  @spec sign_raw_transaction_with_key_preset(atom()) :: map()
+  def sign_raw_transaction_with_key_preset(type) do
+    case type do
+      :simple ->
+        sign_raw_transaction_with_key_fixture()
+
+      :with_prevtxs ->
+        sign_raw_transaction_with_key_fixture(with_prevtxs_overrides())
+
+      :incomplete_signing ->
+        sign_raw_transaction_with_key_result_fixture(incomplete_signing_overrides())
+
+      :custom_sighash ->
+        sign_raw_transaction_with_key_fixture(custom_sighash_overrides())
+    end
+  end
+
+  ## Private functions for signrawtransactionwithkey presets
+
+  defp with_prevtxs_overrides do
+    %{
+      "prevtxs" => [
+        sign_raw_transaction_prevtx_fixture(),
+        sign_raw_transaction_prevtx_fixture(%{
+          "txid" => "abcdef0987654321abcdef0987654321abcdef0987654321abcdef0987654321",
+          "vout" => 1,
+          "amount" => 0.5
+        })
+      ]
+    }
+  end
+
+  defp incomplete_signing_overrides do
+    %{
+      "complete" => false,
+      "errors" => [
+        sign_raw_transaction_error_fixture(),
+        sign_raw_transaction_error_fixture(%{
+          "vout" => 1,
+          "error" => "Unable to sign input, invalid stack size (possibly missing key)"
+        })
+      ]
+    }
+  end
+
+  defp custom_sighash_overrides do
+    %{
+      "sighashtype" => "SINGLE|ANYONECANPAY"
+    }
+  end
 end

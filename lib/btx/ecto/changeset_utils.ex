@@ -100,6 +100,25 @@ defmodule BTx.Ecto.ChangesetUtils do
   end
 
   @doc """
+  Basic validation for Bitcoin base58-encoded private key.
+
+  ## Examples
+
+      # Valid WIF (compressed)
+      iex> BTx.Ecto.ChangesetUtils.valid_privkey?("L1aW4aubDFB7yfras2S1mME3bFqiXgYF73PvvrLXa8hT8VwQDfV3")
+      true
+
+      # Valid WIF (uncompressed)
+      iex> BTx.Ecto.ChangesetUtils.valid_privkey?("5HueCGU8rMjxEXxiPuD5BDuRaU9tGm4b5NxkREAJnFsZVDa3sZH")
+      true
+
+  """
+  @spec valid_privkey?(String.t()) :: boolean()
+  def valid_privkey?(privkey) when is_binary(privkey) do
+    String.match?(privkey, ~r/^[5KL][1-9A-HJ-NP-Za-km-z]{50,51}$/)
+  end
+
+  @doc """
   Normalizes the attributes of a schema.
 
   ## Examples

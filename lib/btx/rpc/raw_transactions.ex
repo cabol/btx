@@ -15,7 +15,9 @@ defmodule BTx.RPC.RawTransactions do
     DecodeRawTransaction,
     DecodeRawTransactionResult,
     GetRawTransaction,
-    GetRawTransactionResult
+    GetRawTransactionResult,
+    SignRawTransactionWithKey,
+    SignRawTransactionWithKeyResult
   }
 
   alias BTx.RPC.Response
@@ -293,5 +295,84 @@ defmodule BTx.RPC.RawTransactions do
     |> RPC.call!(DecodeRawTransaction.new!(params), opts)
     |> Map.fetch!(:result)
     |> DecodeRawTransactionResult.new!()
+  end
+
+  @doc """
+  Sign inputs for raw transaction (serialized, hex-encoded).
+
+  The second argument is an array of base58-encoded private keys that will be
+  the only keys used to sign the transaction.
+
+  The third optional argument (may be null) is an array of previous transaction
+  outputs that this transaction depends on but may not yet be in the block chain.
+
+  ## Arguments
+
+  - `client` - Same as `BTx.RPC.call/3`.
+  - `params` - A keyword list or map of parameters for the request.
+    See `BTx.RPC.RawTransactions.SignRawTransactionWithKey` for more information
+    about the available parameters.
+  - `opts` - Same as `BTx.RPC.call/3`.
+
+  ## Options
+
+  See `BTx.RPC.call/3`.
+
+  ## Examples
+
+      # Sign transaction with private keys
+      iex> BTx.RPC.RawTransactions.sign_raw_transaction_with_key(client,
+      ...>   hexstring: "02000000010123456789abcdef...",
+      ...>   privkeys: ["5HueCGU8rMjxEXxiPuD5BDu... "]
+      ...> )
+      {:ok, %BTx.RPC.RawTransactions.SignRawTransactionWithKeyResult{
+        hex: "0200000001...",
+        complete: true,
+        errors: []
+      }}
+
+      # Sign with previous transaction outputs
+      iex> BTx.RPC.RawTransactions.sign_raw_transaction_with_key(client,
+      ...>   hexstring: "02000000010123456789abcdef...",
+      ...>   privkeys: ["5HueCGU8rMjxEXxiPuD5BDu... "],
+      ...>   prevtxs: [%{
+      ...>     txid: "abcdef123...",
+      ...>     vout: 0,
+      ...>     script_pub_key: "76a914...",
+      ...>     amount: 1.0
+      ...>   }]
+      ...> )
+      {:ok, %BTx.RPC.RawTransactions.SignRawTransactionWithKeyResult{...}}
+
+      # Sign with custom signature hash type
+      iex> BTx.RPC.RawTransactions.sign_raw_transaction_with_key(client,
+      ...>   hexstring: "02000000010123456789abcdef...",
+      ...>   privkeys: ["5HueCGU8rMjxEXxiPuD5BDu... "],
+      ...>   sighashtype: "SINGLE"
+      ...> )
+      {:ok, %BTx.RPC.RawTransactions.SignRawTransactionWithKeyResult{...}}
+
+  """
+  @spec sign_raw_transaction_with_key(RPC.client(), params(), keyword()) ::
+          response(SignRawTransactionWithKeyResult.t())
+  def sign_raw_transaction_with_key(client, params, opts \\ []) do
+    with {:ok, request} <- SignRawTransactionWithKey.new(params) do
+      case RPC.call(client, request, opts) do
+        {:ok, %Response{result: result}} -> SignRawTransactionWithKeyResult.new(result)
+        error -> error
+      end
+    end
+  end
+
+  @doc """
+  Same as `sign_raw_transaction_with_key/3` but raises on error.
+  """
+  @spec sign_raw_transaction_with_key!(RPC.client(), params(), keyword()) ::
+          SignRawTransactionWithKeyResult.t()
+  def sign_raw_transaction_with_key!(client, params, opts \\ []) do
+    client
+    |> RPC.call!(SignRawTransactionWithKey.new!(params), opts)
+    |> Map.fetch!(:result)
+    |> SignRawTransactionWithKeyResult.new!()
   end
 end
