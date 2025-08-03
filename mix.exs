@@ -158,6 +158,7 @@ defmodule BTx.MixProject do
           BTx.RPC.RawTransactions.RawTransaction.Vin.ScriptSig,
           BTx.RPC.RawTransactions.RawTransaction.Vout,
           BTx.RPC.RawTransactions.RawTransaction.Vout.ScriptPubKey,
+          BTx.RPC.RawTransactions.SendRawTransaction,
           BTx.RPC.RawTransactions.SignRawTransactionWithKey,
           BTx.RPC.RawTransactions.SignRawTransactionWithKeyResult
         ],

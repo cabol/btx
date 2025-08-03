@@ -656,4 +656,112 @@ defmodule BTx.RawTransactionsFixtures do
       "sighashtype" => "SINGLE|ANYONECANPAY"
     }
   end
+
+  ## SendRawTransaction fixtures
+
+  @doc """
+  Returns a fixture for sendrawtransaction request.
+
+  ## Options
+
+  You can override any field by passing a map with the desired values:
+
+  ## Examples
+
+      # Default request
+      send_raw_transaction_request_fixture()
+
+      # Override specific fields
+      send_raw_transaction_request_fixture(%{
+        "hexstring" => "custom_hex_transaction",
+        "maxfeerate" => 0.05
+      })
+
+      # Accept any fee rate
+      send_raw_transaction_request_fixture(%{
+        "maxfeerate" => 0
+      })
+
+  """
+  @spec send_raw_transaction_request_fixture(map()) :: map()
+  def send_raw_transaction_request_fixture(overrides \\ %{}) do
+    %{
+      "hexstring" =>
+        "0200000001abc123def456789abc123def456789abc123def456789abc123def456789ab00000000484730440220123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01022012345678901234567890123456789012345678901234567890123456789012340121023456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456ffffffff0100e1f50500000000160014389ffce9cd9ae88dcc0631e88a821ffdbe9bfe2600000000",
+      "maxfeerate" => 0.10
+    }
+    |> deep_merge(overrides)
+  end
+
+  @doc """
+  Returns a fixture for sendrawtransaction result (transaction hash).
+
+  ## Options
+
+  You can override the transaction hash by passing a string:
+
+  ## Examples
+
+      # Default transaction hash
+      send_raw_transaction_result_fixture()
+
+      # Custom transaction hash
+      send_raw_transaction_result_fixture("abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890")
+
+  """
+  @spec send_raw_transaction_result_fixture(String.t()) :: String.t()
+  def send_raw_transaction_result_fixture(
+        txid \\ "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+      ) do
+    txid
+  end
+
+  @doc """
+  Returns preset fixtures for common sendrawtransaction scenarios.
+
+  ## Examples
+
+      send_raw_transaction_preset(:default_fee)
+      send_raw_transaction_preset(:high_fee)
+      send_raw_transaction_preset(:no_fee_limit)
+      send_raw_transaction_preset(:low_fee)
+
+  """
+  @spec send_raw_transaction_preset(atom()) :: map()
+  def send_raw_transaction_preset(type) do
+    case type do
+      :default_fee -> send_raw_transaction_request_fixture()
+      :high_fee -> send_raw_transaction_request_fixture(high_fee_overrides())
+      :no_fee_limit -> send_raw_transaction_request_fixture(no_fee_limit_overrides())
+      :low_fee -> send_raw_transaction_request_fixture(low_fee_overrides())
+      :minimal -> send_raw_transaction_request_fixture(minimal_overrides())
+    end
+  end
+
+  ## Private functions
+
+  defp high_fee_overrides do
+    %{
+      "maxfeerate" => 1.0
+    }
+  end
+
+  defp no_fee_limit_overrides do
+    %{
+      "maxfeerate" => 0
+    }
+  end
+
+  defp low_fee_overrides do
+    %{
+      "maxfeerate" => 0.01
+    }
+  end
+
+  defp minimal_overrides do
+    %{
+      "hexstring" =>
+        "0200000001abc123def456789abc123def456789abc123def456789abc123def456789ab00000000ffffffff0100e1f50500000000160014389ffce9cd9ae88dcc0631e88a821ffdbe9bfe2600000000"
+    }
+  end
 end

@@ -16,6 +16,7 @@ defmodule BTx.RPC.RawTransactions do
     DecodeRawTransactionResult,
     GetRawTransaction,
     GetRawTransactionResult,
+    SendRawTransaction,
     SignRawTransactionWithKey,
     SignRawTransactionWithKeyResult
   }
@@ -372,5 +373,67 @@ defmodule BTx.RPC.RawTransactions do
     |> RPC.call!(SignRawTransactionWithKey.new!(params), opts)
     |> Map.fetch!(:result)
     |> SignRawTransactionWithKeyResult.new!()
+  end
+
+  @doc """
+  Submit a raw transaction (serialized, hex-encoded) to local node and network.
+
+  Note that the transaction will be sent unconditionally to all peers, so using this
+  for manual rebroadcast may degrade privacy by leaking the transaction's origin, as
+  nodes will normally not rebroadcast non-wallet transactions already in their mempool.
+
+  Also see createrawtransaction and signrawtransactionwithkey calls.
+
+  ## Arguments
+
+  - `client` - Same as `BTx.RPC.call/3`.
+  - `params` - A keyword list or map of parameters for the request.
+    See `BTx.RPC.Utils.SendRawTransaction` for more information about the
+    available parameters.
+  - `opts` - Same as `BTx.RPC.call/3`.
+
+  ## Options
+
+  See `BTx.RPC.call/3`.
+
+  ## Examples
+
+      # Send a raw transaction with default max fee rate
+      iex> BTx.RPC.Utils.send_raw_transaction(client,
+      ...>   hexstring: "0200000001abc123def456789abc123def456789abc123def456789abc123def456789ab00000000484730440220123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01022012345678901234567890123456789012345678901234567890123456789012340121023456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456ffffffff0100e1f50500000000160014389ffce9cd9ae88dcc0631e88a821ffdbe9bfe2600000000"
+      ...> )
+      {:ok, "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"}
+
+      # Send a raw transaction with custom max fee rate
+      iex> BTx.RPC.Utils.send_raw_transaction(client,
+      ...>   hexstring: "0200000001abc123...",
+      ...>   maxfeerate: 0.05
+      ...> )
+      {:ok, "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"}
+
+      # Send a raw transaction accepting any fee rate
+      iex> BTx.RPC.Utils.send_raw_transaction(client,
+      ...>   hexstring: "0200000001abc123...",
+      ...>   maxfeerate: 0
+      ...> )
+      {:ok, "fedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321"}
+
+  """
+  @spec send_raw_transaction(RPC.client(), params(), keyword()) :: response(String.t())
+  def send_raw_transaction(client, params, opts \\ []) do
+    with {:ok, request} <- SendRawTransaction.new(params),
+         {:ok, %Response{result: result}} <- RPC.call(client, request, opts) do
+      {:ok, result}
+    end
+  end
+
+  @doc """
+  Same as `send_raw_transaction/3` but raises on error.
+  """
+  @spec send_raw_transaction!(RPC.client(), params(), keyword()) :: String.t()
+  def send_raw_transaction!(client, params, opts \\ []) do
+    client
+    |> RPC.call!(SendRawTransaction.new!(params), opts)
+    |> Map.fetch!(:result)
   end
 end
