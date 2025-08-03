@@ -55,4 +55,22 @@ defmodule BTx.RPC.RawTransactions.RawTransaction.PrevTx do
     |> validate_hexstring(:witness_script)
     |> validate_number(:amount, greater_than: 0)
   end
+
+  @doc """
+  Converts a `PrevTx` schema to a map.
+  """
+  @spec to_map(t()) :: map()
+  def to_map(%__MODULE__{} = prevtx) do
+    prevtx
+    |> Map.take(__schema__(:fields))
+    |> Enum.reduce(%{}, fn {key, value}, acc ->
+      case {key, value} do
+        {:script_pub_key, val} when not is_nil(val) -> Map.put(acc, "scriptPubKey", val)
+        {:redeem_script, val} when not is_nil(val) -> Map.put(acc, "redeemScript", val)
+        {:witness_script, val} when not is_nil(val) -> Map.put(acc, "witnessScript", val)
+        {key, val} when not is_nil(val) -> Map.put(acc, to_string(key), val)
+        _ -> acc
+      end
+    end)
+  end
 end

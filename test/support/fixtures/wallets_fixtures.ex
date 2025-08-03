@@ -695,4 +695,152 @@ defmodule BTx.WalletsFixtures do
       "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2" => %{"purpose" => "send"}
     }
   end
+
+  ## SignRawTransactionWithWallet fixtures
+
+  @doc """
+  Returns a fixture for signrawtransactionwithwallet request.
+
+  ## Options
+
+  You can override any field by passing a map with the desired values:
+
+  ## Examples
+
+      # Default request
+      sign_raw_transaction_with_wallet_request_fixture()
+
+      # Override specific fields
+      sign_raw_transaction_with_wallet_request_fixture(%{
+        "sighashtype" => "SINGLE",
+        "wallet_name" => "custom_wallet"
+      })
+
+      # With previous transactions
+      sign_raw_transaction_with_wallet_request_fixture(%{
+        "prevtxs" => [
+          %{
+            "txid" => "abc123...",
+            "vout" => 0,
+            "scriptPubKey" => "76a914...",
+            "amount" => 0.01
+          }
+        ]
+      })
+
+  """
+  @spec sign_raw_transaction_with_wallet_request_fixture(map()) :: map()
+  def sign_raw_transaction_with_wallet_request_fixture(overrides \\ %{}) do
+    %{
+      "hexstring" =>
+        "0200000001abc123def456789abc123def456789abc123def456789abc123def456789ab00000000ffffffff0100e1f50500000000160014389ffce9cd9ae88dcc0631e88a821ffdbe9bfe2600000000",
+      "prevtxs" => [],
+      "sighashtype" => "ALL",
+      "wallet_name" => "test_wallet"
+    }
+    |> deep_merge(overrides)
+  end
+
+  @doc """
+  Returns a fixture for signrawtransactionwithwallet result.
+
+  ## Options
+
+  You can override any field by passing a map with the desired values:
+
+  ## Examples
+
+      # Default successful result
+      sign_raw_transaction_with_wallet_result_fixture()
+
+      # Override specific fields
+      sign_raw_transaction_with_wallet_result_fixture(%{
+        "complete" => false,
+        "errors" => [
+          %{
+            "txid" => "abc123...",
+            "vout" => 0,
+            "error" => "Input not found or already spent"
+          }
+        ]
+      })
+
+      # Incomplete transaction
+      sign_raw_transaction_with_wallet_result_fixture(%{
+        "complete" => false
+      })
+
+  """
+  @spec sign_raw_transaction_with_wallet_result_fixture(map()) :: map()
+  def sign_raw_transaction_with_wallet_result_fixture(overrides \\ %{}) do
+    %{
+      "hex" =>
+        "0200000001abc123def456789abc123def456789abc123def456789abc123def456789ab00000000484730440220123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01022012345678901234567890123456789012345678901234567890123456789012340121023456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456ffffffff0100e1f50500000000160014389ffce9cd9ae88dcc0631e88a821ffdbe9bfe2600000000",
+      "complete" => true,
+      "errors" => []
+    }
+    |> deep_merge(overrides)
+  end
+
+  @doc """
+  Returns preset fixtures for common signrawtransactionwithwallet scenarios.
+
+  ## Examples
+
+      sign_raw_transaction_with_wallet_preset(:successful)
+      sign_raw_transaction_with_wallet_preset(:incomplete)
+      sign_raw_transaction_with_wallet_preset(:with_errors)
+      sign_raw_transaction_with_wallet_preset(:with_prevtxs)
+
+  """
+  @spec sign_raw_transaction_with_wallet_preset(atom()) :: map()
+  def sign_raw_transaction_with_wallet_preset(type) do
+    case type do
+      :successful -> sign_raw_transaction_with_wallet_result_fixture()
+      :incomplete -> sign_raw_transaction_with_wallet_result_fixture(incomplete_overrides())
+      :with_errors -> sign_raw_transaction_with_wallet_result_fixture(with_errors_overrides())
+      :with_prevtxs -> sign_raw_transaction_with_wallet_request_fixture(with_prevtxs_overrides())
+    end
+  end
+
+  ## Private functions
+
+  defp incomplete_overrides do
+    %{
+      "complete" => false,
+      "hex" =>
+        "0200000001abc123def456789abc123def456789abc123def456789abc123def456789ab00000000ffffffff0100e1f50500000000160014389ffce9cd9ae88dcc0631e88a821ffdbe9bfe2600000000"
+    }
+  end
+
+  defp with_errors_overrides do
+    %{
+      "complete" => false,
+      "errors" => [
+        %{
+          "txid" => "abc123def456789abc123def456789abc123def456789abc123def456789ab",
+          "vout" => 0,
+          "scriptSig" =>
+            "47304402203c2a7d8c8a4b5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1021034567890abcdef0123456789abcdef0123456789abcdef0123456789abcdef01",
+          "sequence" => 4_294_967_295,
+          "error" => "Input not found or already spent"
+        }
+      ]
+    }
+  end
+
+  defp with_prevtxs_overrides do
+    %{
+      "prevtxs" => [
+        %{
+          "txid" => "abc123def456789abc123def456789abc123def456789abc123def456789ab",
+          "vout" => 0,
+          "scriptPubKey" => "76a914389ffce9cd9ae88dcc0631e88a821ffdbe9bfe2688ac",
+          "redeemScript" =>
+            "5221023456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456",
+          "amount" => 0.01000000
+        }
+      ]
+    }
+  end
 end

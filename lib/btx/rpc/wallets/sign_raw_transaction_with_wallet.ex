@@ -1,18 +1,16 @@
-defmodule BTx.RPC.RawTransactions.SignRawTransactionWithKey do
+defmodule BTx.RPC.Wallets.SignRawTransactionWithWallet do
   @moduledoc """
   Sign inputs for raw transaction (serialized, hex-encoded).
 
-  The second argument is an array of base58-encoded private keys that will be
-  the only keys used to sign the transaction.
-
-  The third optional argument (may be null) is an array of previous transaction
+  The second optional argument (may be null) is an array of previous transaction
   outputs that this transaction depends on but may not yet be in the block chain.
+
+  Requires wallet passphrase to be set with walletpassphrase call if wallet is
+  encrypted.
 
   ## Schema fields (a.k.a "Arguments")
 
   - `:hexstring` - (required) The transaction hex string.
-
-  - `:privkeys` - (required) Array of base58-encoded private keys for signing.
 
   - `:prevtxs` - (optional) Array of previous dependent transaction outputs.
 
@@ -20,8 +18,14 @@ defmodule BTx.RPC.RawTransactions.SignRawTransactionWithKey do
     "ALL", "NONE", "SINGLE", "ALL|ANYONECANPAY", "NONE|ANYONECANPAY",
     "SINGLE|ANYONECANPAY". Default: "ALL".
 
-  See [Bitcoin RPC API Reference `signrawtransactionwithkey`][signrawtransactionwithkey].
-  [signrawtransactionwithkey]: https://developer.bitcoin.org/reference/rpc/signrawtransactionwithkey.html
+  - `:wallet_name` - (optional) When is present, the `:wallet_name` is used
+    to build the path for the request. See
+    ["Wallet-specific RPC calls"][wallet-rpc] section for more information.
+
+  [wallet-rpc]: http://hexdocs.pm/btx/BTx.RPC.Wallets.html#module-wallet-specific-rpc-calls
+
+  See [Bitcoin RPC API Reference `signrawtransactionwithwallet`][signrawtransactionwithwallet].
+  [signrawtransactionwithwallet]: https://developer.bitcoin.org/reference/rpc/signrawtransactionwithwallet.html
   """
 
   use Ecto.Schema
@@ -35,18 +39,18 @@ defmodule BTx.RPC.RawTransactions.SignRawTransactionWithKey do
 
   ## Constants
 
-  @method "signrawtransactionwithkey"
+  @method "signrawtransactionwithwallet"
 
   # Valid signature hash types
   @valid_sighash_types ~w(ALL NONE SINGLE ALL|ANYONECANPAY NONE|ANYONECANPAY SINGLE|ANYONECANPAY)
 
   ## Types & Schema
 
-  @typedoc "SignRawTransactionWithKey request"
+  @typedoc "SignRawTransactionWithWallet request"
   @type t() :: %__MODULE__{
           method: String.t(),
+          wallet_name: String.t() | nil,
           hexstring: String.t() | nil,
-          privkeys: [String.t()] | nil,
           prevtxs: [PrevTx.t()] | nil,
           sighashtype: String.t() | nil
         }
@@ -56,34 +60,37 @@ defmodule BTx.RPC.RawTransactions.SignRawTransactionWithKey do
     # Predefined fields
     field :method, :string, default: @method
 
+    # For optional path parameter `/wallet/<wallet_name>`
+    field :wallet_name, :string
+
     # Method fields
     field :hexstring, :string
-    field :privkeys, {:array, :string}
     embeds_many :prevtxs, PrevTx
     field :sighashtype, :string, default: "ALL"
   end
 
-  @required_fields ~w(hexstring privkeys)a
-  @optional_fields ~w(sighashtype)a
+  @required_fields ~w(hexstring)a
+  @optional_fields ~w(sighashtype wallet_name)a
 
   ## Encodable protocol
 
   defimpl BTx.RPC.Encodable, for: __MODULE__ do
     def encode(%{
           method: method,
+          wallet_name: wallet_name,
           hexstring: hexstring,
-          privkeys: privkeys,
           prevtxs: prevtxs,
           sighashtype: sighashtype
         }) do
       # Convert prevtxs to simple maps for JSON encoding
       prevtxs_params = if prevtxs, do: Enum.map(prevtxs, &PrevTx.to_map/1), else: nil
 
-      params = [hexstring, privkeys, prevtxs_params, sighashtype]
+      path = if wallet_name, do: "/wallet/#{wallet_name}", else: "/"
+      params = [hexstring, prevtxs_params, sighashtype]
 
       Request.new(
         method: method,
-        path: "/",
+        path: path,
         params: trim_trailing_nil(params)
       )
     end
@@ -92,27 +99,27 @@ defmodule BTx.RPC.RawTransactions.SignRawTransactionWithKey do
   ## API
 
   @doc """
-  Creates a new `SignRawTransactionWithKey` request.
+  Creates a new `SignRawTransactionWithWallet` request.
   """
   @spec new(keyword() | map()) :: {:ok, t()} | {:error, Ecto.Changeset.t()}
   def new(attrs) do
     %__MODULE__{}
     |> changeset(Enum.into(attrs, %{}))
-    |> apply_action(:signrawtransactionwithkey)
+    |> apply_action(:signrawtransactionwithwallet)
   end
 
   @doc """
-  Creates a new `SignRawTransactionWithKey` request.
+  Creates a new `SignRawTransactionWithWallet` request.
   """
   @spec new!(keyword() | map()) :: t()
   def new!(attrs) do
     %__MODULE__{}
     |> changeset(Enum.into(attrs, %{}))
-    |> apply_action!(:signrawtransactionwithkey)
+    |> apply_action!(:signrawtransactionwithwallet)
   end
 
   @doc """
-  Creates a changeset for the `SignRawTransactionWithKey` request.
+  Creates a changeset for the `SignRawTransactionWithWallet` request.
   """
   @spec changeset(t(), map()) :: Ecto.Changeset.t()
   def changeset(t, attrs) do
@@ -122,22 +129,7 @@ defmodule BTx.RPC.RawTransactions.SignRawTransactionWithKey do
     |> cast_embed(:prevtxs)
     |> validate_length(:hexstring, min: 1)
     |> validate_hexstring(:hexstring)
-    |> validate_length(:privkeys, min: 1)
-    |> validate_privkeys()
     |> validate_inclusion(:sighashtype, @valid_sighash_types)
-  end
-
-  ## Private functions
-
-  # Basic validation for base58-encoded private keys
-  # This is a simple check - Bitcoin Core will do comprehensive validation
-  defp validate_privkeys(changeset) do
-    validate_change(changeset, :privkeys, fn :privkeys, privkeys ->
-      if Enum.all?(privkeys, &valid_privkey?/1) do
-        []
-      else
-        [privkeys: "contains invalid private keys"]
-      end
-    end)
+    |> validate_wallet_name()
   end
 end

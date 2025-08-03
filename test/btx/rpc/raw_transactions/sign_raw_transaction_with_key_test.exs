@@ -79,6 +79,34 @@ defmodule BTx.RPC.RawTransactions.SignRawTransactionWithKeyTest do
     end
   end
 
+  describe "PrevTx to_map/1" do
+    test "converts a PrevTx schema to a map" do
+      attrs = sign_raw_transaction_prevtx_fixture()
+
+      changeset = PrevTx.changeset(%PrevTx{}, attrs)
+      assert changeset.valid?
+
+      prevtx = Changeset.apply_changes(changeset)
+      map = PrevTx.to_map(prevtx)
+      assert map == attrs
+    end
+
+    test "converts a PrevTx schema to a map with nil fields" do
+      attrs =
+        sign_raw_transaction_prevtx_fixture(%{
+          "redeemScript" => nil,
+          "witnessScript" => nil
+        })
+
+      changeset = PrevTx.changeset(%PrevTx{}, attrs)
+      assert changeset.valid?
+
+      prevtx = Changeset.apply_changes(changeset)
+      map = PrevTx.to_map(prevtx)
+      assert map == attrs |> Map.drop(["redeemScript", "witnessScript"])
+    end
+  end
+
   ## ScriptVerificationError schema tests
 
   describe "ScriptVerificationError changeset/2" do

@@ -45,6 +45,8 @@ defmodule BTx.RPC.Wallets do
     LoadWalletResult,
     SendToAddress,
     SendToAddressResult,
+    SignRawTransactionWithWallet,
+    SignRawTransactionWithWalletResult,
     UnloadWallet,
     UnloadWalletResult,
     WalletLock,
@@ -1167,6 +1169,87 @@ defmodule BTx.RPC.Wallets do
     |> RPC.call!(ListUnspent.new!(params), opts)
     |> Map.fetch!(:result)
     |> parse_unspent_list!()
+  end
+
+  ## Raw Transactions
+
+  @doc """
+  Sign inputs for raw transaction (serialized, hex-encoded).
+
+  The second optional argument (may be null) is an array of previous transaction
+  outputs that this transaction depends on but may not yet be in the block chain.
+
+  Requires wallet passphrase to be set with walletpassphrase call if wallet is
+  encrypted.
+
+  ## Arguments
+
+  - `client` - Same as `BTx.RPC.call/3`.
+  - `params` - A keyword list or map of parameters for the request.
+    See `BTx.RPC.Wallets.SignRawTransactionWithWallet` for more information about the
+    available parameters.
+  - `opts` - Same as `BTx.RPC.call/3`.
+
+  ## Options
+
+  See `BTx.RPC.call/3`.
+
+  ## Examples
+
+      # Sign a raw transaction with wallet
+      iex> BTx.RPC.Wallets.sign_raw_transaction_with_wallet(client,
+      ...>   hexstring: "0200000001...",
+      ...>   wallet_name: "my_wallet"
+      ...> )
+      {:ok, %BTx.RPC.Wallets.SignRawTransactionWithWalletResult{
+        hex: "0200000001...",
+        complete: true,
+        errors: []
+      }}
+
+      # Sign with previous transactions
+      iex> BTx.RPC.Wallets.sign_raw_transaction_with_wallet(client,
+      ...>   hexstring: "0200000001...",
+      ...>   prevtxs: [
+      ...>     %{
+      ...>       txid: "abc123...",
+      ...>       vout: 0,
+      ...>       script_pub_key: "76a914...",
+      ...>       amount: 0.01
+      ...>     }
+      ...>   ],
+      ...>   wallet_name: "my_wallet"
+      ...> )
+      {:ok, %BTx.RPC.Wallets.SignRawTransactionWithWalletResult{...}}
+
+      # Sign with custom signature hash type
+      iex> BTx.RPC.Wallets.sign_raw_transaction_with_wallet(client,
+      ...>   hexstring: "0200000001...",
+      ...>   sighashtype: "SINGLE",
+      ...>   wallet_name: "my_wallet"
+      ...> )
+      {:ok, %BTx.RPC.Wallets.SignRawTransactionWithWalletResult{...}}
+
+  """
+  @spec sign_raw_transaction_with_wallet(RPC.client(), params(), keyword()) ::
+          response(SignRawTransactionWithWalletResult.t())
+  def sign_raw_transaction_with_wallet(client, params, opts \\ []) do
+    with {:ok, request} <- SignRawTransactionWithWallet.new(params),
+         {:ok, %Response{result: result}} <- RPC.call(client, request, opts) do
+      SignRawTransactionWithWalletResult.new(result)
+    end
+  end
+
+  @doc """
+  Same as `sign_raw_transaction_with_wallet/3` but raises on error.
+  """
+  @spec sign_raw_transaction_with_wallet!(RPC.client(), params(), keyword()) ::
+          SignRawTransactionWithWalletResult.t()
+  def sign_raw_transaction_with_wallet!(client, params, opts \\ []) do
+    client
+    |> RPC.call!(SignRawTransactionWithWallet.new!(params), opts)
+    |> Map.fetch!(:result)
+    |> SignRawTransactionWithWalletResult.new!()
   end
 
   ## Private helper functions

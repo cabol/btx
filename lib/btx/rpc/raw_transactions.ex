@@ -356,11 +356,9 @@ defmodule BTx.RPC.RawTransactions do
   @spec sign_raw_transaction_with_key(RPC.client(), params(), keyword()) ::
           response(SignRawTransactionWithKeyResult.t())
   def sign_raw_transaction_with_key(client, params, opts \\ []) do
-    with {:ok, request} <- SignRawTransactionWithKey.new(params) do
-      case RPC.call(client, request, opts) do
-        {:ok, %Response{result: result}} -> SignRawTransactionWithKeyResult.new(result)
-        error -> error
-      end
+    with {:ok, request} <- SignRawTransactionWithKey.new(params),
+         {:ok, %Response{result: result}} <- RPC.call(client, request, opts) do
+      SignRawTransactionWithKeyResult.new(result)
     end
   end
 
