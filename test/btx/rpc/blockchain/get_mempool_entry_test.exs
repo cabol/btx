@@ -536,7 +536,7 @@ defmodule BTx.RPC.Blockchain.GetMempoolEntryTest do
       txid = send_result.txid
 
       # Step 5: Verify the mempool entry
-      assert_eventually do
+      assert_eventually 10, 1000 do
         assert {:ok, %GetMempoolEntryResult{} = result} =
                  Blockchain.get_mempool_entry(real_client, txid: txid, retries: 10)
 

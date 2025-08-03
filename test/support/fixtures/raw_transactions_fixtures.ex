@@ -764,4 +764,191 @@ defmodule BTx.RawTransactionsFixtures do
         "0200000001abc123def456789abc123def456789abc123def456789abc123def456789ab00000000ffffffff0100e1f50500000000160014389ffce9cd9ae88dcc0631e88a821ffdbe9bfe2600000000"
     }
   end
+
+  ## FundRawTransaction fixtures
+
+  @doc """
+  Returns a fixture for fundrawtransaction request.
+
+  ## Options
+
+  You can override any field by passing a map with the desired values:
+
+  ## Examples
+
+      # Default request
+      fund_raw_transaction_request_fixture()
+
+      # Override specific fields
+      fund_raw_transaction_request_fixture(%{
+        "hexstring" => "custom_hex_transaction",
+        "options" => %{
+          "fee_rate" => 50.0,
+          "change_type" => "bech32"
+        }
+      })
+
+      # With witness flag
+      fund_raw_transaction_request_fixture(%{
+        "iswitness" => true
+      })
+
+  """
+  @spec fund_raw_transaction_request_fixture(map()) :: map()
+  def fund_raw_transaction_request_fixture(overrides \\ %{}) do
+    %{
+      "hexstring" =>
+        "0200000000010100e1f50500000000160014389ffce9cd9ae88dcc0631e88a821ffdbe9bfe2600000000",
+      "options" => %{
+        "add_inputs" => true,
+        "lock_unspents" => false,
+        "fee_rate" => 25.0
+      },
+      "iswitness" => nil
+    }
+    |> deep_merge(overrides)
+  end
+
+  @doc """
+  Returns a fixture for fundrawtransaction options.
+
+  ## Options
+
+  You can override any field by passing a map with the desired values:
+
+  ## Examples
+
+      # Default options
+      fund_raw_transaction_options_fixture()
+
+      # Override specific fields
+      fund_raw_transaction_options_fixture(%{
+        "change_type" => "bech32",
+        "subtract_fee_from_outputs" => [0, 1]
+      })
+
+  """
+  @spec fund_raw_transaction_options_fixture(map()) :: map()
+  def fund_raw_transaction_options_fixture(overrides \\ %{}) do
+    %{
+      "add_inputs" => true,
+      "change_address" => nil,
+      "change_position" => nil,
+      "change_type" => "bech32",
+      "include_watching" => false,
+      "lock_unspents" => false,
+      "fee_rate" => 25.0,
+      "subtract_fee_from_outputs" => [],
+      "replaceable" => false,
+      "conf_target" => 6,
+      "estimate_mode" => "economical"
+    }
+    |> deep_merge(overrides)
+  end
+
+  @doc """
+  Returns a fixture for fundrawtransaction result.
+
+  ## Options
+
+  You can override any field by passing a map with the desired values:
+
+  ## Examples
+
+      # Default successful result
+      fund_raw_transaction_result_fixture()
+
+      # Override specific fields
+      fund_raw_transaction_result_fixture(%{
+        "fee" => 0.00005000,
+        "changepos" => -1
+      })
+
+      # No change output
+      fund_raw_transaction_result_fixture(%{
+        "changepos" => -1
+      })
+
+  """
+  @spec fund_raw_transaction_result_fixture(map()) :: map()
+  def fund_raw_transaction_result_fixture(overrides \\ %{}) do
+    %{
+      "hex" =>
+        "0200000001abc123def456789abc123def456789abc123def456789abc123def456789ab00000000484730440220123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01022012345678901234567890123456789012345678901234567890123456789012340121023456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456ffffffff0100e1f50500000000160014389ffce9cd9ae88dcc0631e88a821ffdbe9bfe2600000000",
+      "fee" => 0.00001000,
+      "changepos" => 1
+    }
+    |> deep_merge(overrides)
+  end
+
+  @doc """
+  Returns preset fixtures for common fundrawtransaction scenarios.
+
+  ## Examples
+
+      fund_raw_transaction_preset(:basic_funding)
+      fund_raw_transaction_preset(:with_change)
+      fund_raw_transaction_preset(:no_change)
+      fund_raw_transaction_preset(:high_fee)
+      fund_raw_transaction_preset(:subtract_fee)
+
+  """
+  @spec fund_raw_transaction_preset(atom()) :: map()
+  def fund_raw_transaction_preset(type) do
+    case type do
+      :basic_funding -> fund_raw_transaction_request_fixture()
+      :with_change -> fund_raw_transaction_result_fixture()
+      :no_change -> fund_raw_transaction_result_fixture(no_change_overrides())
+      :high_fee -> fund_raw_transaction_request_fixture(fund_raw_transaction_high_fee_overrides())
+      :subtract_fee -> fund_raw_transaction_request_fixture(subtract_fee_overrides())
+      :legacy_fee -> fund_raw_transaction_request_fixture(legacy_fee_overrides())
+      :bech32_change -> fund_raw_transaction_request_fixture(bech32_change_overrides())
+    end
+  end
+
+  ## Private functions
+
+  defp no_change_overrides do
+    %{
+      "changepos" => -1,
+      "fee" => 0.00002500
+    }
+  end
+
+  defp fund_raw_transaction_high_fee_overrides do
+    %{
+      "options" => %{
+        "fee_rate" => 100.0,
+        "lock_unspents" => true
+      }
+    }
+  end
+
+  defp subtract_fee_overrides do
+    %{
+      "options" => %{
+        "subtract_fee_from_outputs" => [0],
+        "fee_rate" => 50.0
+      }
+    }
+  end
+
+  defp legacy_fee_overrides do
+    %{
+      "options" => %{
+        "feeRate" => 0.00010000,
+        "estimate_mode" => "conservative"
+      }
+    }
+  end
+
+  defp bech32_change_overrides do
+    %{
+      "options" => %{
+        "change_type" => "bech32",
+        "change_position" => 1,
+        "replaceable" => true
+      }
+    }
+  end
 end

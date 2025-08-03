@@ -363,52 +363,54 @@ defmodule RawTransactions.SendRawTransactionTest do
           retries: 10
         )
 
-      # Get unspent outputs
-      unspent =
-        Wallets.list_unspent!(
-          real_client,
-          [wallet_name: wallet_name],
-          retries: 10
-        )
+      assert_eventually do
+        # Get unspent outputs
+        unspent =
+          Wallets.list_unspent!(
+            real_client,
+            [wallet_name: wallet_name],
+            retries: 10
+          )
 
-      utxo =
-        unspent
-        |> Enum.sort_by(& &1.amount, :desc)
-        |> hd()
+        utxo =
+          unspent
+          |> Enum.sort_by(& &1.amount, :desc)
+          |> hd()
 
-      # Create a raw transaction
-      {:ok, raw_tx} =
-        RawTransactions.create_raw_transaction(
-          real_client,
-          [
-            inputs: [%{txid: utxo.txid, vout: utxo.vout}],
-            outputs: %{
-              addresses: [%{address: address, amount: 0.0001}]
-            }
-          ],
-          retries: 10
-        )
+        # Create a raw transaction
+        {:ok, raw_tx} =
+          RawTransactions.create_raw_transaction(
+            real_client,
+            [
+              inputs: [%{txid: utxo.txid, vout: utxo.vout}],
+              outputs: %{
+                addresses: [%{address: address, amount: 0.0001}]
+              }
+            ],
+            retries: 10
+          )
 
-      # Sign the transaction
-      {:ok, signed_result} =
-        Wallets.sign_raw_transaction_with_wallet(
-          real_client,
-          [hexstring: raw_tx, wallet_name: wallet_name],
-          retries: 10
-        )
+        # Sign the transaction
+        {:ok, signed_result} =
+          Wallets.sign_raw_transaction_with_wallet(
+            real_client,
+            [hexstring: raw_tx, wallet_name: wallet_name],
+            retries: 10
+          )
 
-      # Send the signed transaction
-      assert {:ok, txid} =
-               RawTransactions.send_raw_transaction(
-                 real_client,
-                 [hexstring: signed_result.hex, maxfeerate: 0],
-                 retries: 10
-               )
+        # Send the signed transaction
+        assert {:ok, txid} =
+                 RawTransactions.send_raw_transaction(
+                   real_client,
+                   [hexstring: signed_result.hex, maxfeerate: 0],
+                   retries: 10
+                 )
 
-      # Verify we got a valid transaction hash
-      assert is_binary(txid)
-      assert String.length(txid) == 64
-      assert String.match?(txid, ~r/^[a-fA-F0-9]{64}$/)
+        # Verify we got a valid transaction hash
+        assert is_binary(txid)
+        assert String.length(txid) == 64
+        assert String.match?(txid, ~r/^[a-fA-F0-9]{64}$/)
+      end
     end
   end
 

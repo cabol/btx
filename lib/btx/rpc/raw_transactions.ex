@@ -14,6 +14,8 @@ defmodule BTx.RPC.RawTransactions do
     CreateRawTransaction,
     DecodeRawTransaction,
     DecodeRawTransactionResult,
+    FundRawTransaction,
+    FundRawTransactionResult,
     GetRawTransaction,
     GetRawTransactionResult,
     SendRawTransaction,
@@ -33,18 +35,6 @@ defmodule BTx.RPC.RawTransactions do
   @type response(t) :: {:ok, t} | {:error, Ecto.Changeset.t()} | RPC.rpc_error()
 
   ## API
-
-  # Add this to the alias list in raw_transactions.ex:
-  alias BTx.RPC.RawTransactions.{
-    # <- ADD THIS LINE
-    CreateRawTransaction,
-    DecodeRawTransaction,
-    DecodeRawTransactionResult,
-    GetRawTransaction,
-    GetRawTransactionResult
-  }
-
-  # Add these functions at the end of the raw_transactions.ex module:
 
   @doc """
   Create a transaction spending the given inputs and creating new outputs.
@@ -435,5 +425,87 @@ defmodule BTx.RPC.RawTransactions do
     client
     |> RPC.call!(SendRawTransaction.new!(params), opts)
     |> Map.fetch!(:result)
+  end
+
+  @doc """
+  If the transaction has no inputs, they will be automatically selected to meet its out value.
+
+  It will add at most one change output to the outputs.
+
+  No existing outputs will be modified unless "subtractFeeFromOutputs" is specified.
+
+  Note that inputs which were signed may need to be resigned after completion since in/outputs have been added.
+
+  The inputs added will not be signed, use signrawtransactionwithkey or signrawtransactionwithwallet for that.
+
+  ## Arguments
+
+  - `client` - Same as `BTx.RPC.call/3`.
+  - `params` - A keyword list or map of parameters for the request.
+    See `BTx.RPC.RawTransactions.FundRawTransaction` for more information about the
+    available parameters.
+  - `opts` - Same as `BTx.RPC.call/3`.
+
+  ## Options
+
+  See `BTx.RPC.call/3`.
+
+  ## Examples
+
+      # Fund a basic raw transaction
+      iex> BTx.RPC.RawTransactions.fund_raw_transaction(client,
+      ...>   hexstring: "0200000000010100e1f50500000000160014389ffce9cd9ae88dcc0631e88a821ffdbe9bfe2600000000"
+      ...> )
+      {:ok, %BTx.RPC.RawTransactions.FundRawTransactionResult{
+        hex: "0200000001abc123def456...signed_transaction_hex...",
+        fee: 0.00001000,
+        changepos: 1
+      }}
+
+      # Fund with custom options
+      iex> BTx.RPC.RawTransactions.fund_raw_transaction(client,
+      ...>   hexstring: "0200000000010100e1f50500000000160014389ffce9cd9ae88dcc0631e88a821ffdbe9bfe2600000000",
+      ...>   options: %{
+      ...>     fee_rate: 25.0,
+      ...>     change_type: "bech32",
+      ...>     subtract_fee_from_outputs: [0]
+      ...>   }
+      ...> )
+      {:ok, %BTx.RPC.RawTransactions.FundRawTransactionResult{
+        hex: "0200000001abc123def456...funded_transaction...",
+        fee: 0.00002500,
+        changepos: -1
+      }}
+
+      # Fund with legacy fee rate (BTC/kvB)
+      iex> BTx.RPC.RawTransactions.fund_raw_transaction(client,
+      ...>   hexstring: "0200000000010100e1f50500000000160014389ffce9cd9ae88dcc0631e88a821ffdbe9bfe2600000000",
+      ...>   options: %{
+      ...>     fee_rate_btc: 0.00001000,
+      ...>     lock_unspents: true
+      ...>   }
+      ...> )
+      {:ok, %BTx.RPC.RawTransactions.FundRawTransactionResult{...}}
+
+  """
+  @spec fund_raw_transaction(RPC.client(), params(), keyword()) ::
+          response(FundRawTransactionResult.t())
+  def fund_raw_transaction(client, params, opts \\ []) do
+    with {:ok, request} <- FundRawTransaction.new(params),
+         {:ok, %Response{result: result}} <- RPC.call(client, request, opts) do
+      FundRawTransactionResult.new(result)
+    end
+  end
+
+  @doc """
+  Same as `fund_raw_transaction/3` but raises on error.
+  """
+  @spec fund_raw_transaction!(RPC.client(), params(), keyword()) ::
+          FundRawTransactionResult.t()
+  def fund_raw_transaction!(client, params, opts \\ []) do
+    client
+    |> RPC.call!(FundRawTransaction.new!(params), opts)
+    |> Map.fetch!(:result)
+    |> FundRawTransactionResult.new!()
   end
 end

@@ -147,6 +147,9 @@ defmodule BTx.MixProject do
         ],
         "Raw Transactions RPCs": [
           BTx.RPC.RawTransactions.CreateRawTransaction,
+          BTx.RPC.RawTransactions.FundRawTransaction,
+          BTx.RPC.RawTransactions.FundRawTransactionResult,
+          BTx.RPC.RawTransactions.FundRawTransaction.Options,
           BTx.RPC.RawTransactions.GetRawTransaction,
           BTx.RPC.RawTransactions.GetRawTransactionResult,
           BTx.RPC.RawTransactions.RawTransaction.Input,

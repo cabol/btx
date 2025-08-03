@@ -162,6 +162,27 @@ defmodule BTx.Ecto.ChangesetUtils do
       iex> BTx.Ecto.ChangesetUtils.normalize_attrs(%{"nTx" => 1})
       %{"n_tx" => 1}
 
+      iex> BTx.Ecto.ChangesetUtils.normalize_attrs(%{"changeAddress" => "test"})
+      %{"change_address" => "test"}
+
+      iex> BTx.Ecto.ChangesetUtils.normalize_attrs(%{"changePosition" => 1})
+      %{"change_position" => 1}
+
+      iex> BTx.Ecto.ChangesetUtils.normalize_attrs(%{"includeWatching" => true})
+      %{"include_watching" => true}
+
+      iex> BTx.Ecto.ChangesetUtils.normalize_attrs(%{"lockUnspents" => true})
+      %{"lock_unspents" => true}
+
+      iex> BTx.Ecto.ChangesetUtils.normalize_attrs(%{"feeRate" => 1})
+      %{"fee_rate_btc" => 1}
+
+      iex> BTx.Ecto.ChangesetUtils.normalize_attrs(%{"subtractFeeFromOutputs" => [0]})
+      %{"subtract_fee_from_outputs" => [0]}
+
+      iex> BTx.Ecto.ChangesetUtils.normalize_attrs(%{"other" => "other"})
+      %{"other" => "other"}
+
   """
   @spec normalize_attrs(map()) :: map()
   def normalize_attrs(attrs) when is_map(attrs) do
@@ -185,5 +206,11 @@ defmodule BTx.Ecto.ChangesetUtils do
   defp normalize_field({"witnessScript", value}), do: {"witness_script", value}
   defp normalize_field({"versionHex", value}), do: {"version_hex", value}
   defp normalize_field({"nTx", value}), do: {"n_tx", value}
+  defp normalize_field({"changeAddress", value}), do: {"change_address", value}
+  defp normalize_field({"changePosition", value}), do: {"change_position", value}
+  defp normalize_field({"includeWatching", value}), do: {"include_watching", value}
+  defp normalize_field({"lockUnspents", value}), do: {"lock_unspents", value}
+  defp normalize_field({"feeRate", value}), do: {"fee_rate_btc", value}
+  defp normalize_field({"subtractFeeFromOutputs", value}), do: {"subtract_fee_from_outputs", value}
   defp normalize_field({key, value}), do: {key, value}
 end
