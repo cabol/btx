@@ -5,7 +5,7 @@
   "skip_files": [
     "lib/btx.ex",
     "lib/btx/helpers.ex",
-    "lib/btx/ecto/types/scanning.ex",
+    "lib/btx/ecto/types/*",
     "test/support/*"
   ]
 }

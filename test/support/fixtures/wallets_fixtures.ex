@@ -843,4 +843,290 @@ defmodule BTx.WalletsFixtures do
       ]
     }
   end
+
+  ## ImportDescriptors fixtures
+
+  @doc """
+  Returns a fixture for importdescriptors request.
+
+  ## Options
+
+  You can override any field by passing a map with the desired values:
+
+  ## Examples
+
+      # Default request with single descriptor
+      import_descriptors_request_fixture()
+
+      # Override specific fields
+      import_descriptors_request_fixture(%{
+        "wallet_name" => "custom_wallet",
+        "requests" => [
+          %{
+            "desc" => "custom_descriptor",
+            "timestamp" => 1234567890
+          }
+        ]
+      })
+
+      # Multiple descriptors
+      import_descriptors_request_fixture(%{
+        "requests" => [
+          %{
+            "desc" => "wpkh([d34db33f/84h/0h/0h]xpub6ERApfZwUNrhLCkDtcHTcxd75RbzS1ed54G1LkBUHQVHQKqhMkhgbmJbZRkrgZw4koxb5JaHWkY4ALHY2grBGRjaDMzQLcgJvLJuZZvRcEL/0/*)#cjjspncu",
+            "timestamp" => "now",
+            "active" => true,
+            "range" => [0, 100]
+          },
+          %{
+            "desc" => "wpkh([d34db33f/84h/0h/0h]xpub6ERApfZwUNrhLCkDtcHTcxd75RbzS1ed54G1LkBUHQVHQKqhMkhgbmJbZRkrgZw4koxb5JaHWkY4ALHY2grBGRjaDMzQLcgJvLJuZZvRcEL/1/*)#tjg09x5t",
+            "timestamp" => 0,
+            "internal" => true
+          }
+        ]
+      })
+
+  """
+  @spec import_descriptors_request_fixture(map()) :: map()
+  def import_descriptors_request_fixture(overrides \\ %{}) do
+    %{
+      "requests" => [
+        %{
+          "desc" =>
+            "wpkh([d34db33f/84h/0h/0h]xpub6ERApfZwUNrhLCkDtcHTcxd75RbzS1ed54G1LkBUHQVHQKqhMkhgbmJbZRkrgZw4koxb5JaHWkY4ALHY2grBGRjaDMzQLcgJvLJuZZvRcEL/0/*)#cjjspncu",
+          "active" => false,
+          "timestamp" => "now",
+          "internal" => false,
+          "label" => "test_wallet"
+        }
+      ],
+      "wallet_name" => "test_wallet"
+    }
+    |> deep_merge(overrides)
+  end
+
+  @doc """
+  Returns a fixture for a single import descriptor request.
+
+  ## Options
+
+  You can override any field by passing a map with the desired values:
+
+  ## Examples
+
+      # Default single request
+      import_descriptor_request_fixture()
+
+      # Override specific fields
+      import_descriptor_request_fixture(%{
+        "active" => true,
+        "range" => [0, 100],
+        "next_index" => 50
+      })
+
+  """
+  @spec import_descriptor_request_fixture(map()) :: map()
+  def import_descriptor_request_fixture(overrides \\ %{}) do
+    %{
+      "desc" =>
+        "wpkh([d34db33f/84h/0h/0h]xpub6ERApfZwUNrhLCkDtcHTcxd75RbzS1ed54G1LkBUHQVHQKqhMkhgbmJbZRkrgZw4koxb5JaHWkY4ALHY2grBGRjaDMzQLcgJvLJuZZvRcEL/0/*)#cjjspncu",
+      "active" => false,
+      "timestamp" => "now",
+      "internal" => false,
+      "label" => "test_label"
+    }
+    |> deep_merge(overrides)
+  end
+
+  @doc """
+  Returns a fixture for importdescriptors result.
+
+  ## Options
+
+  You can override any field by passing a map with the desired values:
+
+  ## Examples
+
+      # Default successful result
+      import_descriptors_result_fixture()
+
+      # Override for multiple responses
+      import_descriptors_result_fixture(%{
+        "responses" => [
+          %{"success" => true, "warnings" => [], "error" => nil},
+          %{"success" => false, "warnings" => ["Warning message"], "error" => %{"code" => -4, "message" => "Descriptor already exists"}}
+        ]
+      })
+
+  """
+  @spec import_descriptors_result_fixture(map()) :: map()
+  def import_descriptors_result_fixture(overrides \\ %{}) do
+    %{
+      "responses" => [
+        %{
+          "success" => true,
+          "warnings" => [],
+          "error" => nil
+        }
+      ]
+    }
+    |> deep_merge(overrides)
+  end
+
+  @doc """
+  Returns a fixture for a single import descriptor response.
+
+  ## Options
+
+  You can override any field by passing a map with the desired values:
+
+  ## Examples
+
+      # Default successful response
+      import_descriptor_response_fixture()
+
+      # Override for error response
+      import_descriptor_response_fixture(%{
+        "success" => false,
+        "warnings" => ["Descriptor may be invalid"],
+        "error" => %{
+          "code" => -4,
+          "message" => "Descriptor already exists"
+        }
+      })
+
+  """
+  @spec import_descriptor_response_fixture(map()) :: map()
+  def import_descriptor_response_fixture(overrides \\ %{}) do
+    %{
+      "success" => true,
+      "warnings" => [],
+      "error" => nil
+    }
+    |> deep_merge(overrides)
+  end
+
+  @doc """
+  Returns preset fixtures for common importdescriptors scenarios.
+
+  ## Examples
+
+      import_descriptors_preset(:single_success)
+      import_descriptors_preset(:multiple_success)
+      import_descriptors_preset(:with_warnings)
+      import_descriptors_preset(:with_errors)
+      import_descriptors_preset(:mixed_results)
+
+  """
+  @spec import_descriptors_preset(atom()) :: map()
+  def import_descriptors_preset(type) do
+    case type do
+      :single_success ->
+        import_descriptors_result_fixture()
+
+      :multiple_success ->
+        import_descriptors_result_fixture(import_desc_multiple_success_overrides())
+
+      :with_warnings ->
+        import_descriptors_result_fixture(import_desc_with_warnings_overrides())
+
+      :with_errors ->
+        import_descriptors_result_fixture(import_desc_with_errors_overrides())
+
+      :mixed_results ->
+        import_descriptors_result_fixture(import_desc_mixed_results_overrides())
+
+      :active_with_range ->
+        import_descriptors_request_fixture(active_with_range_overrides())
+
+      :internal_descriptor ->
+        import_descriptors_request_fixture(internal_descriptor_overrides())
+    end
+  end
+
+  ## Private functions
+
+  defp import_desc_multiple_success_overrides do
+    %{
+      "responses" => [
+        %{"success" => true, "warnings" => [], "error" => nil},
+        %{"success" => true, "warnings" => [], "error" => nil}
+      ]
+    }
+  end
+
+  defp import_desc_with_warnings_overrides do
+    %{
+      "responses" => [
+        %{
+          "success" => true,
+          "warnings" => ["Rescan will be triggered"],
+          "error" => nil
+        }
+      ]
+    }
+  end
+
+  defp import_desc_with_errors_overrides do
+    %{
+      "responses" => [
+        %{
+          "success" => false,
+          "warnings" => [],
+          "error" => %{
+            "code" => -4,
+            "message" => "Descriptor already exists"
+          }
+        }
+      ]
+    }
+  end
+
+  defp import_desc_mixed_results_overrides do
+    %{
+      "responses" => [
+        %{"success" => true, "warnings" => [], "error" => nil},
+        %{
+          "success" => false,
+          "warnings" => ["Invalid checksum"],
+          "error" => %{
+            "code" => -5,
+            "message" => "Invalid descriptor"
+          }
+        }
+      ]
+    }
+  end
+
+  defp active_with_range_overrides do
+    %{
+      "requests" => [
+        %{
+          "desc" =>
+            "wpkh([d34db33f/84h/0h/0h]xpub6ERApfZwUNrhLCkDtcHTcxd75RbzS1ed54G1LkBUHQVHQKqhMkhgbmJbZRkrgZw4koxb5JaHWkY4ALHY2grBGRjaDMzQLcgJvLJuZZvRcEL/0/*)#cjjspncu",
+          "active" => true,
+          "range" => [0, 100],
+          "next_index" => 50,
+          "timestamp" => 0,
+          "internal" => false,
+          "label" => "active_wallet"
+        }
+      ]
+    }
+  end
+
+  defp internal_descriptor_overrides do
+    %{
+      "requests" => [
+        %{
+          "desc" =>
+            "wpkh([d34db33f/84h/0h/0h]xpub6ERApfZwUNrhLCkDtcHTcxd75RbzS1ed54G1LkBUHQVHQKqhMkhgbmJbZRkrgZw4koxb5JaHWkY4ALHY2grBGRjaDMzQLcgJvLJuZZvRcEL/1/*)#tjg09x5t",
+          "active" => false,
+          "timestamp" => 1_640_995_200,
+          "internal" => true
+          # label should not be present for internal descriptors
+        }
+      ]
+    }
+  end
 end

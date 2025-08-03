@@ -36,6 +36,9 @@ defmodule BTx.RPC.Wallets do
     GetTransactionResult,
     GetWalletInfo,
     GetWalletInfoResult,
+    ImportDescriptorResponse,
+    ImportDescriptors,
+    ImportDescriptorsResult,
     ListTransactions,
     ListTransactionsItem,
     ListUnspent,
@@ -1250,6 +1253,100 @@ defmodule BTx.RPC.Wallets do
     |> RPC.call!(SignRawTransactionWithWallet.new!(params), opts)
     |> Map.fetch!(:result)
     |> SignRawTransactionWithWalletResult.new!()
+  end
+
+  ## Descriptors
+
+  @doc """
+  Import descriptors. This will trigger a rescan of the blockchain based on the
+  earliest timestamp of all descriptors being imported. Requires a new wallet backup.
+
+  Note: This call can take over an hour to complete if using an early timestamp;
+  during that time, other rpc calls may report that the imported keys, addresses
+  or scripts exist but related transactions are still missing.
+
+  ## Arguments
+
+  - `client` - Same as `BTx.RPC.call/3`.
+  - `params` - A keyword list or map of parameters for the request.
+    See `BTx.RPC.Wallets.ImportDescriptors` for more information about the
+    available parameters.
+  - `opts` - Same as `BTx.RPC.call/3`.
+
+  ## Options
+
+  See `BTx.RPC.call/3`.
+
+  ## Examples
+
+      # Import a single descriptor
+      iex> BTx.RPC.Wallets.import_descriptors(client,
+      ...>   requests: [
+      ...>     %{
+      ...>       desc: "wpkh([d34db33f/84h/0h/0h]xpub6ERApfZwUNrhLCkDtcHTcxd75RbzS1ed54G1LkBUHQVHQKqhMkhgbmJbZRkrgZw4koxb5JaHWkY4ALHY2grBGRjaDMzQLcgJvLJuZZvRcEL/0/*)#cjjspncu",
+      ...>       timestamp: "now",
+      ...>       internal: false,
+      ...>       label: "my_wallet"
+      ...>     }
+      ...>   ],
+      ...>   wallet_name: "my_wallet"
+      ...> )
+      {:ok, [
+        %{
+          success: true,
+          warnings: [],
+          error: nil
+        }
+      ]}
+
+      # Import multiple descriptors with different settings
+      iex> BTx.RPC.Wallets.import_descriptors(client,
+      ...>   requests: [
+      ...>     %{
+      ...>       desc: "wpkh([d34db33f/84h/0h/0h]xpub6ERApfZwUNrhLCkDtcHTcxd75RbzS1ed54G1LkBUHQVHQKqhMkhgbmJbZRkrgZw4koxb5JaHWkY4ALHY2grBGRjaDMzQLcgJvLJuZZvRcEL/0/*)#cjjspncu",
+      ...>       timestamp: 0,
+      ...>       active: true,
+      ...>       range: [0, 100],
+      ...>       internal: false,
+      ...>       label: "external_wallet"
+      ...>     },
+      ...>     %{
+      ...>       desc: "wpkh([d34db33f/84h/0h/0h]xpub6ERApfZwUNrhLCkDtcHTcxd75RbzS1ed54G1LkBUHQVHQKqhMkhgbmJbZRkrgZw4koxb5JaHWkY4ALHY2grBGRjaDMzQLcgJvLJuZZvRcEL/1/*)#tjg09x5t",
+      ...>       timestamp: 0,
+      ...>       active: true,
+      ...>       range: [0, 100],
+      ...>       internal: true
+      ...>     }
+      ...>   ],
+      ...>   wallet_name: "my_wallet"
+      ...> )
+      {:ok, [
+        %{success: true, warnings: [], error: nil},
+        %{success: true, warnings: [], error: nil}
+      ]}
+
+  """
+  @spec import_descriptors(RPC.client(), params(), keyword()) ::
+          response([ImportDescriptorResponse.t()])
+  def import_descriptors(client, params, opts \\ []) do
+    with {:ok, request} <- ImportDescriptors.new(params),
+         {:ok, %Response{result: result}} <- RPC.call(client, request, opts),
+         {:ok, import_result} <- ImportDescriptorsResult.new(result) do
+      {:ok, import_result.responses}
+    end
+  end
+
+  @doc """
+  Same as `import_descriptors/3` but raises on error.
+  """
+  @spec import_descriptors!(RPC.client(), params(), keyword()) ::
+          [ImportDescriptorResponse.t()]
+  def import_descriptors!(client, params, opts \\ []) do
+    client
+    |> RPC.call!(ImportDescriptors.new!(params), opts)
+    |> Map.fetch!(:result)
+    |> ImportDescriptorsResult.new!()
+    |> Map.fetch!(:responses)
   end
 
   ## Private helper functions
