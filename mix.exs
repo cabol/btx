@@ -162,6 +162,8 @@ defmodule BTx.MixProject do
           BTx.RPC.RawTransactions.SignRawTransactionWithKeyResult
         ],
         "Utils RPC": [
+          BTx.RPC.Utils.GetDescriptorInfo,
+          BTx.RPC.Utils.GetDescriptorInfoResult,
           BTx.RPC.Utils.ValidateAddress,
           BTx.RPC.Utils.ValidateAddressResult
         ],
