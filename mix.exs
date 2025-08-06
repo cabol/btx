@@ -217,7 +217,7 @@ defmodule BTx.MixProject do
   defp extras do
     [
       # Introduction
-      # "guides/introduction/getting-started.md"
+      "guides/introduction/getting-started.md"
     ]
   end
 

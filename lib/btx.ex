@@ -35,7 +35,12 @@ defmodule BTx do
         descriptors: true
       )
 
-  See individual module documentation for detailed examples and usage patterns.
+  For more detailed information, see the
+  [getting started guide][getting_started] and
+  [online documentation][docs].
+
+  [getting_started]: http://hexdocs.pm/btx/getting-started.html
+  [docs]: http://hexdocs.pm/btx/BTx.html
 
   ## Development Status
 

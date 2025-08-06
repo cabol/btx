@@ -6,28 +6,39 @@
 [![Hex.pm](http://img.shields.io/hexpm/v/btx.svg)](http://hex.pm/packages/btx)
 [![Documentation](http://img.shields.io/badge/Documentation-ff69b4)](http://hexdocs.pm/btx)
 
-## About
-
 **BTx** is a modern Elixir library for Bitcoin development, starting with a
 powerful JSON-RPC client for Bitcoin Core. Designed for developers building
-Bitcoin applications, `BTx` provides an idiomatic Elixir interface with plans
-to expand into comprehensive Bitcoin tooling.
+Bitcoin applications, `BTx` provides an idiomatic Elixir interface with
+comprehensive Bitcoin tooling.
 
-## Features
+## ✨ Features
 
-- **Full JSON-RPC Compliance**: Complete implementation of Bitcoin Core's
-  JSON-RPC API (`BTx.RPC`).
-- **Idiomatic Elixir Interface**: Clean, functional API that feels natural
-  in Elixir applications.
-- **Configurable Client**: Built on Tesla for flexible HTTP client
-  configuration.
-- **Automatic Encoding**: Bitcoin methods automatically encoded using Ecto
-  embedded schemas.
-- **Response Handling**: Intelligent response parsing and error handling.
+### 🚀 Complete JSON-RPC Implementation
+- **Full Bitcoin Core API Coverage**: Complete implementation of Bitcoin
+  Core's JSON-RPC API.
+- **Type-Safe Requests**: All methods use Ecto schemas with automatic
+  validation.
+- **Intelligent Response Parsing**: Structured response handling with embedded
+  schemas.
 
-## Installation
+### 🛠️ Developer Experience
+- **Idiomatic Elixir Interface**: Clean, functional API that feels natural in
+  Elixir applications.
+- **Context-Organized API**: Well-organized modules (`BTx.RPC.Wallets`,
+  `BTx.RPC.Blockchain`, etc.).
+- **Comprehensive Error Handling**: Detailed error messages with specific
+  Bitcoin Core error codes.
+- **Built-in Retries**: Configurable retry logic for network resilience.
 
-Add `btx` to your list of dependencies in `mix.exs`:
+### 🔧 Enterprise-Ready
+- **Flexible HTTP Client**: Built on Tesla for maximum configurability.
+- **Telemetry Integration**: Built-in metrics and observability.
+- **Connection Pooling**: Efficient resource management.
+- **Wallet Routing**: Automatic wallet-specific endpoint routing.
+
+## 🚀 Quick Install
+
+Add `btx` to your dependencies in `mix.exs`:
 
 ```elixir
 def deps do
@@ -37,74 +48,155 @@ def deps do
 end
 ```
 
-## Quick Start
+For more detailed information, see the
+[getting started guide][getting_started] and
+[online documentation][docs].
 
-The first step is to ensure that you have a Bitcoin node running locally.
-You can use the `docker-compose.yml` file in the repo to spin up the Bitcoin
-node (running in `regtest` mode), like so:
+[getting_started]: http://hexdocs.pm/btx/getting-started.html
+[docs]: http://hexdocs.pm/btx/BTx.html
 
-```shell
+## ⚡ Quick Start
+
+### 1. Start Bitcoin Core (Regtest)
+```bash
+# Using the included docker-compose
 docker-compose up -d
 ```
 
-Now we can start using the JSON RPC API. Let's create a wallet:
-
+### 2. Create a Client
 ```elixir
-# Create a new client
-iex> client =
-...>   BTx.RPC.client(
-...>     base_url: "http://127.0.0.1:18443",
-...>     username: "my-user",
-...>     password: "my-pass"
-...>   )
-
-# Create a wallet (using the `BTx.RPC.Wallets` context)
-iex> BTx.RPC.Wallets.create_wallet!(client,
-...>   wallet_name: "my-wallet",
-...>   passphrase: "my-passphrase",
-...>   avoid_reuse: true,
-...>   descriptors: true
-...> )
-%BTx.RPC.Wallets.CreateWalletResult{
-  name: "my-wallet",
-  warning: nil
-}
+client = BTx.RPC.client(
+  base_url: "http://127.0.0.1:18443",
+  username: "my-user",
+  password: "my-pass"
+)
 ```
 
-## Roadmap
+### 3. Create Your First Wallet
+```elixir
+{:ok, result} = BTx.RPC.Wallets.create_wallet(client,
+  wallet_name: "my-wallet",
+  passphrase: "secure-passphrase",
+  avoid_reuse: true,
+  descriptors: true
+)
 
-BTx is under active development with plans to expand beyond JSON-RPC:
+# => %BTx.RPC.Wallets.CreateWalletResult{name: "my-wallet", warning: nil}
+```
 
-- **Phase 1** (Current): Complete JSON-RPC client implementation
-- **Phase 2**: Wallet management utilities
-- **Phase 3**: Transaction building and signing
-- **Phase 4**: Blockchain analysis and utilities
-- **Phase 5**: Advanced Bitcoin primitives
+### 4. Generate Addresses & Send Transactions
+```elixir
+# Generate a new address
+{:ok, address} = BTx.RPC.Wallets.get_new_address(client,
+  wallet_name: "my-wallet",
+  label: "customer-payment",
+  address_type: "bech32"
+)
 
-## Development Status
+# Get wallet balance
+{:ok, balance} = BTx.RPC.Wallets.get_balance(client,
+  wallet_name: "my-wallet"
+)
 
-⚠️ **Work in Progress**: `BTx` is currently under active development. While the
-core JSON-RPC functionality is being implemented, the API may change between
-versions. Not recommended for production use yet.
+# Send payment
+{:ok, txid} = BTx.RPC.Wallets.send_to_address(client,
+  address: "bc1q...",
+  amount: 0.001,
+  wallet_name: "my-wallet"
+)
+```
 
-## Contributing
+## 🎯 Key Advantages
 
-Contributions to **BTx** are very welcome and appreciated!
+### Type Safety First
+```elixir
+# ✅ Type-safe with validation
+{:ok, wallet} = BTx.RPC.Wallets.create_wallet(client,
+  wallet_name: "valid-name",
+  descriptors: true
+)
 
-Use the [issue tracker](https://github.com/cabol/btx/issues)
-for bug reports or feature requests. Open a
-[pull request](https://github.com/cabol/btx/pulls)
-when you are ready to contribute.
+# ❌ Invalid parameters caught early
+{:error, changeset} = BTx.RPC.Wallets.create_wallet(client,
+  wallet_name: "", # Empty name validation fails
+  descriptors: "invalid" # Type validation fails
+)
+```
 
-When submitting a pull request you should not update the
-[CHANGELOG.md](CHANGELOG.md), and also make sure you test your changes
-thoroughly, include unit tests alongside new or changed code.
+### Comprehensive Error Handling
+```elixir
+case BTx.RPC.Wallets.create_wallet(client, wallet_name: "existing") do
+  {:ok, result} ->
+    # Success
+  {:error, %BTx.RPC.MethodError{code: -4}} ->
+    # Wallet already exists
+  {:error, %BTx.RPC.Error{reason: :econnrefused}} ->
+    # Bitcoin Core not running
+end
+```
 
-Before to submit a PR it is highly recommended to run `mix test.ci` and ensure
-all checks run successfully.
+### Context-Organized API
+- **`BTx.RPC.Blockchain`** - Blockchain info, blocks, mining
+- **`BTx.RPC.Mining`** - Mining utilities
+- **`BTx.RPC.RawTransactions`** - Transaction creation and signing
+- **`BTx.RPC.Utils`** - Utility functions, validation, estimates
+- **`BTx.RPC.Wallets`** - Wallet management, addresses, transactions
 
-## Copyright and License
+## 📚 Learn More
+
+Ready to dive deeper? Check out our comprehensive guides:
+
+**[📖 Getting Started Guide](docs/getting-started.md)** - Complete tutorial
+with real examples
+
+**[📋 API Documentation](http://hexdocs.pm/btx)** - Full API reference
+
+## 🗺️ Roadmap
+
+BTx is actively developed with an ambitious roadmap focused on building
+comprehensive Bitcoin development tools:
+
+| **Phase** | **Description** | **Status** |
+|-----------|-----------------|------------|
+| 🔌 **I** | Foundation layer providing complete Bitcoin Core JSON-RPC API coverage with type-safe requests and intelligent response parsing. | ⚠️ **In Progress** |
+| 📋 **II** | High-level transaction builders, multi-signature support, fee optimization algorithms, and advanced signing workflows for complex transaction scenarios. | ❌ **Planned** |
+| 🚧 **III** | Wallet utilities including backup/restore formats, address generation algorithms, balance calculation helpers, and transaction parsing/validation tools. | ❌ **Planned** |
+| 📊 **IV** | Blockchain analysis tools including UTXO analysis algorithms, transaction graph building utilities, mempool monitoring helpers, and block parsing/validation tools. | ❌ **Planned** |
+| 🧙 **V** | Advanced Bitcoin primitives including Lightning Network protocols, privacy features (CoinJoin), smart contract scripting, and custom Bitcoin protocol extensions. | ❌ **Planned** |
+
+## ⚠️ Development Status
+
+**Work in Progress**: `BTx` is currently in active development. While the core
+JSON-RPC functionality is stable and well-tested, the API may evolve between
+versions. Currently suitable for development and testing environments.
+
+## 🤝 Contributing
+
+Contributions are very welcome! Here's how you can help:
+
+1. **Report Issues**: Use the [issue tracker](https://github.com/cabol/btx/issues)
+   for bugs or feature requests
+2. **Submit PRs**: Open [pull requests](https://github.com/cabol/btx/pulls)
+   for improvements
+3. **Run Tests**: Ensure `mix test.ci` passes before submitting
+4. **Documentation**: Help improve docs and examples
+
+### Development Setup
+```bash
+# Clone and setup
+git clone https://github.com/cabol/btx.git
+cd btx
+mix deps.get
+
+# Start Bitcoin regtest for testing
+docker-compose up -d
+
+# Run full test suite
+mix test.ci
+```
+
+## 📄 Copyright and License
 
 Copyright (c) 2025 Carlos Andres Bolaños R.A.
 
-Nebulex source code is licensed under the [MIT License](LICENSE).
+BTx source code is licensed under the [MIT License](LICENSE.md).
