@@ -222,6 +222,23 @@ defmodule BTx.RPCTest do
       assert {:error, %BTx.RPC.Error{reason: :http_service_unavailable}} =
                RPC.call(client, method, retries: 3, retry_delay: fn n -> n end)
     end
+
+    test "retryable error with function retry delay and retryable errors", %{
+      client: client,
+      method: method
+    } do
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{status: 503, body: "Service Unavailable"}
+      end)
+
+      assert {:error, %BTx.RPC.Error{reason: :http_service_unavailable}} =
+               RPC.call(client, method,
+                 retries: 3,
+                 retry_delay: fn n -> n end,
+                 retryable_errors: [:http_service_unavailable]
+               )
+    end
   end
 
   describe "call!/2" do

@@ -102,6 +102,14 @@ defmodule BTx.RPC.Options do
       integer or a function that receives the number of retries and returns a
       positive integer (the delay in milliseconds).
       """
+    ],
+    retryable_errors: [
+      type: {:list, :atom},
+      required: false,
+      doc: """
+      The errors that are retryable.
+      Defaults to `BTx.RPC.default_retryable_errors()`.
+      """
     ]
   ]
 

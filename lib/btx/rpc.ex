@@ -193,11 +193,14 @@ defmodule BTx.RPC do
   @typedoc "Response from the JSON RPC API"
   @type rpc_response() :: {:ok, BTx.RPC.Response.t()} | rpc_error()
 
-  # Retryable errors
-  @retryable_errors ~w(http_internal_server_error
-                       http_service_unavailable
-                       http_bad_gateway
-                       http_gateway_timeout)a
+  # Default retryable errors
+  @default_retryable_errors ~w(http_internal_server_error
+                               http_service_unavailable
+                               http_bad_gateway
+                               http_gateway_timeout)a
+
+  # Inline common instructions
+  @compile {:inline, default_retryable_errors: 0}
 
   ## API
 
@@ -382,6 +385,7 @@ defmodule BTx.RPC do
     {path, opts} = Keyword.pop(opts, :path)
     {retries, opts} = Keyword.pop!(opts, :retries)
     {retry_delay, opts} = Keyword.pop!(opts, :retry_delay)
+    {retryable, opts} = Keyword.pop_lazy(opts, :retryable_errors, &default_retryable_errors/0)
 
     # Encode method and add ID if provided
     request = Encodable.encode(method_object)
@@ -400,7 +404,7 @@ defmodule BTx.RPC do
 
     :telemetry.span([:btx, :rpc, :call], metadata, fn ->
       client
-      |> with_retry(path, request, opts, method_object, retry_delay, retries)
+      |> with_retry(path, request, opts, method_object, retryable, retry_delay, retries)
       |> handle_response(metadata)
     end)
   end
@@ -416,24 +420,82 @@ defmodule BTx.RPC do
     end
   end
 
+  @doc """
+  Returns the default retryable errors.
+  """
+  @spec default_retryable_errors() :: [atom()]
+  def default_retryable_errors, do: @default_retryable_errors
+
   ## Private functions
 
-  defp with_retry(client, path, request, opts, method_object, retry_delay, retries) do
-    with_retry(client, path, request, opts, method_object, retry_delay, retries, 1)
+  defp with_retry(
+         client,
+         path,
+         request,
+         opts,
+         method_object,
+         retryable,
+         retry_delay,
+         retries
+       ) do
+    with_retry(
+      client,
+      path,
+      request,
+      opts,
+      method_object,
+      retryable,
+      retry_delay,
+      retries,
+      1
+    )
   end
 
-  defp with_retry(client, path, request, opts, method_object, _retry_delay, retries, count)
+  defp with_retry(
+         client,
+         path,
+         request,
+         opts,
+         method_object,
+         _retryable,
+         _retry_delay,
+         retries,
+         count
+       )
        when count >= retries do
     post(client, path, request, opts, method_object)
   end
 
-  defp with_retry(client, path, request, opts, method_object, retry_delay, retries, count) do
-    with {:error, %BTx.RPC.Error{reason: reason}}
-         when is_atom(reason) and reason in @retryable_errors <-
+  defp with_retry(
+         client,
+         path,
+         request,
+         opts,
+         method_object,
+         retryable,
+         retry_delay,
+         retries,
+         count
+       ) do
+    with {:error, %_t{reason: reason}} = error <-
            post(client, path, request, opts, method_object) do
-      apply_retry_delay(retry_delay, count)
+      if Enum.member?(retryable, reason) do
+        apply_retry_delay(retry_delay, count)
 
-      with_retry(client, path, request, opts, method_object, retry_delay, retries, count + 1)
+        with_retry(
+          client,
+          path,
+          request,
+          opts,
+          method_object,
+          retryable,
+          retry_delay,
+          retries,
+          count + 1
+        )
+      else
+        error
+      end
     end
   end
 
