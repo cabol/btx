@@ -7,6 +7,8 @@ defmodule BTx.RPC.Response do
 
   import BTx.Helpers
 
+  alias BTx.RPC.MethodError
+
   @typedoc "Native type for the result field"
   @type native_type() :: number() | boolean() | String.t() | map() | nil
 
@@ -80,7 +82,11 @@ defmodule BTx.RPC.Response do
         status: _,
         body: %{"result" => nil, "error" => %{"code" => code, "message" => message}} = body
       }) do
-    wrap_error BTx.RPC.MethodError, id: body["id"], code: code, message: message
+    wrap_error MethodError,
+      id: body["id"],
+      code: code,
+      message: message,
+      reason: MethodError.reason(code)
   end
 
   # HTTP 500 - Internal Server Error (node is not running)

@@ -621,7 +621,12 @@ defmodule BTx.RPC.Wallets.SendToAddressTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -6, message: message}} =
+      assert {:error,
+              %BTx.RPC.MethodError{
+                code: -6,
+                message: message,
+                reason: :wallet_insufficient_funds
+              }} =
                Wallets.send_to_address(client,
                  address: address,
                  amount: 100.0
@@ -648,7 +653,8 @@ defmodule BTx.RPC.Wallets.SendToAddressTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -5, message: message}} =
+      assert {:error,
+              %BTx.RPC.MethodError{code: -5, message: message, reason: :invalid_address_or_key}} =
                Wallets.send_to_address(client,
                  address: address,
                  amount: 0.1
@@ -676,7 +682,8 @@ defmodule BTx.RPC.Wallets.SendToAddressTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -13, message: message}} =
+      assert {:error,
+              %BTx.RPC.MethodError{code: -13, message: message, reason: :wallet_unlock_needed}} =
                Wallets.send_to_address(client,
                  address: address,
                  amount: 0.1

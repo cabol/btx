@@ -469,7 +469,12 @@ defmodule BTx.RPC.Wallets.GetAddressesByLabelTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -18, message: message}} =
+      assert {:error,
+              %BTx.RPC.MethodError{
+                code: -18,
+                message: message,
+                reason: :wallet_not_found
+              }} =
                Wallets.get_addresses_by_label(client,
                  label: "test",
                  wallet_name: "nonexistent"

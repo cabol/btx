@@ -287,7 +287,12 @@ defmodule BTx.RPC.Blockchain.GetBlockTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -5, message: "Block not found"}} =
+      assert {:error,
+              %BTx.RPC.MethodError{
+                code: -5,
+                message: "Block not found",
+                reason: :invalid_address_or_key
+              }} =
                Blockchain.get_block(client, blockhash: @valid_blockhash)
     end
 
@@ -395,56 +400,4 @@ defmodule BTx.RPC.Blockchain.GetBlockTest do
       end
     end
   end
-
-  ## Helper functions for tests
-
-  # defp get_block_hex_fixture do
-  #   "010000000000000000000000000000000000000000000000000000000000000000000000 " <>
-  #     "3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a29ab5f49ffff001d1dac2b7c"
-  # end
-
-  # defp get_block_result_v1_fixture(overrides \\ %{}) do
-  #   %{
-  #     "hash" => @valid_blockhash,
-  #     "confirmations" => 100,
-  #     "size" => 285,
-  #     "strippedsize" => 249,
-  #     "weight" => 1140,
-  #     "height" => 750_123,
-  #     "version" => 1,
-  #     "versionHex" => "00000001",
-  #     "merkleroot" => "3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a",
-  #     "tx" => [
-  #       "3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a",
-  #       "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"
-  #     ],
-  #     "time" => 1_640_995_200,
-  #     "mediantime" => 1_640_995_000,
-  #     "nonce" => 486_604_799,
-  #     "bits" => "1d00ffff",
-  #     "difficulty" => 1.0,
-  #     "chainwork" => "0000000000000000000000000000000000000000000000000000000100010001",
-  #     "nTx" => 2,
-  #     "previousblockhash" => "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f",
-  #     "nextblockhash" => "00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048"
-  #   }
-  #   |> Map.merge(overrides)
-  # end
-
-  # defp get_block_result_v2_fixture(overrides \\ %{}) do
-  #   base_v1 = get_block_result_v1_fixture()
-
-  #   %{
-  #     base_v1
-  #     | "tx" => [
-  #         get_raw_transaction_result_fixture(%{
-  #           "txid" => "3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a"
-  #         }),
-  #         get_raw_transaction_result_fixture(%{
-  #           "txid" => "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"
-  #         })
-  #       ]
-  #   }
-  #   |> Map.merge(overrides)
-  # end
 end

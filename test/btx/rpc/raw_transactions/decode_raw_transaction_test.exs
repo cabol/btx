@@ -307,7 +307,12 @@ defmodule BTx.RPC.RawTransactions.DecodeRawTransactionTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -22, message: "TX decode failed"}} =
+      assert {:error,
+              %BTx.RPC.MethodError{
+                code: -22,
+                message: "TX decode failed",
+                reason: :deserialization_error
+              }} =
                RawTransactions.decode_raw_transaction(client, hexstring: @valid_hex)
     end
 

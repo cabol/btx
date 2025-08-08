@@ -403,8 +403,12 @@ defmodule BTx.RPC.Wallets.GetNewAddressTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -18, message: message}} =
-               Wallets.get_new_address(client, label: "test", wallet_name: wallet_name)
+      assert {:error,
+              %BTx.RPC.MethodError{
+                code: -18,
+                message: message,
+                reason: :wallet_not_found
+              }} = Wallets.get_new_address(client, label: "test", wallet_name: wallet_name)
 
       assert message == "Requested wallet does not exist or is not loaded"
     end

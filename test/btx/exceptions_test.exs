@@ -54,19 +54,72 @@ defmodule BTx.ExceptionsTest do
   end
 
   describe "BTx.RPC.MethodError exception" do
-    test "creates method error with required fields" do
-      error = %MethodError{id: "test-id", code: -18, message: "Wallet not found"}
+    test "maps error codes to reasons correctly" do
+      # Test some common error codes
+      error_codes_and_reasons = [
+        {-1, :misc_error},
+        {-3, :type_error},
+        {-4, :wallet_error},
+        {-6, :wallet_insufficient_funds},
+        {-8, :invalid_parameter},
+        {-13, :wallet_unlock_needed},
+        {-18, :wallet_not_found},
+        {-32_602, :invalid_params},
+        {-32_603, :internal_error}
+      ]
 
-      assert error.id == "test-id"
-      assert error.code == -18
-      assert error.message == "Wallet not found"
-      assert Exception.message(error) == "Wallet not found"
+      for {code, expected_reason} <- error_codes_and_reasons do
+        assert MethodError.reason(code) == expected_reason
+      end
     end
 
-    test "exception/1 creates from keyword list" do
-      error = MethodError.exception(id: "test", code: -1, message: "Test error")
+    test "handles unknown error codes" do
+      assert MethodError.reason(999_999) == :unknown_error
+    end
 
-      assert %MethodError{id: "test", code: -1, message: "Test error"} = error
+    test "maps all wallet error codes" do
+      wallet_error_codes = [-4, -6, -11, -12, -13, -14, -15, -16, -17, -18, -19, -35, -36]
+
+      for code <- wallet_error_codes do
+        reason = MethodError.reason(code)
+        assert reason in ~w(wallet_error wallet_insufficient_funds wallet_invalid_label_name
+                           wallet_keypool_ran_out wallet_unlock_needed wallet_passphrase_incorrect
+                           wallet_wrong_enc_state wallet_encryption_failed wallet_already_unlocked
+                           wallet_not_found wallet_not_specified wallet_already_loaded
+                           wallet_already_exists)a
+      end
+    end
+
+    test "maps all validation error codes" do
+      validation_error_codes = [-3, -5, -8, -11, -32_602]
+
+      for code <- validation_error_codes do
+        reason = MethodError.reason(code)
+        assert reason in ~w(type_error invalid_address_or_key invalid_parameter
+                           wallet_invalid_label_name invalid_params)a
+      end
+    end
+
+    test "maps all connection error codes" do
+      connection_error_codes = [-9, -10, -29, -31]
+
+      for code <- connection_error_codes do
+        reason = MethodError.reason(code)
+        assert reason in ~w(client_not_connected client_in_initial_download
+                           client_node_not_connected client_p2p_disabled)a
+      end
+    end
+
+    test "formats error message correctly" do
+      error = %MethodError{
+        id: "test-id",
+        code: -6,
+        message: "Insufficient funds",
+        reason: :wallet_insufficient_funds
+      }
+
+      message = Exception.message(error)
+      assert message == "Insufficient funds"
     end
   end
 end

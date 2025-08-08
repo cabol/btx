@@ -453,8 +453,12 @@ defmodule BTx.RPC.Wallets.GetBalanceTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -18, message: message}} =
-               Wallets.get_balance(client, wallet_name: "nonexistent")
+      assert {:error,
+              %BTx.RPC.MethodError{
+                code: -18,
+                message: message,
+                reason: :wallet_not_found
+              }} = Wallets.get_balance(client, wallet_name: "nonexistent")
 
       assert message == "Requested wallet does not exist or is not loaded"
     end

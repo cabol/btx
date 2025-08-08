@@ -77,6 +77,7 @@ defmodule BTx.RPC.Blockchain do
       ...> )
       {:error, %BTx.RPC.MethodError{
         code: -5,
+        reason: :invalid_address_or_key,
         message: "Transaction not in mempool"
       }}
 
@@ -273,6 +274,7 @@ defmodule BTx.RPC.Blockchain do
       ...> )
       {:error, %BTx.RPC.MethodError{
         code: -5,
+        reason: :invalid_address_or_key,
         message: "Block not found"
       }}
 

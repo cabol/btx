@@ -251,7 +251,8 @@ defmodule BTx.RPC.Wallets.WalletLockTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -15, message: message}} =
+      assert {:error,
+              %BTx.RPC.MethodError{code: -15, message: message, reason: :wallet_wrong_enc_state}} =
                Wallets.wallet_lock(client)
 
       assert message =~ "unencrypted wallet"
@@ -273,7 +274,8 @@ defmodule BTx.RPC.Wallets.WalletLockTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -13, message: message}} =
+      assert {:error,
+              %BTx.RPC.MethodError{code: -13, message: message, reason: :wallet_unlock_needed}} =
                Wallets.wallet_lock(client)
 
       assert message =~ "already locked"
@@ -297,8 +299,12 @@ defmodule BTx.RPC.Wallets.WalletLockTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -18, message: message}} =
-               Wallets.wallet_lock(client, wallet_name: "nonexistent")
+      assert {:error,
+              %BTx.RPC.MethodError{
+                code: -18,
+                message: message,
+                reason: :wallet_not_found
+              }} = Wallets.wallet_lock(client, wallet_name: "nonexistent")
 
       assert message == "Requested wallet does not exist or is not loaded"
     end
@@ -354,7 +360,7 @@ defmodule BTx.RPC.Wallets.WalletLockTest do
         )
 
       # This should fail since the wallet is not encrypted
-      assert {:error, %BTx.RPC.MethodError{code: -15}} =
+      assert {:error, %BTx.RPC.MethodError{code: -15, reason: :wallet_wrong_enc_state}} =
                Wallets.wallet_lock(
                  real_client,
                  [wallet_name: unencrypted_wallet_name],

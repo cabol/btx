@@ -638,7 +638,7 @@ defmodule BTx.RPC.RawTransactions.FundRawTransactionTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -6}} =
+      assert {:error, %BTx.RPC.MethodError{code: -6, reason: :wallet_insufficient_funds}} =
                RawTransactions.fund_raw_transaction(client, hexstring: @valid_hex)
     end
 

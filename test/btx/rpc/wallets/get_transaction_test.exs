@@ -471,7 +471,8 @@ defmodule BTx.RPC.Wallets.GetTransactionTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -5, message: message}} =
+      assert {:error,
+              %BTx.RPC.MethodError{code: -5, message: message, reason: :invalid_address_or_key}} =
                Wallets.get_transaction(client, txid: @valid_txid)
 
       assert message =~ "Invalid or non-wallet transaction id"

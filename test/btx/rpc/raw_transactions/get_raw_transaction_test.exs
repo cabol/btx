@@ -377,7 +377,7 @@ defmodule BTx.RPC.RawTransactions.GetRawTransactionTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -5}} =
+      assert {:error, %BTx.RPC.MethodError{code: -5, reason: :invalid_address_or_key}} =
                RawTransactions.get_raw_transaction(client, txid: @valid_txid)
     end
 

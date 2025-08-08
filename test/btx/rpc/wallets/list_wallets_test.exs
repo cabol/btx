@@ -202,7 +202,8 @@ defmodule BTx.RPC.Wallets.ListWalletsTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -32_601, message: message}} =
+      assert {:error,
+              %BTx.RPC.MethodError{code: -32_601, message: message, reason: :method_not_found}} =
                Wallets.list_wallets(client)
 
       assert message == "Method not found"

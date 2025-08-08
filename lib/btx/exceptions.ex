@@ -146,10 +146,10 @@ defmodule BTx.RPC.MethodError do
   @typedoc """
   The type for this exception struct.
   """
-  @type t() :: %__MODULE__{id: String.t(), code: integer(), message: String.t()}
+  @type t() :: %__MODULE__{id: String.t(), code: integer(), reason: atom(), message: String.t()}
 
   # Exception struct
-  defexception [:id, :code, :message]
+  defexception [:id, :code, :reason, :message]
 
   ## Callbacks
 
@@ -157,13 +157,91 @@ defmodule BTx.RPC.MethodError do
   def exception(opts) do
     id = Keyword.fetch!(opts, :id)
     code = Keyword.fetch!(opts, :code)
+    reason = Keyword.fetch!(opts, :reason)
     message = Keyword.fetch!(opts, :message)
 
-    %__MODULE__{id: id, code: code, message: message}
+    %__MODULE__{id: id, code: code, reason: reason, message: message}
   end
 
   @impl true
   def message(%__MODULE__{message: message}) do
     message
   end
+
+  ## Public API
+
+  @doc """
+  Maps a Bitcoin Core error code to its corresponding reason atom.
+
+  [Bitcoin Core error codes](https://github.com/bitcoin/bitcoin/blob/master/src/rpc/protocol.h#L100)
+
+  ## Examples
+
+      iex> BTx.RPC.MethodError.reason(-6)
+      :wallet_insufficient_funds
+
+      iex> BTx.RPC.MethodError.reason(-18)
+      :wallet_not_found
+
+      iex> BTx.RPC.MethodError.reason(-32_602)
+      :invalid_params
+
+  """
+  @spec reason(integer()) :: atom()
+  def reason(code)
+
+  # Standard JSON-RPC 2.0 errors
+  def reason(-32_600), do: :invalid_request
+  def reason(-32_601), do: :method_not_found
+  def reason(-32_602), do: :invalid_params
+  def reason(-32_603), do: :internal_error
+  def reason(-32_700), do: :parse_error
+
+  # General application defined errors
+  def reason(-1), do: :misc_error
+  def reason(-3), do: :type_error
+  def reason(-5), do: :invalid_address_or_key
+  def reason(-7), do: :out_of_memory
+  def reason(-8), do: :invalid_parameter
+  def reason(-20), do: :database_error
+  def reason(-22), do: :deserialization_error
+  def reason(-25), do: :verify_error
+  def reason(-26), do: :verify_rejected
+  def reason(-27), do: :verify_already_in_utxo_set
+  def reason(-28), do: :in_warmup
+  def reason(-32), do: :method_deprecated
+
+  # P2P client errors
+  def reason(-9), do: :client_not_connected
+  def reason(-10), do: :client_in_initial_download
+  def reason(-23), do: :client_node_already_added
+  def reason(-24), do: :client_node_not_added
+  def reason(-29), do: :client_node_not_connected
+  def reason(-30), do: :client_invalid_ip_or_subnet
+  def reason(-31), do: :client_p2p_disabled
+  def reason(-34), do: :client_node_capacity_reached
+
+  # Chain errors
+  def reason(-33), do: :client_mempool_disabled
+
+  # Wallet errors
+  def reason(-4), do: :wallet_error
+  def reason(-6), do: :wallet_insufficient_funds
+  def reason(-11), do: :wallet_invalid_label_name
+  def reason(-12), do: :wallet_keypool_ran_out
+  def reason(-13), do: :wallet_unlock_needed
+  def reason(-14), do: :wallet_passphrase_incorrect
+  def reason(-15), do: :wallet_wrong_enc_state
+  def reason(-16), do: :wallet_encryption_failed
+  def reason(-17), do: :wallet_already_unlocked
+  def reason(-18), do: :wallet_not_found
+  def reason(-19), do: :wallet_not_specified
+  def reason(-35), do: :wallet_already_loaded
+  def reason(-36), do: :wallet_already_exists
+
+  # Backwards compatible aliases
+  def reason(-2), do: :forbidden_by_safe_mode
+
+  # Unknown error code
+  def reason(_), do: :unknown_error
 end

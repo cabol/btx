@@ -312,7 +312,7 @@ defmodule RawTransactions.SendRawTransactionTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -26}} =
+      assert {:error, %BTx.RPC.MethodError{code: -26, reason: :verify_rejected}} =
                RawTransactions.send_raw_transaction(client, hexstring: @valid_hex)
     end
 
@@ -332,7 +332,7 @@ defmodule RawTransactions.SendRawTransactionTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -22}} =
+      assert {:error, %BTx.RPC.MethodError{code: -22, reason: :deserialization_error}} =
                RawTransactions.send_raw_transaction(client, hexstring: @valid_hex)
     end
 

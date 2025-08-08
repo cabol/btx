@@ -556,7 +556,7 @@ defmodule BTx.RPC.Wallets.SignRawTransactionWithWalletTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -18}} =
+      assert {:error, %BTx.RPC.MethodError{code: -18, reason: :wallet_not_found}} =
                Wallets.sign_raw_transaction_with_wallet(client, hexstring: @valid_hex)
     end
 

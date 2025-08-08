@@ -93,7 +93,8 @@ defmodule BTx.RPC.Blockchain.GetBlockCountTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -1, message: "RPC server error"}} =
+      assert {:error,
+              %BTx.RPC.MethodError{code: -1, message: "RPC server error", reason: :misc_error}} =
                Blockchain.get_block_count(client)
     end
 

@@ -648,7 +648,7 @@ defmodule BTx.RPC.Mining.GenerateToAddressTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -1, message: message}} =
+      assert {:error, %BTx.RPC.MethodError{code: -1, message: message, reason: :misc_error}} =
                Mining.generate_to_address(client,
                  nblocks: 100,
                  address: @valid_bech32_address
@@ -675,7 +675,12 @@ defmodule BTx.RPC.Mining.GenerateToAddressTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -5, message: message}} =
+      assert {:error,
+              %BTx.RPC.MethodError{
+                code: -5,
+                message: message,
+                reason: :invalid_address_or_key
+              }} =
                Mining.generate_to_address(client,
                  nblocks: 1,
                  address: invalid_address
@@ -700,7 +705,12 @@ defmodule BTx.RPC.Mining.GenerateToAddressTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -6, message: message}} =
+      assert {:error,
+              %BTx.RPC.MethodError{
+                code: -6,
+                message: message,
+                reason: :wallet_insufficient_funds
+              }} =
                Mining.generate_to_address(client,
                  nblocks: 1,
                  address: @valid_bech32_address
@@ -725,7 +735,12 @@ defmodule BTx.RPC.Mining.GenerateToAddressTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -18, message: message}} =
+      assert {:error,
+              %BTx.RPC.MethodError{
+                code: -18,
+                message: message,
+                reason: :wallet_not_found
+              }} =
                Mining.generate_to_address(client,
                  nblocks: 1,
                  address: @valid_bech32_address

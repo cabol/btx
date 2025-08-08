@@ -38,7 +38,7 @@ defmodule BTx.RPC.ResponseTest do
 
     test "handles JSON-RPC errors" do
       env = %Tesla.Env{
-        status: 500,
+        status: 200,
         body: %{
           "id" => "test-id",
           "result" => nil,
@@ -49,7 +49,13 @@ defmodule BTx.RPC.ResponseTest do
         }
       }
 
-      assert {:error, %MethodError{id: "test-id", code: -32_602, message: "Invalid params"}} =
+      assert {:error,
+              %MethodError{
+                id: "test-id",
+                code: -32_602,
+                reason: :invalid_params,
+                message: "Invalid params"
+              }} =
                Response.new(env)
     end
 

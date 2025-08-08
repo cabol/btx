@@ -584,7 +584,8 @@ defmodule BTx.RPC.Wallets.GetReceivedByAddressTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -5, message: message}} =
+      assert {:error,
+              %BTx.RPC.MethodError{code: -5, message: message, reason: :invalid_address_or_key}} =
                Wallets.get_received_by_address(client, address: invalid_address)
 
       assert message == "Invalid Bitcoin address"
@@ -609,7 +610,12 @@ defmodule BTx.RPC.Wallets.GetReceivedByAddressTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -18, message: message}} =
+      assert {:error,
+              %BTx.RPC.MethodError{
+                code: -18,
+                message: message,
+                reason: :wallet_not_found
+              }} =
                Wallets.get_received_by_address(client,
                  address: address,
                  wallet_name: "nonexistent"

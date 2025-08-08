@@ -279,8 +279,12 @@ defmodule BTx.RPC.Wallets.UnloadWalletResultTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -18, message: message}} =
-               Wallets.unload_wallet(client, wallet_name: "nonexistent_wallet")
+      assert {:error,
+              %BTx.RPC.MethodError{
+                code: -18,
+                message: message,
+                reason: :wallet_not_found
+              }} = Wallets.unload_wallet(client, wallet_name: "nonexistent_wallet")
 
       assert message == "Requested wallet does not exist or is not loaded"
     end
@@ -331,7 +335,7 @@ defmodule BTx.RPC.Wallets.UnloadWalletResultTest do
                )
 
       # Try to unload again (should fail)
-      assert {:error, %BTx.RPC.MethodError{code: -18}} =
+      assert {:error, %BTx.RPC.MethodError{code: -18, reason: :wallet_not_found}} =
                Wallets.unload_wallet(client, [wallet_name: wallet_name], retries: 10)
     end
   end

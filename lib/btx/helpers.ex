@@ -9,8 +9,8 @@ defmodule BTx.Helpers do
   ## Example
 
       iex> import BTx.Helpers
-      iex> wrap_error BTx.RPC.MethodError, id: "1", code: -1, message: "Invalid params"
-      {:error, %BTx.RPC.MethodError{id: "1", code: -1, message: "Invalid params"}}
+      iex> wrap_error BTx.RPC.MethodError, id: "1", code: -1, message: "Invalid params", reason: BTx.RPC.MethodError.reason(-1)
+      {:error, %BTx.RPC.MethodError{id: "1", code: -1, reason: :misc_error, message: "Invalid params"}}
 
   """
   defmacro wrap_error(exception, opts) do

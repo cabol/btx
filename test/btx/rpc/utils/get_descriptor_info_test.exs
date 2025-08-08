@@ -324,7 +324,7 @@ defmodule BTx.RPC.Utils.GetDescriptorInfoTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -5}} =
+      assert {:error, %BTx.RPC.MethodError{code: -5, reason: :invalid_address_or_key}} =
                Utils.get_descriptor_info(client, descriptor: @valid_descriptor)
     end
 

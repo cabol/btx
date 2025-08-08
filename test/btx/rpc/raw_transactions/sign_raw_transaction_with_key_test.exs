@@ -476,7 +476,12 @@ defmodule BTx.RPC.RawTransactions.SignRawTransactionWithKeyTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -8, message: "Invalid private key"}} =
+      assert {:error,
+              %BTx.RPC.MethodError{
+                code: -8,
+                message: "Invalid private key",
+                reason: :invalid_parameter
+              }} =
                RawTransactions.sign_raw_transaction_with_key(client,
                  hexstring: @valid_hex,
                  privkeys: ["5HueCGU8rMjxEXxiPuD5BDuRaU9tGm4b5NxkREAJnFsZVDa3sZH"]

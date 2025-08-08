@@ -437,7 +437,12 @@ defmodule BTx.RPC.RawTransactions.CreateRawTransactionTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -8, message: "Invalid parameter"}} =
+      assert {:error,
+              %BTx.RPC.MethodError{
+                code: -8,
+                message: "Invalid parameter",
+                reason: :invalid_parameter
+              }} =
                RawTransactions.create_raw_transaction(client,
                  inputs: [%{txid: @valid_txid, vout: 0}],
                  outputs: %{

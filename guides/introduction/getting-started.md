@@ -464,18 +464,10 @@ defmodule MyBitcoinApp do
         Logger.info("Wallet created: #{result.name}")
         {:ok, result}
 
-      # Bitcoin Core specific errors
-      {:error, %BTx.RPC.MethodError{code: -4, message: msg}} ->
-        Logger.warn("Wallet already exists: #{msg}")
-        {:error, :wallet_exists}
-
-      {:error, %BTx.RPC.MethodError{code: -8, message: msg}} ->
-        Logger.error("Invalid parameters: #{msg}")
-        {:error, :invalid_params}
-
-      {:error, %BTx.RPC.MethodError{code: -18, message: msg}} ->
-        Logger.error("Wallet not loaded: #{msg}")
-        {:error, :wallet_not_loaded}
+      # Bitcoin Core specific errors - using enhanced error handling
+      {:error, %BTx.RPC.MethodError{reason: reason, message: message}} ->
+        Logger.error("Method error (#{reason}): #{message}")
+        {:error, :method_error}
 
       # Connection and authentication errors
       {:error, %BTx.RPC.Error{reason: :http_unauthorized}} ->
@@ -518,21 +510,14 @@ defmodule MyBitcoinApp do
         Logger.info("Transaction sent successfully: #{txid}")
         {:ok, txid}
 
-      {:error, %BTx.RPC.MethodError{code: -6}} ->
-        Logger.warn("Insufficient funds for transaction")
-        {:error, :insufficient_funds}
+      {:error, %BTx.RPC.Error{} = error} ->
+        Logger.error("HTTP error: #{Exception.message(error)}")
+        {:error, :http_error}
 
-      {:error, %BTx.RPC.Error{reason: :timeout}} ->
-        Logger.error("Transaction timed out after retries")
-        {:error, :timeout}
-
-      {:error, %BTx.RPC.Error{reason: :service_unavailable}} ->
-        Logger.error("Bitcoin Core service unavailable after retries")
-        {:error, :service_unavailable}
-
-      {:error, error} ->
-        Logger.error("Transaction failed: #{inspect(error)}")
-        {:error, :transaction_failed}
+      # Bitcoin Core specific errors - using enhanced error handling
+      {:error, %BTx.RPC.MethodError{reason: reason, message: message}} ->
+        Logger.error("Method error (#{reason}): #{message}")
+        {:error, :method_error}
     end
   end
 end
@@ -684,7 +669,7 @@ def safe_wallet_operation(client, wallet_name) do
                            wallet_name: wallet_name) do
     {:ok, %{info: info, balance: balance}}
   else
-    {:error, %BTx.RPC.MethodError{code: -18}} ->
+    {:error, %BTx.RPC.MethodError{reason: :wallet_not_found}} ->
       {:error, :wallet_not_loaded}
     {:error, error} ->
       {:error, error}
@@ -754,7 +739,7 @@ defmodule MyApp.PaymentProcessor do
         Logger.info("Payment sent for order #{order_id}: #{txid}")
         {:ok, txid}
 
-      {:error, %BTx.RPC.MethodError{code: -6}} ->
+      {:error, %BTx.RPC.MethodError{reason: :wallet_insufficient_funds}} ->
         Logger.warn("Insufficient funds for order #{order_id}")
         {:error, :insufficient_funds}
 
@@ -921,7 +906,7 @@ defmodule MyApp.BitcoinCase do
            wallet_name: "test-wallet",
            descriptors: true) do
       {:ok, _} -> :ok
-      {:error, %BTx.RPC.MethodError{code: -4}} -> :ok  # Wallet exists
+      {:error, %BTx.RPC.MethodError{reason: :wallet_error}} -> :ok  # Wallet exists
       {:error, error} ->
         raise "Failed to create test wallet: #{inspect(error)}"
     end

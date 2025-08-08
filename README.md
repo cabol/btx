@@ -128,7 +128,7 @@ client = BTx.RPC.client(
 case BTx.RPC.Wallets.create_wallet(client, wallet_name: "existing") do
   {:ok, result} ->
     # Success
-  {:error, %BTx.RPC.MethodError{code: -4}} ->
+  {:error, %BTx.RPC.MethodError{reason: :misc_error}} ->
     # Wallet already exists
   {:error, %BTx.RPC.Error{reason: :econnrefused}} ->
     # Bitcoin Core not running

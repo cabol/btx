@@ -184,6 +184,7 @@ defmodule BTx.RPC.RawTransactions do
       ...> )
       {:error, %BTx.RPC.MethodError{
         code: -5,
+        reason: :invalid_address_or_key,
         message: "No such mempool or blockchain transaction"
       }}
 

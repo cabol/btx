@@ -548,7 +548,12 @@ defmodule BTx.RPC.Wallets.WalletPassphraseTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -14, message: message}} =
+      assert {:error,
+              %BTx.RPC.MethodError{
+                code: -14,
+                message: message,
+                reason: :wallet_passphrase_incorrect
+              }} =
                Wallets.wallet_passphrase(client,
                  passphrase: "wrong_passphrase",
                  timeout: 60
@@ -574,7 +579,8 @@ defmodule BTx.RPC.Wallets.WalletPassphraseTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -15, message: message}} =
+      assert {:error,
+              %BTx.RPC.MethodError{code: -15, message: message, reason: :wallet_wrong_enc_state}} =
                Wallets.wallet_passphrase(client,
                  passphrase: "any_passphrase",
                  timeout: 60
@@ -601,7 +607,12 @@ defmodule BTx.RPC.Wallets.WalletPassphraseTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -18, message: message}} =
+      assert {:error,
+              %BTx.RPC.MethodError{
+                code: -18,
+                message: message,
+                reason: :wallet_not_found
+              }} =
                Wallets.wallet_passphrase(client,
                  passphrase: "any_passphrase",
                  timeout: 60,
@@ -650,7 +661,7 @@ defmodule BTx.RPC.Wallets.WalletPassphraseTest do
              ) == {:ok, nil}
 
       # Try with wrong passphrase (should fail)
-      assert {:error, %BTx.RPC.MethodError{code: -14}} =
+      assert {:error, %BTx.RPC.MethodError{code: -14, reason: :wallet_passphrase_incorrect}} =
                Wallets.wallet_passphrase(
                  real_client,
                  [passphrase: "wrong_passphrase", timeout: 60, wallet_name: wallet_name],

@@ -274,6 +274,7 @@ defmodule BTx.RPC do
   - `{:error, BTx.RPC.MethodError.t()}` - Bitcoin Core RPC error containing:
     - `id` - The request ID
     - `code` - Bitcoin Core error code (e.g., -4 for wallet exists)
+    - `reason` - Bitcoin Core error reason (e.g., `:wallet_error` for wallet exists).
     - `message` - Human-readable error description
 
   - `{:error, BTx.RPC.Error.t()}` - HTTP/network/parsing error containing:
@@ -318,17 +319,9 @@ defmodule BTx.RPC do
           {:ok, response.result}
 
         # Bitcoin Core RPC errors
-        {:error, %BTx.RPC.MethodError{code: -4, message: message}} ->
-          Logger.warn("Wallet already exists: \#{message}")
-          {:error, :wallet_exists}
-
-        {:error, %BTx.RPC.MethodError{code: -8, message: message}} ->
-          Logger.error("Invalid parameters: \#{message}")
-          {:error, :invalid_params}
-
-        {:error, %BTx.RPC.MethodError{code: -18, message: message}} ->
-          Logger.error("Wallet not loaded: \#{message}")
-          {:error, :wallet_not_loaded}
+        {:error, %BTx.RPC.MethodError{reason: reason, message: message}} ->
+          Logger.error("Method error (\#{reason}): \#{message}")
+          {:error, :method_error}
 
         # HTTP/Network errors
         {:error, %BTx.RPC.Error{reason: :http_unauthorized}} ->

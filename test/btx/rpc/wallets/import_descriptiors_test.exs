@@ -638,7 +638,7 @@ defmodule BTx.RPC.Wallets.ImportDescriptorsTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -18}} =
+      assert {:error, %BTx.RPC.MethodError{code: -18, reason: :wallet_not_found}} =
                Wallets.import_descriptors(client,
                  requests: [
                    %{desc: @valid_descriptor, timestamp: "now"}

@@ -343,7 +343,8 @@ defmodule BTx.RPC.Blockchain.GetMempoolEntryTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -5, message: message}} =
+      assert {:error,
+              %BTx.RPC.MethodError{code: -5, message: message, reason: :invalid_address_or_key}} =
                Blockchain.get_mempool_entry(client, txid: @valid_txid)
 
       assert message == "Transaction not in mempool"
@@ -367,8 +368,12 @@ defmodule BTx.RPC.Blockchain.GetMempoolEntryTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -8, message: message}} =
-               Blockchain.get_mempool_entry(client, txid: invalid_txid)
+      assert {:error,
+              %BTx.RPC.MethodError{
+                code: -8,
+                message: message,
+                reason: :invalid_parameter
+              }} = Blockchain.get_mempool_entry(client, txid: invalid_txid)
 
       assert message =~ "txid must be of length 64"
     end
@@ -389,7 +394,8 @@ defmodule BTx.RPC.Blockchain.GetMempoolEntryTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -5, message: message}} =
+      assert {:error,
+              %BTx.RPC.MethodError{code: -5, message: message, reason: :invalid_address_or_key}} =
                Blockchain.get_mempool_entry(client, txid: @valid_txid)
 
       assert message == "Transaction not in mempool"

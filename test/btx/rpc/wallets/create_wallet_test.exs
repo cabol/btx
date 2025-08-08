@@ -538,7 +538,12 @@ defmodule BTx.RPC.Wallets.CreateWalletTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -8, message: message}} =
+      assert {:error,
+              %BTx.RPC.MethodError{
+                code: -8,
+                message: message,
+                reason: :invalid_parameter
+              }} =
                Wallets.create_wallet(client, wallet_name: "test_wallet", passphrase: "test_pass")
 
       assert message =~ "invalid characters"

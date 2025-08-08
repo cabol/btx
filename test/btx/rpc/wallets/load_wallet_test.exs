@@ -310,7 +310,7 @@ defmodule BTx.RPC.Wallets.LoadWalletTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -4, message: message}} =
+      assert {:error, %BTx.RPC.MethodError{code: -4, message: message, reason: :wallet_error}} =
                Wallets.load_wallet(client, filename: "test.dat")
 
       assert message =~ "already loaded"
@@ -332,8 +332,12 @@ defmodule BTx.RPC.Wallets.LoadWalletTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.MethodError{code: -18, message: message}} =
-               Wallets.load_wallet(client, filename: "nonexistent.dat")
+      assert {:error,
+              %BTx.RPC.MethodError{
+                code: -18,
+                message: message,
+                reason: :wallet_not_found
+              }} = Wallets.load_wallet(client, filename: "nonexistent.dat")
 
       assert message == "Wallet file not found"
     end
