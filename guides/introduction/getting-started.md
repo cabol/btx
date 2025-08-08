@@ -478,7 +478,7 @@ defmodule MyBitcoinApp do
         {:error, :wallet_not_loaded}
 
       # Connection and authentication errors
-      {:error, %BTx.RPC.Error{reason: {:rpc, :unauthorized}}} ->
+      {:error, %BTx.RPC.Error{reason: :http_unauthorized}} ->
         Logger.error("Authentication failed - check credentials")
         {:error, :auth_failed}
 

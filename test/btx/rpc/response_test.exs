@@ -19,14 +19,15 @@ defmodule BTx.RPC.ResponseTest do
 
     test "handles various HTTP error statuses" do
       statuses_and_reasons = [
-        {400, {:rpc, :bad_request}},
-        {401, {:rpc, :unauthorized}},
-        {403, {:rpc, :forbidden}},
-        {404, :not_found},
-        {405, {:rpc, :method_not_allowed}},
-        {502, {:rpc, :bad_gateway}},
-        {503, {:rpc, :service_unavailable}},
-        {504, {:rpc, :gateway_timeout}}
+        {400, :http_bad_request},
+        {401, :http_unauthorized},
+        {403, :http_forbidden},
+        {404, :http_not_found},
+        {405, :http_method_not_allowed},
+        {500, :http_internal_server_error},
+        {502, :http_bad_gateway},
+        {503, :http_service_unavailable},
+        {504, :http_gateway_timeout}
       ]
 
       for {status, expected_reason} <- statuses_and_reasons do
@@ -59,7 +60,7 @@ defmodule BTx.RPC.ResponseTest do
         body: "I'm a teapot"
       }
 
-      assert {:error, %Error{reason: {:rpc, :unknown_error}, metadata: metadata}} =
+      assert {:error, %Error{reason: :unknown_error, metadata: metadata}} =
                Response.new(env)
 
       assert Keyword.get(metadata, :status) == 418

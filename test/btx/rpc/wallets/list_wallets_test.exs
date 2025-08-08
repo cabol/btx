@@ -214,7 +214,7 @@ defmodule BTx.RPC.Wallets.ListWalletsTest do
           %Tesla.Env{status: 401, body: "Unauthorized"}
       end)
 
-      assert {:error, %BTx.RPC.Error{reason: {:rpc, :unauthorized}}} =
+      assert {:error, %BTx.RPC.Error{reason: :http_unauthorized}} =
                Wallets.list_wallets(client)
     end
 
@@ -224,7 +224,7 @@ defmodule BTx.RPC.Wallets.ListWalletsTest do
           %Tesla.Env{status: 503, body: "Service Unavailable"}
       end)
 
-      assert {:error, %BTx.RPC.Error{reason: {:rpc, :service_unavailable}}} =
+      assert {:error, %BTx.RPC.Error{reason: :http_service_unavailable}} =
                Wallets.list_wallets(client)
     end
 

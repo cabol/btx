@@ -74,7 +74,7 @@ defmodule BTx.RPCTest do
           %Tesla.Env{status: 400, body: "Bad method"}
       end)
 
-      assert {:error, %BTx.RPC.Error{reason: {:rpc, :bad_request}}} = RPC.call(client, method)
+      assert {:error, %BTx.RPC.Error{reason: :http_bad_request}} = RPC.call(client, method)
     end
 
     test "HTTP 401 returns unauthorized error", %{client: client, method: method} do
@@ -83,7 +83,7 @@ defmodule BTx.RPCTest do
           %Tesla.Env{status: 401, body: "Unauthorized"}
       end)
 
-      assert {:error, %BTx.RPC.Error{reason: {:rpc, :unauthorized}}} = RPC.call(client, method)
+      assert {:error, %BTx.RPC.Error{reason: :http_unauthorized}} = RPC.call(client, method)
     end
 
     test "HTTP 403 returns forbidden error", %{client: client, method: method} do
@@ -92,7 +92,7 @@ defmodule BTx.RPCTest do
           %Tesla.Env{status: 403, body: "Forbidden"}
       end)
 
-      assert {:error, %BTx.RPC.Error{reason: {:rpc, :forbidden}}} = RPC.call(client, method)
+      assert {:error, %BTx.RPC.Error{reason: :http_forbidden}} = RPC.call(client, method)
     end
 
     test "HTTP 404 returns not found error", %{client: client, method: method} do
@@ -101,7 +101,7 @@ defmodule BTx.RPCTest do
           %Tesla.Env{status: 404, body: "Not Found"}
       end)
 
-      assert {:error, %BTx.RPC.Error{reason: :not_found}} = RPC.call(client, method)
+      assert {:error, %BTx.RPC.Error{reason: :http_not_found}} = RPC.call(client, method)
     end
 
     test "HTTP 405 returns method not allowed error", %{client: client, method: method} do
@@ -110,7 +110,7 @@ defmodule BTx.RPCTest do
           %Tesla.Env{status: 405, body: "Method Not Allowed"}
       end)
 
-      assert {:error, %BTx.RPC.Error{reason: {:rpc, :method_not_allowed}}} =
+      assert {:error, %BTx.RPC.Error{reason: :http_method_not_allowed}} =
                RPC.call(client, method)
     end
 
@@ -120,7 +120,7 @@ defmodule BTx.RPCTest do
           %Tesla.Env{status: 503, body: "Service Unavailable"}
       end)
 
-      assert {:error, %BTx.RPC.Error{reason: {:rpc, :service_unavailable}}} =
+      assert {:error, %BTx.RPC.Error{reason: :http_service_unavailable}} =
                RPC.call(client, method)
     end
 
@@ -175,7 +175,7 @@ defmodule BTx.RPCTest do
           }
       end)
 
-      assert {:error, %BTx.RPC.Error{reason: {:rpc, :unknown_error}, metadata: metadata}} =
+      assert {:error, %BTx.RPC.Error{reason: :unknown_error, metadata: metadata}} =
                RPC.call(client, method)
 
       assert Keyword.get(metadata, :status) == 599
@@ -209,7 +209,7 @@ defmodule BTx.RPCTest do
           %Tesla.Env{status: 503, body: "Service Unavailable"}
       end)
 
-      assert {:error, %BTx.RPC.Error{reason: {:rpc, :service_unavailable}}} =
+      assert {:error, %BTx.RPC.Error{reason: :http_service_unavailable}} =
                RPC.call(client, method, retries: 2, retry_delay: 1)
     end
 
@@ -219,7 +219,7 @@ defmodule BTx.RPCTest do
           %Tesla.Env{status: 503, body: "Service Unavailable"}
       end)
 
-      assert {:error, %BTx.RPC.Error{reason: {:rpc, :service_unavailable}}} =
+      assert {:error, %BTx.RPC.Error{reason: :http_service_unavailable}} =
                RPC.call(client, method, retries: 3, retry_delay: fn n -> n end)
     end
   end

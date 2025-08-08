@@ -6,13 +6,16 @@ defmodule BTx.ExceptionsTest do
   describe "BTx.RPC.Error exception" do
     test "formats RPC error messages correctly" do
       error_types = [
-        {{:rpc, :bad_request}, "Bad Request"},
-        {{:rpc, :unauthorized}, "Unauthorized"},
-        {{:rpc, :forbidden}, "Forbidden"},
-        {{:rpc, :not_found}, "Not Found"},
-        {{:rpc, :method_not_allowed}, "Method Not Allowed"},
-        {{:rpc, :service_unavailable}, "Service Unavailable"},
-        {{:rpc, :unknown_error}, "Unknown Error"}
+        {:http_bad_request, "Bad Request"},
+        {:http_unauthorized, "Unauthorized"},
+        {:http_forbidden, "Forbidden"},
+        {:http_not_found, "Not Found"},
+        {:http_method_not_allowed, "Method Not Allowed"},
+        {:http_internal_server_error, "Internal Server Error"},
+        {:http_bad_gateway, "Bad Gateway"},
+        {:http_service_unavailable, "Service Unavailable"},
+        {:http_gateway_timeout, "Gateway Timeout"},
+        {:unknown_error, "Unknown Error"}
       ]
 
       for {reason, expected_prefix} <- error_types do
@@ -24,7 +27,7 @@ defmodule BTx.ExceptionsTest do
 
     test "includes metadata in error messages" do
       error = %Error{
-        reason: {:rpc, :unknown_error},
+        reason: :unknown_error,
         metadata: [status: 502, body: "Bad Gateway"]
       }
 

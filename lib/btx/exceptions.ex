@@ -6,17 +6,17 @@ defmodule BTx.RPC.Error do
 
   The `:reason` field can assume the following values:
 
-    * `{:rpc, status}` - RPC error.
-      * `:bad_request` - if the request is invalid.
-      * `:unauthorized` - if the RPC credentials are missing or incorrect.
-      * `:forbidden` - if access is denied (IP not allowed, etc.).
-      * `:not_found` - if the RPC endpoint doesn't exist.
-      * `:method_not_allowed` - if the wrong HTTP method is used (e.g., GET instead of POST).
-      * `:service_unavailable` - if Bitcoin Core is starting, stopping, or overloaded.
-      * `:unknown_error` - for unexpected error conditions.
-
+    * `:bad_request` - if the request is invalid.
+    * `:unauthorized` - if the RPC credentials are missing or incorrect.
+    * `:forbidden` - if access is denied (IP not allowed, etc.).
+    * `:not_found` - if the RPC endpoint doesn't exist.
+    * `:method_not_allowed` - if the wrong HTTP method is used (e.g., GET instead of POST).
+    * `:internal_server_error` - if Bitcoin Core is not running.
+    * `:bad_gateway` - if Bitcoin Core is overloaded.
+    * `:service_unavailable` - if Bitcoin Core is starting, stopping, or overloaded.
+    * `:gateway_timeout` - if Bitcoin Core is taking too long to respond.
+    * `:unknown_error` - for unexpected error conditions.
     * `t:Exception.t/0` - if the underlying adapter fails due to an exception.
-
     * `t:any/0` - any other error.
 
   """
@@ -55,39 +55,54 @@ defmodule BTx.RPC.Error do
 
   ## Helpers
 
-  defp format_error({:rpc, :bad_request}, _metadata) do
+  defp format_error(:http_bad_request, _metadata) do
     "Bad Request: The request is invalid. " <>
       "Please check the request parameters and ensure they are correct."
   end
 
-  defp format_error({:rpc, :unauthorized}, _metadata) do
+  defp format_error(:http_unauthorized, _metadata) do
     "Unauthorized: RPC credentials are missing or incorrect. " <>
       "Please check your Bitcoin Core `rpcuser` and `rpcpassword` configuration."
   end
 
-  defp format_error({:rpc, :forbidden}, _metadata) do
+  defp format_error(:http_forbidden, _metadata) do
     "Forbidden: Access denied to Bitcoin Core RPC. " <>
       "This usually means your IP address is not in the `rpcallowip` list or " <>
       "other access restrictions are in place. Check your Bitcoin Core configuration."
   end
 
-  defp format_error({:rpc, :not_found}, _metadata) do
+  defp format_error(:http_not_found, _metadata) do
     "Not Found: The RPC endpoint does not exist. " <>
       "Please check the URL and ensure Bitcoin Core is running with RPC enabled."
   end
 
-  defp format_error({:rpc, :method_not_allowed}, _metadata) do
+  defp format_error(:http_method_not_allowed, _metadata) do
     "Method Not Allowed: Invalid HTTP method used for RPC request. " <>
       "Bitcoin Core RPC requires POST requests with JSON-RPC payload."
   end
 
-  defp format_error({:rpc, :service_unavailable}, _metadata) do
+  defp format_error(:http_internal_server_error, _metadata) do
+    "Internal Server Error: Bitcoin Core is not running. " <>
+      "Please check if Bitcoin Core is running and try again."
+  end
+
+  defp format_error(:http_bad_gateway, _metadata) do
+    "Bad Gateway: Bitcoin Core is overloaded. " <>
+      "Please try again later or check if Bitcoin Core is running."
+  end
+
+  defp format_error(:http_service_unavailable, _metadata) do
     "Service Unavailable: Bitcoin Core RPC service is temporarily unavailable. " <>
       "This can happen during startup, shutdown, or when the node is overloaded. " <>
       "Please wait and retry."
   end
 
-  defp format_error({:rpc, :unknown_error}, metadata) do
+  defp format_error(:http_gateway_timeout, _metadata) do
+    "Gateway Timeout: Bitcoin Core is taking too long to respond. " <>
+      "Please check if Bitcoin Core is running and try again."
+  end
+
+  defp format_error(:unknown_error, metadata) do
     "Unknown Error: An unexpected error occurred during RPC communication."
     |> maybe_format_metadata(metadata)
   end

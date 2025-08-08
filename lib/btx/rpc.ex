@@ -194,7 +194,10 @@ defmodule BTx.RPC do
   @type rpc_response() :: {:ok, BTx.RPC.Response.t()} | rpc_error()
 
   # Retryable errors
-  @retryable_errors ~w(service_unavailable bad_gateway gateway_timeout)a
+  @retryable_errors ~w(http_internal_server_error
+                       http_service_unavailable
+                       http_bad_gateway
+                       http_gateway_timeout)a
 
   ## API
 
@@ -274,7 +277,7 @@ defmodule BTx.RPC do
     - `message` - Human-readable error description
 
   - `{:error, BTx.RPC.Error.t()}` - HTTP/network/parsing error containing:
-    - `reason` - Error type (`{:rpc, :unauthorized}`, etc.)
+    - `reason` - Error type (`:http_unauthorized`, etc.)
     - `metadata` - Additional error context
 
   ## Examples
@@ -328,15 +331,15 @@ defmodule BTx.RPC do
           {:error, :wallet_not_loaded}
 
         # HTTP/Network errors
-        {:error, %BTx.RPC.Error{reason: {:rpc, :unauthorized}}} ->
+        {:error, %BTx.RPC.Error{reason: :http_unauthorized}} ->
           Logger.error("Authentication failed - check RPC credentials")
           {:error, :auth_failed}
 
-        {:error, %BTx.RPC.Error{reason: {:rpc, :service_unavailable}}} ->
+        {:error, %BTx.RPC.Error{reason: :http_service_unavailable}} ->
           Logger.warn("Bitcoin Core temporarily unavailable")
           {:error, :service_unavailable}
 
-        {:error, %BTx.RPC.Error{reason: {:rpc, :forbidden}}} ->
+        {:error, %BTx.RPC.Error{reason: :http_forbidden}} ->
           Logger.error("Access denied - check IP allowlist")
           {:error, :access_denied}
 
@@ -432,7 +435,8 @@ defmodule BTx.RPC do
   end
 
   defp with_retry(client, path, request, opts, method_object, retry_delay, retries, count) do
-    with {:error, %BTx.RPC.Error{reason: {:rpc, error}}} when error in @retryable_errors <-
+    with {:error, %BTx.RPC.Error{reason: reason}}
+         when is_atom(reason) and reason in @retryable_errors <-
            post(client, path, request, opts, method_object) do
       apply_retry_delay(retry_delay, count)
 

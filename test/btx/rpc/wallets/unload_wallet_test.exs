@@ -291,7 +291,7 @@ defmodule BTx.RPC.Wallets.UnloadWalletResultTest do
           %Tesla.Env{status: 401, body: "Unauthorized"}
       end)
 
-      assert {:error, %BTx.RPC.Error{reason: {:rpc, :unauthorized}}} =
+      assert {:error, %BTx.RPC.Error{reason: :http_unauthorized}} =
                Wallets.unload_wallet(client, wallet_name: "test_wallet")
     end
 
