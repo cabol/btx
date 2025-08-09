@@ -451,7 +451,7 @@ defmodule BTx.RPC.Wallets.GetWalletInfoTest do
     @tag :integration
     test "real Bitcoin regtest integration" do
       # This test requires a real Bitcoin regtest node running
-      real_client = new_client()
+      real_client = new_client(retry_opts: [max_retries: 10])
 
       # Create a unique wallet name
       wallet_name = "get-wallet-info-#{UUID.generate()}"
@@ -460,12 +460,13 @@ defmodule BTx.RPC.Wallets.GetWalletInfoTest do
       %BTx.RPC.Wallets.CreateWalletResult{name: ^wallet_name} =
         Wallets.create_wallet!(
           real_client,
-          [wallet_name: wallet_name, passphrase: "test", avoid_reuse: true],
-          retries: 10
+          wallet_name: wallet_name,
+          passphrase: "test",
+          avoid_reuse: true
         )
 
       assert {:ok, %GetWalletInfoResult{walletname: ^wallet_name}} =
-               Wallets.get_wallet_info(real_client, [wallet_name: wallet_name], retries: 10)
+               Wallets.get_wallet_info(real_client, wallet_name: wallet_name)
     end
   end
 

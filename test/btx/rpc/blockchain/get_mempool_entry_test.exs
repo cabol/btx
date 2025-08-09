@@ -505,7 +505,7 @@ defmodule BTx.RPC.Blockchain.GetMempoolEntryTest do
     @tag :integration
     test "real Bitcoin regtest integration" do
       # This test requires a real Bitcoin regtest node with transactions in mempool
-      real_client = new_client()
+      real_client = new_client(retry_opts: [max_retries: 10])
 
       # Wallet for this test
       wallet_name = "btx-shared-test-wallet"
@@ -514,12 +514,12 @@ defmodule BTx.RPC.Blockchain.GetMempoolEntryTest do
       destination_address =
         Wallets.get_new_address!(
           real_client,
-          [wallet_name: wallet_name, label: "destination"],
-          retries: 10
+          wallet_name: wallet_name,
+          label: "destination"
         )
 
       # Step 2: Get balance
-      balance = Wallets.get_balance!(real_client, [wallet_name: wallet_name], retries: 10)
+      balance = Wallets.get_balance!(real_client, wallet_name: wallet_name)
       assert balance > 0.0
 
       # Step 3: Send a transaction (this will create a mempool entry)
@@ -530,13 +530,10 @@ defmodule BTx.RPC.Blockchain.GetMempoolEntryTest do
       {:ok, send_result} =
         Wallets.send_to_address(
           real_client,
-          [
-            address: destination_address,
-            amount: send_amount,
-            wallet_name: wallet_name,
-            comment: "Integration test transaction"
-          ],
-          retries: 10
+          address: destination_address,
+          amount: send_amount,
+          wallet_name: wallet_name,
+          comment: "Integration test transaction"
         )
 
       txid = send_result.txid
@@ -544,7 +541,7 @@ defmodule BTx.RPC.Blockchain.GetMempoolEntryTest do
       # Step 5: Verify the mempool entry
       assert_eventually 10, 1000 do
         assert {:ok, %GetMempoolEntryResult{} = result} =
-                 Blockchain.get_mempool_entry(real_client, txid: txid, retries: 10)
+                 Blockchain.get_mempool_entry(real_client, txid: txid)
 
         # Verify the mempool entry has expected fields
         assert is_integer(result.vsize)

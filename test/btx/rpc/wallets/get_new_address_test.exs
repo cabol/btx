@@ -466,19 +466,19 @@ defmodule BTx.RPC.Wallets.GetNewAddressTest do
     @tag :integration
     test "real Bitcoin regtest integration" do
       # This test requires a real Bitcoin regtest node running
-      real_client = new_client()
+      real_client = new_client(retry_opts: [max_retries: 10])
 
       # First ensure we have a wallet loaded, create one if needed
       wallet_name =
         Wallets.create_wallet!(
           real_client,
-          [wallet_name: "test-wallet-#{UUID.generate()}", passphrase: "test"],
-          retries: 10
+          wallet_name: "test-wallet-#{UUID.generate()}",
+          passphrase: "test"
         ).name
 
       # Now try to get a new address
       assert {:ok, address} =
-               Wallets.get_new_address(real_client, [wallet_name: wallet_name], retries: 10)
+               Wallets.get_new_address(real_client, wallet_name: wallet_name)
 
       assert is_binary(address)
       # Bitcoin addresses are long

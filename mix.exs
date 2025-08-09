@@ -123,9 +123,11 @@ defmodule BTx.MixProject do
         # BTx.RPC.Request,
         # BTx.RPC.Response,
 
-        "RPC APIs": [
+        "RPC Contexts": [
           BTx.RPC.Blockchain,
           BTx.RPC.Mining,
+          BTx.RPC.RawTransactions,
+          BTx.RPC.Utils,
           BTx.RPC.Wallets
         ],
         "Blockchain RPCs": [
@@ -147,6 +149,8 @@ defmodule BTx.MixProject do
         ],
         "Raw Transactions RPCs": [
           BTx.RPC.RawTransactions.CreateRawTransaction,
+          BTx.RPC.RawTransactions.DecodeRawTransaction,
+          BTx.RPC.RawTransactions.DecodeRawTransactionResult,
           BTx.RPC.RawTransactions.FundRawTransaction,
           BTx.RPC.RawTransactions.FundRawTransactionResult,
           BTx.RPC.RawTransactions.FundRawTransaction.Options,

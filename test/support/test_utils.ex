@@ -12,7 +12,8 @@ defmodule BTx.TestUtils do
     [
       base_url: "http://localhost:18443/",
       username: "btx-user",
-      password: "btx-pass"
+      password: "btx-pass",
+      retry_opts: [max_retries: 1]
     ]
     |> Keyword.merge(opts)
     |> RPC.client()

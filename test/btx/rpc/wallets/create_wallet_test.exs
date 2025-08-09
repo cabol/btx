@@ -563,12 +563,12 @@ defmodule BTx.RPC.Wallets.CreateWalletTest do
     @tag :integration
     test "real Bitcoin regtest integration" do
       # This test requires a real Bitcoin regtest node running
-      client = new_client()
+      client = new_client(retry_opts: [max_retries: 10])
       wallet_name = "integration-test-#{UUID.generate()}"
 
       params = [wallet_name: wallet_name, passphrase: "test_pass", descriptors: true]
 
-      assert Wallets.create_wallet!(client, params, id: wallet_name, retries: 10) ==
+      assert Wallets.create_wallet!(client, params, id: wallet_name) ==
                CreateWalletResult.new!(%{name: wallet_name})
 
       assert_raise BTx.RPC.MethodError, ~r/already exists/, fn ->

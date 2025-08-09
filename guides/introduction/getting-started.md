@@ -132,7 +132,7 @@ IO.inspect(info.chain)  # => "regtest"
 ### Client Configuration Options
 
 ```elixir
-client = BTx.RPC.client(
+config = [
   # Required
   base_url: "http://127.0.0.1:18443",
   username: "my-user",
@@ -142,13 +142,12 @@ client = BTx.RPC.client(
   headers: [{"User-Agent", "MyApp/1.0"}],
   adapter: {Tesla.Adapter.Hackney, [pool: :btx]},
   timeout: 30_000
-)
+]
 
-# You can also configure retries per request
-{:ok, info} = BTx.RPC.Blockchain.get_blockchain_info(client,
-  retries: 5,           # Retry up to 5 times for network errors
-  retry_delay: 2000     # Wait 2 seconds between retries
-)
+client = BTx.RPC.client(config)
+
+# You can also configure retries
+client = BTx.RPC.client([retry_opts: [max_retries: 10]] ++ config)
 ```
 
 ## 💰 Working with Wallets
@@ -493,33 +492,6 @@ defmodule MyBitcoinApp do
         {:error, :unknown}
     end
   end
-
-  def send_with_retries(client, address, amount, wallet_name) do
-    # BTx has built-in retry logic for network-related errors
-    case BTx.RPC.Wallets.send_to_address(client,
-           [
-             address: address,
-             amount: amount,
-             wallet_name: wallet_name
-           ],
-           # Use BTx's built-in retry functionality
-           retries: 3,
-           retry_delay: 2000
-         ) do
-      {:ok, txid} ->
-        Logger.info("Transaction sent successfully: #{txid}")
-        {:ok, txid}
-
-      {:error, %BTx.RPC.Error{} = error} ->
-        Logger.error("HTTP error: #{Exception.message(error)}")
-        {:error, :http_error}
-
-      # Bitcoin Core specific errors - using enhanced error handling
-      {:error, %BTx.RPC.MethodError{reason: reason, message: message}} ->
-        Logger.error("Method error (#{reason}): #{message}")
-        {:error, :method_error}
-    end
-  end
 end
 ```
 
@@ -551,19 +523,12 @@ defmodule MyApp.BitcoinClient do
       username: Application.get_env(:my_app, :bitcoin_user),
       password: Application.get_env(:my_app, :bitcoin_password),
 
+      # With retries
+      retry_opts: [max_retries: 10, max_delay: :timer.seconds(5)],
+
       # Use connection pooling
       adapter: {Tesla.Adapter.Finch, name: :bitcoin_pool}
     )
-  end
-
-  # Helper function for high-reliability operations
-  def call_with_retries(client, request, opts \\ []) do
-    default_opts = [
-      retries: 5,
-      retry_delay: 2000
-    ]
-
-    BTx.RPC.call(client, request, Keyword.merge(default_opts, opts))
   end
 end
 
@@ -1012,7 +977,6 @@ BITCOIN_RPC_SSL_VERIFY=true
 
 # Connection settings
 BITCOIN_RPC_TIMEOUT=60000
-BITCOIN_RPC_RETRIES=5
 ```
 
 ### Production Configuration
@@ -1023,8 +987,7 @@ config :my_app, :bitcoin,
   username: System.get_env("BITCOIN_RPC_USER"),
   password: System.get_env("BITCOIN_RPC_PASSWORD"),
   ssl: System.get_env("BITCOIN_RPC_SSL", "false") == "true",
-  timeout: String.to_integer(System.get_env("BITCOIN_RPC_TIMEOUT", "30000")),
-  retries: String.to_integer(System.get_env("BITCOIN_RPC_RETRIES", "3")),
+  timeout: String.to_integer(System.get_env("BITCOIN_RPC_TIMEOUT", "30000"))
 
   # Connection pooling for production
   adapter_config: [

@@ -48,6 +48,42 @@ defmodule BTx.RPC.Options do
       doc: """
       The adapter to use for the HTTP client.
       """
+    ],
+    default_opts: [
+      type: :keyword_list,
+      required: false,
+      default: [],
+      doc: """
+      Default options for all JSON-RPC requests.
+
+      It uses [`Tesla.Middleware.Opts`][opts_middleware] middleware under the
+      hood.
+
+      [opts_middleware]: http://hexdocs.pm/tesla/Tesla.Middleware.Opts.html
+      """
+    ],
+    automatic_retry: [
+      type: :boolean,
+      required: false,
+      default: true,
+      doc: """
+      Whether to automatically retry the request if it fails. If `true`, it will
+      use the `:retry_opts` option to configure the retry middleware.
+      """
+    ],
+    retry_opts: [
+      type: :keyword_list,
+      required: false,
+      default: [],
+      doc: """
+      Options for Tesla middleware `Tesla.Middleware.Retry`. By default, the
+      `:should_retry` option is set to `&BTx.RPC.should_retry?/3`.
+
+      See [`Tesla.Middleware.Retry`][retry_middleware] for more information
+      about the options and defaults.
+
+      [retry_middleware]: http://hexdocs.pm/tesla/Tesla.Middleware.Retry.html
+      """
     ]
   ]
 
@@ -75,40 +111,6 @@ defmodule BTx.RPC.Options do
       > when you need to override the default path behavior. See the method
       > documentation to check if `:wallet_name` is supported before using this
       > option.
-      """
-    ],
-    retries: [
-      type: :pos_integer,
-      required: false,
-      default: 1,
-      doc: """
-      The number of times to retry the request if it fails.
-
-      > #### Retryable errors {: .info}
-      >
-      > The following errors are retryable:
-      >
-      > - `:service_unavailable` (503)
-      > - `:bad_gateway` (502)
-      > - `:gateway_timeout` (504)
-      """
-    ],
-    retry_delay: [
-      type: {:or, [:pos_integer, {:fun, 1}]},
-      required: false,
-      default: :timer.seconds(1),
-      doc: """
-      The delay between retries in milliseconds. the value can be a positive
-      integer or a function that receives the number of retries and returns a
-      positive integer (the delay in milliseconds).
-      """
-    ],
-    retryable_errors: [
-      type: {:list, :atom},
-      required: false,
-      doc: """
-      The errors that are retryable.
-      Defaults to `BTx.RPC.default_retryable_errors()`.
       """
     ]
   ]
@@ -144,7 +146,12 @@ defmodule BTx.RPC.Options do
 
   @spec validate_rpc_opts!(keyword()) :: keyword()
   def validate_rpc_opts!(opts) do
-    NimbleOptions.validate!(opts, @rpc_opts_schema)
+    rpc_opts =
+      opts
+      |> Keyword.take(Keyword.keys(@rpc_opts_schema.schema))
+      |> NimbleOptions.validate!(@rpc_opts_schema)
+
+    Keyword.merge(opts, rpc_opts)
   end
 
   ## Validation helpers

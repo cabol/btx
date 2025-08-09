@@ -464,19 +464,19 @@ defmodule BTx.RPC.RawTransactions.CreateRawTransactionTest do
     @tag :integration
     test "real Bitcoin regtest integration" do
       # This test requires a real Bitcoin regtest node with transactions
-      real_client = new_client()
+      real_client = new_client(retry_opts: [max_retries: 10])
 
       # Get the best block hash first
-      assert {:ok, blockchain_info} = Blockchain.get_blockchain_info(real_client, retries: 10)
+      assert {:ok, blockchain_info} = Blockchain.get_blockchain_info(real_client)
       blockhash = blockchain_info.bestblockhash
 
       # Get the first transaction from the block to use as input
       {:ok, %{tx: [txid | _]}} =
-        Blockchain.get_block(real_client, [blockhash: blockhash], retries: 10)
+        Blockchain.get_block(real_client, blockhash: blockhash)
 
       # Get a new address to use as output
       wallet_name = "btx-shared-test-wallet"
-      {:ok, address} = Wallets.get_new_address(real_client, [wallet_name: wallet_name], retries: 10)
+      {:ok, address} = Wallets.get_new_address(real_client, wallet_name: wallet_name)
 
       # Use the first output as input for our new transaction
       vout = 0
@@ -485,13 +485,10 @@ defmodule BTx.RPC.RawTransactions.CreateRawTransactionTest do
       assert {:ok, hex_result} =
                RawTransactions.create_raw_transaction(
                  real_client,
-                 [
-                   inputs: [%{txid: txid, vout: vout}],
-                   outputs: %{
-                     addresses: [%{address: address, amount: 0.001}]
-                   }
-                 ],
-                 retries: 10
+                 inputs: [%{txid: txid, vout: vout}],
+                 outputs: %{
+                   addresses: [%{address: address, amount: 0.001}]
+                 }
                )
 
       # Verify we got a hex string back
@@ -503,13 +500,10 @@ defmodule BTx.RPC.RawTransactions.CreateRawTransactionTest do
       assert {:ok, data_hex_result} =
                RawTransactions.create_raw_transaction(
                  real_client,
-                 [
-                   inputs: [%{txid: txid, vout: vout}],
-                   outputs: %{
-                     data: "deadbeef"
-                   }
-                 ],
-                 retries: 10
+                 inputs: [%{txid: txid, vout: vout}],
+                 outputs: %{
+                   data: "deadbeef"
+                 }
                )
 
       assert is_binary(data_hex_result)
@@ -519,15 +513,12 @@ defmodule BTx.RPC.RawTransactions.CreateRawTransactionTest do
       assert {:ok, locktime_hex_result} =
                RawTransactions.create_raw_transaction(
                  real_client,
-                 [
-                   inputs: [%{txid: txid, vout: vout, sequence: 1000}],
-                   outputs: %{
-                     addresses: [%{address: address, amount: 0.001}]
-                   },
-                   locktime: 500_000,
-                   replaceable: true
-                 ],
-                 retries: 10
+                 inputs: [%{txid: txid, vout: vout, sequence: 1000}],
+                 outputs: %{
+                   addresses: [%{address: address, amount: 0.001}]
+                 },
+                 locktime: 500_000,
+                 replaceable: true
                )
 
       assert is_binary(locktime_hex_result)
@@ -537,14 +528,11 @@ defmodule BTx.RPC.RawTransactions.CreateRawTransactionTest do
       assert {:ok, mixed_hex_result} =
                RawTransactions.create_raw_transaction(
                  real_client,
-                 [
-                   inputs: [%{txid: txid, vout: vout}],
-                   outputs: %{
-                     addresses: [%{address: address, amount: 0.001}],
-                     data: "cafebabe"
-                   }
-                 ],
-                 retries: 10
+                 inputs: [%{txid: txid, vout: vout}],
+                 outputs: %{
+                   addresses: [%{address: address, amount: 0.001}],
+                   data: "cafebabe"
+                 }
                )
 
       assert is_binary(mixed_hex_result)

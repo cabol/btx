@@ -350,7 +350,7 @@ defmodule RawTransactions.SendRawTransactionTest do
     @tag :integration
     test "real Bitcoin regtest integration" do
       # This test requires a real Bitcoin regtest node running
-      real_client = new_client()
+      real_client = new_client(retry_opts: [max_retries: 10])
 
       # Wallet for this test
       wallet_name = "btx-shared-test-wallet"
@@ -359,8 +359,8 @@ defmodule RawTransactions.SendRawTransactionTest do
       address =
         Wallets.get_new_address!(
           real_client,
-          [wallet_name: wallet_name, label: "test_send"],
-          retries: 10
+          wallet_name: wallet_name,
+          label: "test_send"
         )
 
       assert_eventually do
@@ -368,8 +368,7 @@ defmodule RawTransactions.SendRawTransactionTest do
         unspent =
           Wallets.list_unspent!(
             real_client,
-            [wallet_name: wallet_name],
-            retries: 10
+            wallet_name: wallet_name
           )
 
         utxo =
@@ -381,29 +380,26 @@ defmodule RawTransactions.SendRawTransactionTest do
         {:ok, raw_tx} =
           RawTransactions.create_raw_transaction(
             real_client,
-            [
-              inputs: [%{txid: utxo.txid, vout: utxo.vout}],
-              outputs: %{
-                addresses: [%{address: address, amount: 0.0001}]
-              }
-            ],
-            retries: 10
+            inputs: [%{txid: utxo.txid, vout: utxo.vout}],
+            outputs: %{
+              addresses: [%{address: address, amount: 0.0001}]
+            }
           )
 
         # Sign the transaction
         {:ok, signed_result} =
           Wallets.sign_raw_transaction_with_wallet(
             real_client,
-            [hexstring: raw_tx, wallet_name: wallet_name],
-            retries: 10
+            hexstring: raw_tx,
+            wallet_name: wallet_name
           )
 
         # Send the signed transaction
         assert {:ok, txid} =
                  RawTransactions.send_raw_transaction(
                    real_client,
-                   [hexstring: signed_result.hex, maxfeerate: 0],
-                   retries: 10
+                   hexstring: signed_result.hex,
+                   maxfeerate: 0
                  )
 
         # Verify we got a valid transaction hash

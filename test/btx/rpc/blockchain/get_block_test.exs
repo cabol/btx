@@ -299,18 +299,18 @@ defmodule BTx.RPC.Blockchain.GetBlockTest do
     @tag :integration
     test "real Bitcoin regtest integration" do
       # This test requires a real Bitcoin regtest node
-      real_client = new_client()
+      real_client = new_client(retry_opts: [max_retries: 10])
 
       # Get the best block hash first
-      assert {:ok, blockchain_info} = Blockchain.get_blockchain_info(real_client, retries: 10)
+      assert {:ok, blockchain_info} = Blockchain.get_blockchain_info(real_client)
       blockhash = blockchain_info.bestblockhash
 
       # Test hex format (verbosity=0)
       assert {:ok, hex_string} =
                Blockchain.get_block(
                  real_client,
-                 [blockhash: blockhash, verbosity: 0],
-                 retries: 10
+                 blockhash: blockhash,
+                 verbosity: 0
                )
 
       assert is_binary(hex_string)
@@ -320,8 +320,8 @@ defmodule BTx.RPC.Blockchain.GetBlockTest do
       assert {:ok, %GetBlockResultV1{} = result_v1} =
                Blockchain.get_block(
                  real_client,
-                 [blockhash: blockhash, verbosity: 1],
-                 retries: 10
+                 blockhash: blockhash,
+                 verbosity: 1
                )
 
       assert result_v1.hash == blockhash
@@ -334,8 +334,8 @@ defmodule BTx.RPC.Blockchain.GetBlockTest do
       assert {:ok, %GetBlockResultV2{} = result_v2} =
                Blockchain.get_block(
                  real_client,
-                 [blockhash: blockhash, verbosity: 2],
-                 retries: 10
+                 blockhash: blockhash,
+                 verbosity: 2
                )
 
       assert result_v2.hash == blockhash

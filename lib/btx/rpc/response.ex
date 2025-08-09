@@ -35,44 +35,9 @@ defmodule BTx.RPC.Response do
     {:ok, %__MODULE__{id: id, result: result}}
   end
 
-  # HTTP 400 - Bad Request (invalid request)
-  def new(%Tesla.Env{status: 400}) do
-    wrap_error BTx.RPC.Error, reason: :http_bad_request
-  end
-
-  # HTTP 401 - Unauthorized (invalid credentials)
-  def new(%Tesla.Env{status: 401}) do
-    wrap_error BTx.RPC.Error, reason: :http_unauthorized
-  end
-
-  # HTTP 403 - Forbidden (IP not allowed, access denied)
-  def new(%Tesla.Env{status: 403}) do
-    wrap_error BTx.RPC.Error, reason: :http_forbidden
-  end
-
-  # HTTP 404 - Not Found (invalid endpoint)
-  def new(%Tesla.Env{status: 404}) do
-    wrap_error BTx.RPC.Error, reason: :http_not_found
-  end
-
-  # HTTP 405 - Method Not Allowed (wrong HTTP method, e.g., GET instead of POST)
-  def new(%Tesla.Env{status: 405}) do
-    wrap_error BTx.RPC.Error, reason: :http_method_not_allowed
-  end
-
-  # HTTP 502 - Bad Gateway (node is overloaded)
-  def new(%Tesla.Env{status: 502}) do
-    wrap_error BTx.RPC.Error, reason: :http_bad_gateway
-  end
-
-  # HTTP 503 - Service Unavailable (node is starting, stopping, or overloaded)
-  def new(%Tesla.Env{status: 503}) do
-    wrap_error BTx.RPC.Error, reason: :http_service_unavailable
-  end
-
-  # HTTP 504 - Gateway Timeout (node is taking too long to respond)
-  def new(%Tesla.Env{status: 504}) do
-    wrap_error BTx.RPC.Error, reason: :http_gateway_timeout
+  # HTTP error
+  def new(%Tesla.Env{status: status}) when status in [400, 401, 403, 404, 405, 502, 503, 504] do
+    wrap_error BTx.RPC.Error, reason: http_reason(status)
   end
 
   # HTTP 200, 500, or any other status with JSON-RPC error in body
@@ -91,11 +56,28 @@ defmodule BTx.RPC.Response do
 
   # HTTP 500 - Internal Server Error (node is not running)
   def new(%Tesla.Env{status: 500}) do
-    wrap_error BTx.RPC.Error, reason: :http_internal_server_error
+    wrap_error BTx.RPC.Error, reason: http_reason(500)
   end
 
   # Fallback for any other unexpected cases
   def new(%Tesla.Env{status: status, body: body}) do
-    wrap_error BTx.RPC.Error, reason: :unknown_error, status: status, body: body
+    wrap_error BTx.RPC.Error, reason: http_reason(status), status: status, body: body
   end
+
+  @doc """
+  Returns the HTTP reason for the given status code.
+  """
+  @spec http_reason(integer()) :: atom()
+  def http_reason(status)
+
+  def http_reason(400), do: :http_bad_request
+  def http_reason(401), do: :http_unauthorized
+  def http_reason(403), do: :http_forbidden
+  def http_reason(404), do: :http_not_found
+  def http_reason(405), do: :http_method_not_allowed
+  def http_reason(500), do: :http_internal_server_error
+  def http_reason(502), do: :http_bad_gateway
+  def http_reason(503), do: :http_service_unavailable
+  def http_reason(504), do: :http_gateway_timeout
+  def http_reason(_), do: :unknown_error
 end

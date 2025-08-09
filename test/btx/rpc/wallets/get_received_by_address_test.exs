@@ -677,7 +677,7 @@ defmodule BTx.RPC.Wallets.GetReceivedByAddressTest do
     @tag :integration
     test "real Bitcoin regtest integration" do
       # This test requires a real Bitcoin regtest node running
-      real_client = new_client()
+      real_client = new_client(retry_opts: [max_retries: 10])
 
       # First ensure we have a wallet loaded, create one if needed
       wallet_name = "get-received-test-#{UUID.generate()}"
@@ -686,19 +686,19 @@ defmodule BTx.RPC.Wallets.GetReceivedByAddressTest do
       %BTx.RPC.Wallets.CreateWalletResult{name: ^wallet_name} =
         Wallets.create_wallet!(
           real_client,
-          [wallet_name: wallet_name, passphrase: "test"],
-          retries: 10
+          wallet_name: wallet_name,
+          passphrase: "test"
         )
 
       # Get a new address
-      address = Wallets.get_new_address!(real_client, [wallet_name: wallet_name], retries: 10)
+      address = Wallets.get_new_address!(real_client, wallet_name: wallet_name)
 
       # Check received amount (should be 0.0 for new address)
       assert {:ok, amount} =
                Wallets.get_received_by_address(
                  real_client,
-                 [address: address, wallet_name: wallet_name],
-                 retries: 10
+                 address: address,
+                 wallet_name: wallet_name
                )
 
       assert is_number(amount)

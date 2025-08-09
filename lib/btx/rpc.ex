@@ -233,6 +233,7 @@ defmodule BTx.RPC do
     username = Keyword.fetch!(opts, :username)
     password = Keyword.fetch!(opts, :password)
     headers = Keyword.fetch!(opts, :headers)
+    default_opts = Keyword.fetch!(opts, :default_opts)
 
     # Create Tesla client
     Tesla.client(
@@ -244,8 +245,11 @@ defmodule BTx.RPC do
         # Set the basic auth
         {Tesla.Middleware.BasicAuth, %{username: username, password: password}},
         # Set the JSON engine
-        {Tesla.Middleware.JSON, engine: BTx.json_module()}
-      ],
+        {Tesla.Middleware.JSON, engine: BTx.json_module()},
+        # Set the default options
+        {Tesla.Middleware.Opts, default_opts}
+      ]
+      |> maybe_add_retry_middleware(opts),
       adapter
     )
   end
@@ -264,9 +268,31 @@ defmodule BTx.RPC do
     protocol.
   - `opts` - Optional RPC-specific configuration (see Options below).
 
-  ## Options
+  ## RPC Options
 
   #{Options.rpc_opts_docs()}
+
+  ## Adapter Options
+
+  In addition to the RPC-specific options above, this function also accepts all
+  options supported by the underlying Tesla adapter. These options are passed
+  through directly to the adapter.
+
+  For example, when using `Tesla.Adapter.Finch`, you can pass any options
+  supported by `Finch.request/3`, such as:
+
+  - `:receive_timeout` - Request timeout in milliseconds.
+  - `:pool_timeout` - Pool checkout timeout in milliseconds.
+  - `:request_timeout` - Overall request timeout in milliseconds.
+
+  When using `Tesla.Adapter.Hackney`, you can pass options like:
+
+  - `:timeout` - Request timeout in milliseconds.
+  - `:recv_timeout` - Receive timeout in milliseconds.
+  - `:connect_timeout` - Connection timeout in milliseconds.
+
+  These adapter-specific options provide fine-grained control over HTTP behavior
+  and timeouts, complementing the RPC retry and error handling mechanisms.
 
   ## Returns
 
@@ -327,29 +353,9 @@ defmodule BTx.RPC do
           {:error, :method_error}
 
         # HTTP/Network errors
-        {:error, %BTx.RPC.Error{reason: :http_unauthorized}} ->
-          Logger.error("Authentication failed - check RPC credentials")
-          {:error, :auth_failed}
-
-        {:error, %BTx.RPC.Error{reason: :http_service_unavailable}} ->
-          Logger.warn("Bitcoin Core temporarily unavailable")
-          {:error, :service_unavailable}
-
-        {:error, %BTx.RPC.Error{reason: :http_forbidden}} ->
-          Logger.error("Access denied - check IP allowlist")
-          {:error, :access_denied}
-
-        {:error, %BTx.RPC.Error{reason: :econnrefused}} ->
-          Logger.error("Connection refused - is Bitcoin Core running?")
-          {:error, :connection_refused}
-
-        {:error, %BTx.RPC.Error{reason: :timeout}} ->
-          Logger.error("Request timed out")
-          {:error, :timeout}
-
-        {:error, error} ->
-          Logger.error("Unexpected error: \#{Exception.message(error)}")
-          {:error, :unknown}
+        {:error, %BTx.RPC.Error{} = reason} ->
+          reason |> Exception.message() |> Logger.error()
+          {:error, :http_error}
       end
 
   > #### `call` function usage {: .warning}
@@ -383,9 +389,6 @@ defmodule BTx.RPC do
     # Extract options
     {id, opts} = Keyword.pop(opts, :id)
     {path, opts} = Keyword.pop(opts, :path)
-    {retries, opts} = Keyword.pop!(opts, :retries)
-    {retry_delay, opts} = Keyword.pop!(opts, :retry_delay)
-    {retryable, opts} = Keyword.pop_lazy(opts, :retryable_errors, &default_retryable_errors/0)
 
     # Encode method and add ID if provided
     request = Encodable.encode(method_object)
@@ -404,7 +407,7 @@ defmodule BTx.RPC do
 
     :telemetry.span([:btx, :rpc, :call], metadata, fn ->
       client
-      |> with_retry(path, request, opts, method_object, retryable, retry_delay, retries)
+      |> post(path, request, opts, method_object)
       |> handle_response(metadata)
     end)
   end
@@ -426,87 +429,49 @@ defmodule BTx.RPC do
   @spec default_retryable_errors() :: [atom()]
   def default_retryable_errors, do: @default_retryable_errors
 
-  ## Private functions
+  @doc """
+  Default retry function for `Tesla.Middleware.Retry`.
 
-  defp with_retry(
-         client,
-         path,
-         request,
-         opts,
-         method_object,
-         retryable,
-         retry_delay,
-         retries
-       ) do
-    with_retry(
-      client,
-      path,
-      request,
-      opts,
-      method_object,
-      retryable,
-      retry_delay,
-      retries,
-      1
-    )
-  end
+  It retries on the following conditions:
 
-  defp with_retry(
-         client,
-         path,
-         request,
-         opts,
-         method_object,
-         _retryable,
-         _retry_delay,
-         retries,
-         count
-       )
-       when count >= retries do
-    post(client, path, request, opts, method_object)
-  end
+  - If the response is an error and the reason is within the default retryable
+    errors.
+  - In the case of connection errors (`nxdomain`, `connrefused`, etc).
 
-  defp with_retry(
-         client,
-         path,
-         request,
-         opts,
-         method_object,
-         retryable,
-         retry_delay,
-         retries,
-         count
-       ) do
-    with {:error, %_t{reason: reason}} = error <-
-           post(client, path, request, opts, method_object) do
-      if Enum.member?(retryable, reason) do
-        apply_retry_delay(retry_delay, count)
+  """
+  @spec should_retry?(Tesla.Env.result(), Tesla.Env.t(), any()) :: boolean()
+  def should_retry?(env, env, context)
 
-        with_retry(
-          client,
-          path,
-          request,
-          opts,
-          method_object,
-          retryable,
-          retry_delay,
-          retries,
-          count + 1
-        )
-      else
-        error
-      end
+  def should_retry?({:ok, %Tesla.Env{} = env}, _env, _context) do
+    case Response.new(env) do
+      {:error, %BTx.RPC.Error{reason: reason}} ->
+        Enum.member?(@default_retryable_errors, reason)
+
+      _else ->
+        false
     end
   end
 
-  defp apply_retry_delay(retry_delay, _retries) when is_integer(retry_delay) do
-    Process.sleep(retry_delay)
+  def should_retry?({:error, _reason}, _env, _context) do
+    true
   end
 
-  defp apply_retry_delay(retry_delay, retries) when is_function(retry_delay, 1) do
-    retries
-    |> retry_delay.()
-    |> Process.sleep()
+  ## Private functions
+
+  defp maybe_add_retry_middleware(middleware, opts) do
+    if Keyword.fetch!(opts, :automatic_retry) do
+      # Add the retry middleware
+      [
+        {Tesla.Middleware.Retry,
+         opts
+         |> Keyword.fetch!(:retry_opts)
+         |> Keyword.put_new_lazy(:should_retry, fn -> &__MODULE__.should_retry?/3 end)}
+        | middleware
+      ]
+    else
+      # Skip the retry middleware
+      middleware
+    end
   end
 
   defp post(client, path, request, opts, %_t{method: method} = method_object) do

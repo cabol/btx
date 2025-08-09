@@ -639,36 +639,31 @@ defmodule BTx.RPC.Wallets.GetTransactionTest do
     @tag :integration
     test "real Bitcoin regtest integration" do
       # This test requires a real Bitcoin regtest node with wallet and transactions
-      real_client = new_client()
+      real_client = new_client(retry_opts: [max_retries: 10])
 
       # Wallet for this test
       wallet_name = "btx-shared-test-wallet"
 
       # Step 1: Create a destination address (different wallet or address)
       address =
-        Wallets.get_new_address!(real_client, [wallet_name: wallet_name, label: "destination"],
-          retries: 10
-        )
+        Wallets.get_new_address!(real_client, wallet_name: wallet_name, label: "destination")
 
       # Step 2: Send a transaction
       {:ok, send_result} =
         Wallets.send_to_address(
           real_client,
-          [
-            address: address,
-            amount: 0.001,
-            wallet_name: wallet_name,
-            comment: "Integration test transaction"
-          ],
-          retries: 10
+          address: address,
+          amount: 0.001,
+          wallet_name: wallet_name,
+          comment: "Integration test transaction"
         )
 
       # Step 3: Verify the transaction
       assert {:ok, %GetTransactionResult{} = result} =
                Wallets.get_transaction(
                  real_client,
-                 [txid: send_result.txid, wallet_name: wallet_name],
-                 retries: 10
+                 txid: send_result.txid,
+                 wallet_name: wallet_name
                )
 
       assert is_binary(result.txid)

@@ -569,14 +569,14 @@ defmodule BTx.RPC.Wallets.ListUnspentTest do
     @tag :integration
     test "real Bitcoin regtest integration" do
       # This test requires a real Bitcoin regtest node running
-      real_client = new_client()
+      real_client = new_client(retry_opts: [max_retries: 10])
 
       # Wallet for this test
       wallet_name = "btx-shared-test-wallet"
 
       # Now we should have unspent outputs
       assert {:ok, outputs} =
-               Wallets.list_unspent(real_client, [wallet_name: wallet_name], retries: 10)
+               Wallets.list_unspent(real_client, wallet_name: wallet_name)
 
       if first_output = List.first(outputs) do
         assert %ListUnspentItem{} = first_output

@@ -313,7 +313,7 @@ defmodule BTx.RPC.Wallets.UnloadWalletResultTest do
     @tag :integration
     test "real Bitcoin regtest integration" do
       # This test requires a real Bitcoin regtest node running
-      client = new_client()
+      client = new_client(retry_opts: [max_retries: 10])
 
       # First create a wallet to unload
       wallet_name = "integration-unload-test-#{UUID.generate()}"
@@ -322,21 +322,21 @@ defmodule BTx.RPC.Wallets.UnloadWalletResultTest do
       assert {:ok, %CreateWalletResult{}} =
                Wallets.create_wallet(
                  client,
-                 [wallet_name: wallet_name, passphrase: "test_pass"],
-                 retries: 10
+                 wallet_name: wallet_name,
+                 passphrase: "test_pass"
                )
 
       # Unload the wallet
       assert {:ok, %UnloadWalletResult{}} =
                Wallets.unload_wallet(
                  client,
-                 [wallet_name: wallet_name, load_on_startup: false],
-                 retries: 10
+                 wallet_name: wallet_name,
+                 load_on_startup: false
                )
 
       # Try to unload again (should fail)
       assert {:error, %BTx.RPC.MethodError{code: -18, reason: :wallet_not_found}} =
-               Wallets.unload_wallet(client, [wallet_name: wallet_name], retries: 10)
+               Wallets.unload_wallet(client, wallet_name: wallet_name)
     end
   end
 

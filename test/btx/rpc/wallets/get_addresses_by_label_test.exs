@@ -497,7 +497,7 @@ defmodule BTx.RPC.Wallets.GetAddressesByLabelTest do
     @tag :integration
     test "real Bitcoin regtest integration" do
       # This test requires a real Bitcoin regtest node running
-      real_client = new_client()
+      real_client = new_client(retry_opts: [max_retries: 10])
 
       # Create a new wallet for testing
       wallet_name = "getaddressesbylabel-test-#{UUID.generate()}"
@@ -505,8 +505,8 @@ defmodule BTx.RPC.Wallets.GetAddressesByLabelTest do
       wallet =
         Wallets.create_wallet!(
           real_client,
-          [wallet_name: wallet_name, passphrase: "test"],
-          retries: 10
+          wallet_name: wallet_name,
+          passphrase: "test"
         )
 
       # Create some addresses with labels
@@ -516,24 +516,24 @@ defmodule BTx.RPC.Wallets.GetAddressesByLabelTest do
       address1 =
         Wallets.get_new_address!(
           real_client,
-          [label: test_label, wallet_name: wallet.name],
-          retries: 10
+          label: test_label,
+          wallet_name: wallet.name
         )
 
       # Get another address with the same label
       address2 =
         Wallets.get_new_address!(
           real_client,
-          [label: test_label, wallet_name: wallet.name],
-          retries: 10
+          label: test_label,
+          wallet_name: wallet.name
         )
 
       # Now get addresses by label
       assert {:ok, addresses} =
                Wallets.get_addresses_by_label(
                  real_client,
-                 [label: test_label, wallet_name: wallet.name],
-                 retries: 10
+                 label: test_label,
+                 wallet_name: wallet.name
                )
 
       assert is_map(addresses)
@@ -553,8 +553,8 @@ defmodule BTx.RPC.Wallets.GetAddressesByLabelTest do
       assert_raise BTx.RPC.MethodError, "No addresses with label nonexistent_label", fn ->
         Wallets.get_addresses_by_label!(
           real_client,
-          [label: "nonexistent_label", wallet_name: wallet.name],
-          retries: 10
+          label: "nonexistent_label",
+          wallet_name: wallet.name
         )
       end
     end

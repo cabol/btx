@@ -664,7 +664,7 @@ defmodule BTx.RPC.Wallets.ImportDescriptorsTest do
     @tag :integration
     test "real Bitcoin regtest integration" do
       # This test requires a real Bitcoin regtest node running
-      real_client = new_client()
+      real_client = new_client(retry_opts: [max_retries: 10])
 
       # Create a new descriptor wallet for testing
       wallet_name = "import-descriptors-test-#{UUID.generate()}"
@@ -672,8 +672,8 @@ defmodule BTx.RPC.Wallets.ImportDescriptorsTest do
       wallet =
         Wallets.create_wallet!(
           real_client,
-          [wallet_name: wallet_name, descriptors: true],
-          retries: 10
+          wallet_name: wallet_name,
+          descriptors: true
         )
 
       # TODO: Provide a successful case scenario.
@@ -683,13 +683,10 @@ defmodule BTx.RPC.Wallets.ImportDescriptorsTest do
       assert {:ok, [%ImportDescriptorResponse{} = r]} =
                Wallets.import_descriptors(
                  real_client,
-                 [
-                   requests: [
-                     %{desc: @valid_descriptor, timestamp: "now"}
-                   ],
-                   wallet_name: wallet.name
+                 requests: [
+                   %{desc: @valid_descriptor, timestamp: "now"}
                  ],
-                 retries: 10
+                 wallet_name: wallet.name
                )
 
       assert r.success == false

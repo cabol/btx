@@ -639,7 +639,7 @@ defmodule BTx.RPC.Wallets.WalletPassphraseTest do
     @tag :integration
     test "real Bitcoin regtest integration" do
       # This test requires a real Bitcoin regtest node with an encrypted wallet
-      real_client = new_client()
+      real_client = new_client(retry_opts: [max_retries: 10])
 
       # Create an encrypted wallet
       wallet_name = "wallet-passphrase-test-#{UUID.generate()}"
@@ -648,24 +648,26 @@ defmodule BTx.RPC.Wallets.WalletPassphraseTest do
       %BTx.RPC.Wallets.CreateWalletResult{name: ^wallet_name} =
         Wallets.create_wallet!(
           real_client,
-          [wallet_name: wallet_name, passphrase: "test_passphrase_123"],
-          retries: 10
+          wallet_name: wallet_name,
+          passphrase: "test_passphrase_123"
         )
 
       # The wallet should now be encrypted and locked
       # Try to unlock it
       assert Wallets.wallet_passphrase(
                real_client,
-               [passphrase: "test_passphrase_123", timeout: 60, wallet_name: wallet_name],
-               retries: 10
+               passphrase: "test_passphrase_123",
+               timeout: 60,
+               wallet_name: wallet_name
              ) == {:ok, nil}
 
       # Try with wrong passphrase (should fail)
       assert {:error, %BTx.RPC.MethodError{code: -14, reason: :wallet_passphrase_incorrect}} =
                Wallets.wallet_passphrase(
                  real_client,
-                 [passphrase: "wrong_passphrase", timeout: 60, wallet_name: wallet_name],
-                 retries: 10
+                 passphrase: "wrong_passphrase",
+                 timeout: 60,
+                 wallet_name: wallet_name
                )
     end
   end

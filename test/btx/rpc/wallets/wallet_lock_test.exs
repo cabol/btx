@@ -323,7 +323,7 @@ defmodule BTx.RPC.Wallets.WalletLockTest do
     @tag :integration
     test "real Bitcoin regtest integration" do
       # This test requires a real Bitcoin regtest node with an encrypted wallet
-      real_client = new_client()
+      real_client = new_client(retry_opts: [max_retries: 10])
 
       # Create an encrypted wallet
       wallet_name = "wallet-lock-test-#{UUID.generate()}"
@@ -332,8 +332,8 @@ defmodule BTx.RPC.Wallets.WalletLockTest do
       %BTx.RPC.Wallets.CreateWalletResult{name: ^wallet_name} =
         Wallets.create_wallet!(
           real_client,
-          [wallet_name: wallet_name, passphrase: "test_passphrase_123"],
-          retries: 10
+          wallet_name: wallet_name,
+          passphrase: "test_passphrase_123"
         )
 
       # The wallet should be encrypted and locked by default
@@ -341,13 +341,14 @@ defmodule BTx.RPC.Wallets.WalletLockTest do
       assert {:ok, nil} =
                Wallets.wallet_passphrase(
                  real_client,
-                 [passphrase: "test_passphrase_123", timeout: 60, wallet_name: wallet_name],
-                 retries: 10
+                 passphrase: "test_passphrase_123",
+                 timeout: 60,
+                 wallet_name: wallet_name
                )
 
       # Now lock it again
       assert {:ok, nil} =
-               Wallets.wallet_lock(real_client, [wallet_name: wallet_name], retries: 10)
+               Wallets.wallet_lock(real_client, wallet_name: wallet_name)
 
       # Try to lock an unencrypted wallet (should fail)
       unencrypted_wallet_name = "unencrypted-wallet-#{UUID.generate()}"
@@ -355,16 +356,14 @@ defmodule BTx.RPC.Wallets.WalletLockTest do
       %BTx.RPC.Wallets.CreateWalletResult{name: ^unencrypted_wallet_name} =
         Wallets.create_wallet!(
           real_client,
-          [wallet_name: unencrypted_wallet_name],
-          retries: 10
+          wallet_name: unencrypted_wallet_name
         )
 
       # This should fail since the wallet is not encrypted
       assert {:error, %BTx.RPC.MethodError{code: -15, reason: :wallet_wrong_enc_state}} =
                Wallets.wallet_lock(
                  real_client,
-                 [wallet_name: unencrypted_wallet_name],
-                 retries: 10
+                 wallet_name: unencrypted_wallet_name
                )
     end
   end

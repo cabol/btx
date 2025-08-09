@@ -574,7 +574,7 @@ defmodule BTx.RPC.Wallets.SignRawTransactionWithWalletTest do
     @tag :integration
     test "real Bitcoin regtest integration" do
       # This test requires a real Bitcoin regtest node running
-      real_client = new_client()
+      real_client = new_client(retry_opts: [max_retries: 10])
 
       # Create a new wallet for testing
       wallet_name = "sign-raw-tx-test-#{UUID.generate()}"
@@ -582,8 +582,8 @@ defmodule BTx.RPC.Wallets.SignRawTransactionWithWalletTest do
       wallet =
         Wallets.create_wallet!(
           real_client,
-          [wallet_name: wallet_name, passphrase: "test"],
-          retries: 10
+          wallet_name: wallet_name,
+          passphrase: "test"
         )
 
       # TODO: Provide a successful case scenario.
@@ -592,8 +592,8 @@ defmodule BTx.RPC.Wallets.SignRawTransactionWithWalletTest do
       assert {:error, %BTx.RPC.MethodError{}} =
                Wallets.sign_raw_transaction_with_wallet(
                  real_client,
-                 [hexstring: @valid_hex, wallet_name: wallet.name],
-                 retries: 10
+                 hexstring: @valid_hex,
+                 wallet_name: wallet.name
                )
     end
   end

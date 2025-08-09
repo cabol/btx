@@ -407,7 +407,7 @@ defmodule BTx.RPC.Utils.ValidateAddressTest do
     @tag :integration
     test "real Bitcoin regtest integration" do
       # This test requires a real Bitcoin regtest node running
-      real_client = new_client()
+      real_client = new_client(retry_opts: [max_retries: 10])
 
       # Test various address types
       test_addresses = [
@@ -424,7 +424,7 @@ defmodule BTx.RPC.Utils.ValidateAddressTest do
 
       for address <- test_addresses do
         assert {:ok, %ValidateAddressResult{} = result} =
-                 Utils.validate_address(real_client, [address: address], retries: 10)
+                 Utils.validate_address(real_client, address: address)
 
         assert is_boolean(result.isvalid)
 

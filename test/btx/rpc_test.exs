@@ -17,7 +17,7 @@ defmodule BTx.RPCTest do
 
       assert %Tesla.Client{} = client
       # BaseUrl, Headers, BasicAuth, JSON middlewares
-      assert length(client.pre) == 4
+      assert length(client.pre) == 6
     end
 
     test "creates client with custom headers" do
@@ -34,6 +34,17 @@ defmodule BTx.RPCTest do
       assert_raise NimbleOptions.ValidationError, fn ->
         RPC.client(adapter: "invalid")
       end
+    end
+  end
+
+  describe "default_retryable_errors/0" do
+    test "returns the default retryable errors" do
+      assert RPC.default_retryable_errors() == [
+               :http_internal_server_error,
+               :http_service_unavailable,
+               :http_bad_gateway,
+               :http_gateway_timeout
+             ]
     end
   end
 
@@ -203,41 +214,26 @@ defmodule BTx.RPCTest do
       assert {:error, %BTx.RPC.Error{reason: :econnrefused}} = RPC.call(client, method)
     end
 
-    test "retryable error", %{client: client, method: method} do
+    test "retryable error", %{method: method} do
+      client = new_client(adapter: Tesla.Mock, retry_opts: [max_retries: 3, max_delay: 1])
+
       mock(fn
         %{method: :post, url: @url} ->
           %Tesla.Env{status: 503, body: "Service Unavailable"}
       end)
 
-      assert {:error, %BTx.RPC.Error{reason: :http_service_unavailable}} =
-               RPC.call(client, method, retries: 2, retry_delay: 1)
+      assert {:error, %BTx.RPC.Error{reason: :http_service_unavailable}} = RPC.call(client, method)
     end
 
-    test "retryable error with function retry delay", %{client: client, method: method} do
+    test "retryable disabled", %{method: method} do
+      client = new_client(adapter: Tesla.Mock, automatic_retry: false)
+
       mock(fn
         %{method: :post, url: @url} ->
           %Tesla.Env{status: 503, body: "Service Unavailable"}
       end)
 
-      assert {:error, %BTx.RPC.Error{reason: :http_service_unavailable}} =
-               RPC.call(client, method, retries: 3, retry_delay: fn n -> n end)
-    end
-
-    test "retryable error with function retry delay and retryable errors", %{
-      client: client,
-      method: method
-    } do
-      mock(fn
-        %{method: :post, url: @url} ->
-          %Tesla.Env{status: 503, body: "Service Unavailable"}
-      end)
-
-      assert {:error, %BTx.RPC.Error{reason: :http_service_unavailable}} =
-               RPC.call(client, method,
-                 retries: 3,
-                 retry_delay: fn n -> n end,
-                 retryable_errors: [:http_service_unavailable]
-               )
+      assert {:error, %BTx.RPC.Error{reason: :http_service_unavailable}} = RPC.call(client, method)
     end
   end
 
@@ -308,7 +304,7 @@ defmodule BTx.RPCTest do
   describe "integration with real Bitcoin regtest" do
     @tag :integration
     test "can connect to regtest node" do
-      client = new_client()
+      client = new_client(retry_opts: [max_retries: 10])
       wallet_name = "integration-test-#{UUID.generate()}"
 
       method = CreateWallet.new!(wallet_name: wallet_name, passphrase: "test")
@@ -316,10 +312,10 @@ defmodule BTx.RPCTest do
       # This should work if regtest is running
       # You can skip this test if regtest is not available
       assert %Response{id: ^wallet_name, result: %{"name" => ^wallet_name}} =
-               RPC.call!(client, method, id: wallet_name, retries: 10)
+               RPC.call!(client, method, id: wallet_name)
 
       assert_raise BTx.RPC.MethodError, ~r/already exists/, fn ->
-        RPC.call!(client, method, id: wallet_name, retries: 10)
+        RPC.call!(client, method, id: wallet_name)
       end
     end
   end

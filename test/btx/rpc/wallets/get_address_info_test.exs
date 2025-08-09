@@ -699,25 +699,25 @@ defmodule BTx.RPC.Wallets.GetAddressInfoTest do
     @tag :integration
     test "real Bitcoin regtest integration" do
       # This test requires a real Bitcoin regtest node running
-      real_client = new_client()
+      real_client = new_client(retry_opts: [max_retries: 10])
 
       # First ensure we have a wallet loaded, create one if needed
       wallet_name =
         Wallets.create_wallet!(
           real_client,
-          [wallet_name: "address-info-test-#{UUID.generate()}", passphrase: "test"],
-          retries: 10
+          wallet_name: "address-info-test-#{UUID.generate()}",
+          passphrase: "test"
         ).name
 
       # Get a new address from our wallet
-      address = Wallets.get_new_address!(real_client, [wallet_name: wallet_name], retries: 10)
+      address = Wallets.get_new_address!(real_client, wallet_name: wallet_name)
 
       # Get address info
       assert {:ok, %GetAddressInfoResult{} = result} =
                Wallets.get_address_info(
                  real_client,
-                 [address: address, wallet_name: wallet_name],
-                 retries: 10
+                 address: address,
+                 wallet_name: wallet_name
                )
 
       # Verify the address info has expected fields

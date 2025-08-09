@@ -477,18 +477,19 @@ defmodule BTx.RPC.Wallets.GetBalanceTest do
     @tag :integration
     test "real Bitcoin regtest integration" do
       # This test requires a real Bitcoin regtest node running
-      real_client = new_client()
+      real_client = new_client(retry_opts: [max_retries: 10])
 
       # First ensure we have a wallet loaded, create one if needed
       wallet_name =
         Wallets.create_wallet!(
           real_client,
-          [wallet_name: "test-wallet-#{UUID.generate()}", passphrase: "test", avoid_reuse: true],
-          retries: 10
+          wallet_name: "test-wallet-#{UUID.generate()}",
+          passphrase: "test",
+          avoid_reuse: true
         ).name
 
       assert {:ok, balance} =
-               Wallets.get_balance(real_client, [wallet_name: wallet_name], retries: 10)
+               Wallets.get_balance(real_client, wallet_name: wallet_name)
 
       assert is_number(balance)
       assert balance >= 0.0

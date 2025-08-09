@@ -499,22 +499,22 @@ defmodule BTx.RPC.RawTransactions.SignRawTransactionWithKeyTest do
     @tag :integration
     test "real Bitcoin regtest integration" do
       # This test requires a real Bitcoin regtest node with wallet and funds
-      real_client = new_client()
+      real_client = new_client(retry_opts: [max_retries: 10])
 
       # Get the best block hash first
-      assert {:ok, blockchain_info} = Blockchain.get_blockchain_info(real_client, retries: 10)
+      assert {:ok, blockchain_info} = Blockchain.get_blockchain_info(real_client)
       blockhash = blockchain_info.bestblockhash
 
       # Get a transaction from the block
       {:ok, %{tx: [txid | _]}} =
-        Blockchain.get_block(real_client, [blockhash: blockhash], retries: 10)
+        Blockchain.get_block(real_client, blockhash: blockhash)
 
       # Get the raw transaction to use as a template
       {:ok, hex_string} =
         RawTransactions.get_raw_transaction(
           real_client,
-          [txid: txid, verbose: false],
-          retries: 10
+          txid: txid,
+          verbose: false
         )
 
       # TODO: Provide a successful case scenario.
@@ -529,11 +529,8 @@ defmodule BTx.RPC.RawTransactions.SignRawTransactionWithKeyTest do
       result =
         RawTransactions.sign_raw_transaction_with_key(
           real_client,
-          [
-            hexstring: hex_string,
-            privkeys: [private_key]
-          ],
-          retries: 10
+          hexstring: hex_string,
+          privkeys: [private_key]
         )
 
       # The call should either succeed or fail with a specific Bitcoin Core error
