@@ -97,6 +97,19 @@ defmodule BTx.RPC.Options do
 
       [timeout_middleware]: http://hexdocs.pm/tesla/Tesla.Middleware.Timeout.html
       """
+    ],
+    logger_opts: [
+      type: :keyword_list,
+      required: false,
+      doc: """
+      Options for the Tesla middleware `Tesla.Middleware.Logger`. If it is not
+      set, the `Tesla.Middleware.Logger` middleware is not used.
+
+      See [`Tesla.Middleware.Logger`][logger_middleware] for more information
+      about the options and defaults.
+
+      [logger_middleware]: http://hexdocs.pm/tesla/Tesla.Middleware.Logger.html
+      """
     ]
   ]
 

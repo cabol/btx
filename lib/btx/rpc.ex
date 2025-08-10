@@ -249,6 +249,8 @@ defmodule BTx.RPC do
         # Set the default options
         {Tesla.Middleware.Opts, default_opts}
       ]
+      # Maybe add the logger middleware
+      |> maybe_add_logger_middleware(opts)
       # Maybe add the retry middleware
       |> maybe_add_retry_middleware(opts)
       # Maybe add the timeout middleware
@@ -485,6 +487,16 @@ defmodule BTx.RPC do
       [{Tesla.Middleware.Timeout, async_opts} | middleware]
     else
       # Skip the timeout middleware
+      middleware
+    end
+  end
+
+  defp maybe_add_logger_middleware(middleware, opts) do
+    # If logger opts are provided, add the logger middleware
+    if logger_opts = Keyword.get(opts, :logger_opts) do
+      middleware ++ [{Tesla.Middleware.Logger, logger_opts}]
+    else
+      # Skip the logger middleware
       middleware
     end
   end

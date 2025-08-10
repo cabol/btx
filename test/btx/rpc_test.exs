@@ -1,6 +1,7 @@
 defmodule BTx.RPCTest do
   use ExUnit.Case, async: true
 
+  import ExUnit.CaptureLog
   import BTx.TestUtils
   import Tesla.Mock
 
@@ -270,6 +271,19 @@ defmodule BTx.RPCTest do
 
       assert {:error, %BTx.RPC.Error{reason: :timeout} = ex} = RPC.call(client, method)
       assert Exception.message(ex) =~ "JSON RPC request failed with reason: :timeout"
+    end
+
+    test "logger opts logs error", %{method: method} do
+      client = new_client(adapter: Tesla.Mock, logger_opts: [])
+
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{status: 503, body: "Service Unavailable"}
+      end)
+
+      assert capture_log([level: :error], fn ->
+               assert {:error, %BTx.RPC.Error{}} = RPC.call(client, method)
+             end) =~ "POST http://localhost:18443/ -> 503"
     end
   end
 
