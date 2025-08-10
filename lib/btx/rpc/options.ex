@@ -84,6 +84,19 @@ defmodule BTx.RPC.Options do
 
       [retry_middleware]: http://hexdocs.pm/tesla/Tesla.Middleware.Retry.html
       """
+    ],
+    async_opts: [
+      type: :keyword_list,
+      required: false,
+      doc: """
+      Options for Tesla middleware `Tesla.Middleware.Timeout`. If it is not set,
+      the `Tesla.Middleware.Timeout` middleware is not used.
+
+      See [`Tesla.Middleware.Timeout`][timeout_middleware] for more information
+      about the options and defaults.
+
+      [timeout_middleware]: http://hexdocs.pm/tesla/Tesla.Middleware.Timeout.html
+      """
     ]
   ]
 

@@ -27,41 +27,50 @@ defmodule BTx.RPC.Response do
   @doc """
   Creates a new `Response` struct.
   """
-  @spec new(Tesla.Env.t()) :: {:ok, t()} | {:error, BTx.RPC.MethodError.t() | BTx.RPC.Error.t()}
-  def new(response)
+  @spec new(Tesla.Env.t(), keyword()) ::
+          {:ok, t()} | {:error, BTx.RPC.MethodError.t() | BTx.RPC.Error.t()}
+  def new(response, meta \\ [])
 
   # Successful response
-  def new(%Tesla.Env{status: 200, body: %{"error" => nil, "id" => id, "result" => result}}) do
+  def new(
+        %Tesla.Env{
+          status: 200,
+          body: %{"error" => nil, "id" => id, "result" => result}
+        },
+        _meta
+      ) do
     {:ok, %__MODULE__{id: id, result: result}}
   end
 
   # HTTP error
-  def new(%Tesla.Env{status: status}) when status in [400, 401, 403, 404, 405, 502, 503, 504] do
-    wrap_error BTx.RPC.Error, reason: http_reason(status)
+  def new(%Tesla.Env{status: status}, meta)
+      when status in [400, 401, 403, 404, 405, 502, 503, 504] do
+    wrap_error BTx.RPC.Error, [reason: http_reason(status), status: status] ++ meta
   end
 
   # HTTP 200, 500, or any other status with JSON-RPC error in body
   # This covers most Bitcoin Core application errors
   # (invalid params, insufficient funds, etc.)
-  def new(%Tesla.Env{
-        status: _,
-        body: %{"result" => nil, "error" => %{"code" => code, "message" => message}} = body
-      }) do
-    wrap_error MethodError,
-      id: body["id"],
-      code: code,
-      message: message,
-      reason: MethodError.reason(code)
+  def new(
+        %Tesla.Env{
+          status: _,
+          body: %{"result" => nil, "error" => %{"code" => code, "message" => message}} = body
+        },
+        meta
+      ) do
+    meta = [id: body["id"], code: code, message: message, reason: MethodError.reason(code)] ++ meta
+
+    wrap_error MethodError, meta
   end
 
   # HTTP 500 - Internal Server Error (node is not running)
-  def new(%Tesla.Env{status: 500}) do
-    wrap_error BTx.RPC.Error, reason: http_reason(500)
+  def new(%Tesla.Env{status: 500}, meta) do
+    wrap_error BTx.RPC.Error, [reason: http_reason(500), status: 500] ++ meta
   end
 
   # Fallback for any other unexpected cases
-  def new(%Tesla.Env{status: status, body: body}) do
-    wrap_error BTx.RPC.Error, reason: http_reason(status), status: status, body: body
+  def new(%Tesla.Env{status: status}, meta) do
+    wrap_error BTx.RPC.Error, [reason: http_reason(status), status: status] ++ meta
   end
 
   @doc """

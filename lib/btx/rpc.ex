@@ -249,7 +249,11 @@ defmodule BTx.RPC do
         # Set the default options
         {Tesla.Middleware.Opts, default_opts}
       ]
-      |> maybe_add_retry_middleware(opts),
+      # Maybe add the retry middleware
+      |> maybe_add_retry_middleware(opts)
+      # Maybe add the timeout middleware
+      |> maybe_add_timeout_middleware(opts),
+      # Set the adapter
       adapter
     )
   end
@@ -407,7 +411,7 @@ defmodule BTx.RPC do
 
     :telemetry.span([:btx, :rpc, :call], metadata, fn ->
       client
-      |> post(path, request, opts, method_object)
+      |> post(path, request, opts, method: method, id: id, path: path)
       |> handle_response(metadata)
     end)
   end
@@ -459,30 +463,41 @@ defmodule BTx.RPC do
   ## Private functions
 
   defp maybe_add_retry_middleware(middleware, opts) do
+    # If automatic retry is enabled, add the retry middleware
     if Keyword.fetch!(opts, :automatic_retry) do
-      # Add the retry middleware
-      [
-        {Tesla.Middleware.Retry,
-         opts
-         |> Keyword.fetch!(:retry_opts)
-         |> Keyword.put_new_lazy(:should_retry, fn -> &__MODULE__.should_retry?/3 end)}
-        | middleware
-      ]
+      # Build the retry options
+      retry_opts =
+        opts
+        |> Keyword.fetch!(:retry_opts)
+        |> Keyword.put_new_lazy(:should_retry, fn -> &__MODULE__.should_retry?/3 end)
+
+      [{Tesla.Middleware.Retry, retry_opts} | middleware]
     else
       # Skip the retry middleware
       middleware
     end
   end
 
-  defp post(client, path, request, opts, %_t{method: method} = method_object) do
+  defp maybe_add_timeout_middleware(middleware, opts) do
+    # If async opts are provided, add the timeout middleware
+    if async_opts = Keyword.get(opts, :async_opts) do
+      # Add the timeout middleware
+      [{Tesla.Middleware.Timeout, async_opts} | middleware]
+    else
+      # Skip the timeout middleware
+      middleware
+    end
+  end
+
+  defp post(client, path, request, opts, meta) do
     client
     |> Tesla.post(path, request, opts: opts)
     |> case do
       {:ok, %Tesla.Env{} = response} ->
-        Response.new(response)
+        Response.new(response, meta)
 
       {:error, reason} ->
-        wrap_error BTx.RPC.Error, reason: reason, method: method, method_object: method_object
+        wrap_error BTx.RPC.Error, [reason: reason] ++ meta
     end
   end
 

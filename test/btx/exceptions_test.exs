@@ -15,7 +15,10 @@ defmodule BTx.ExceptionsTest do
         {:http_bad_gateway, "Bad Gateway"},
         {:http_service_unavailable, "Service Unavailable"},
         {:http_gateway_timeout, "Gateway Timeout"},
-        {:unknown_error, "Unknown Error"}
+        {:unknown_error, "Unknown Error"},
+        {:econnrefused, "connection refused"},
+        {:timeout, "timeout"},
+        {:nxdomain, "non-existing domain"}
       ]
 
       for {reason, expected_prefix} <- error_types do

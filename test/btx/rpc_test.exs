@@ -79,6 +79,25 @@ defmodule BTx.RPCTest do
       assert result["name"] == "test_wallet"
     end
 
+    test "successful method returns ok tuple with async opts", %{method: method} do
+      client = new_client(adapter: Tesla.Mock, async_opts: [timeout: 10])
+
+      mock(fn
+        %{method: :post, url: @url} ->
+          %Tesla.Env{
+            status: 200,
+            body: %{
+              "id" => "test-id",
+              "result" => %{"name" => "test_wallet", "warning" => ""},
+              "error" => nil
+            }
+          }
+      end)
+
+      assert {:ok, %Response{id: "test-id", result: result}} = RPC.call(client, method)
+      assert result["name"] == "test_wallet"
+    end
+
     test "HTTP 400 returns bad method error", %{client: client, method: method} do
       mock(fn
         %{method: :post, url: @url} ->
@@ -190,7 +209,8 @@ defmodule BTx.RPCTest do
                RPC.call(client, method)
 
       assert Keyword.get(metadata, :status) == 599
-      assert Keyword.get(metadata, :body) == "Unknown Error"
+      assert Keyword.get(metadata, :reason) == nil
+      assert Keyword.get(metadata, :method) == "createwallet"
     end
 
     test "Tesla adapter error returns error", %{client: client, method: method} do
@@ -199,9 +219,10 @@ defmodule BTx.RPCTest do
           {:error, :timeout}
       end)
 
-      assert {:error, %BTx.RPC.Error{reason: :timeout, metadata: metadata}} =
+      assert {:error, %BTx.RPC.Error{reason: :timeout, metadata: metadata} = ex} =
                RPC.call(client, method)
 
+      assert Exception.message(ex) =~ "JSON RPC request failed with reason: :timeout"
       assert Keyword.has_key?(metadata, :method)
     end
 
@@ -211,7 +232,8 @@ defmodule BTx.RPCTest do
           {:error, :econnrefused}
       end)
 
-      assert {:error, %BTx.RPC.Error{reason: :econnrefused}} = RPC.call(client, method)
+      assert {:error, %BTx.RPC.Error{reason: :econnrefused} = ex} = RPC.call(client, method)
+      assert Exception.message(ex) =~ "JSON RPC request failed with reason: connection refused"
     end
 
     test "retryable error", %{method: method} do
@@ -225,7 +247,7 @@ defmodule BTx.RPCTest do
       assert {:error, %BTx.RPC.Error{reason: :http_service_unavailable}} = RPC.call(client, method)
     end
 
-    test "retryable disabled", %{method: method} do
+    test "automatic retry disabled", %{method: method} do
       client = new_client(adapter: Tesla.Mock, automatic_retry: false)
 
       mock(fn
@@ -234,6 +256,20 @@ defmodule BTx.RPCTest do
       end)
 
       assert {:error, %BTx.RPC.Error{reason: :http_service_unavailable}} = RPC.call(client, method)
+    end
+
+    test "async opts timeout error", %{method: method} do
+      client = new_client(adapter: Tesla.Mock, async_opts: [timeout: 10])
+
+      mock(fn
+        %{method: :post, url: @url} ->
+          Process.sleep(1000)
+
+          %Tesla.Env{status: 503, body: "Service Unavailable"}
+      end)
+
+      assert {:error, %BTx.RPC.Error{reason: :timeout} = ex} = RPC.call(client, method)
+      assert Exception.message(ex) =~ "JSON RPC request failed with reason: :timeout"
     end
   end
 

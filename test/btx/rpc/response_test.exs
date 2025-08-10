@@ -67,10 +67,11 @@ defmodule BTx.RPC.ResponseTest do
       }
 
       assert {:error, %Error{reason: :unknown_error, metadata: metadata}} =
-               Response.new(env)
+               Response.new(env, method: "createwallet")
 
       assert Keyword.get(metadata, :status) == 418
-      assert Keyword.get(metadata, :body) == "I'm a teapot"
+      assert Keyword.get(metadata, :reason) == nil
+      assert Keyword.get(metadata, :method) == "createwallet"
     end
   end
 end

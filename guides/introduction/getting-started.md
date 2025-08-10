@@ -141,7 +141,7 @@ config = [
   # Optional
   headers: [{"User-Agent", "MyApp/1.0"}],
   adapter: {Tesla.Adapter.Hackney, [pool: :btx]},
-  timeout: 30_000
+  async_opts: [timeout: :timer.seconds(30)]
 ]
 
 client = BTx.RPC.client(config)
@@ -463,33 +463,20 @@ defmodule MyBitcoinApp do
         Logger.info("Wallet created: #{result.name}")
         {:ok, result}
 
+        # Validation errors
+      {:error, %Ecto.Changeset{} = changeset} ->
+        Logger.error("Validation failed: #{inspect(changeset.errors)}")
+        {:error, :validation_failed}
+
       # Bitcoin Core specific errors - using enhanced error handling
       {:error, %BTx.RPC.MethodError{reason: reason, message: message}} ->
         Logger.error("Method error (#{reason}): #{message}")
         {:error, :method_error}
 
-      # Connection and authentication errors
-      {:error, %BTx.RPC.Error{reason: :http_unauthorized}} ->
-        Logger.error("Authentication failed - check credentials")
-        {:error, :auth_failed}
-
-      {:error, %BTx.RPC.Error{reason: :econnrefused}} ->
-        Logger.error("Cannot connect to Bitcoin Core")
-        {:error, :connection_failed}
-
-      {:error, %BTx.RPC.Error{reason: :timeout}} ->
-        Logger.error("Request timed out")
-        {:error, :timeout}
-
-      # Validation errors
-      {:error, %Ecto.Changeset{} = changeset} ->
-        Logger.error("Validation failed: #{inspect(changeset.errors)}")
-        {:error, :validation_failed}
-
-      # Unexpected errors
-      {:error, error} ->
-        Logger.error("Unexpected error: #{Exception.message(error)}")
-        {:error, :unknown}
+      # HTTP/connection errors
+      {:error, %BTx.RPC.Error{} = ex} ->
+        ex |> Exception.message() |> Logger.error()
+        {:error, :http_error}
     end
   end
 end
@@ -971,10 +958,6 @@ BITCOIN_RPC_URL=https://your-bitcoin-node.com:8332
 BITCOIN_RPC_USER=production-user
 BITCOIN_RPC_PASSWORD=super-secure-password
 
-# SSL Configuration
-BITCOIN_RPC_SSL=true
-BITCOIN_RPC_SSL_VERIFY=true
-
 # Connection settings
 BITCOIN_RPC_TIMEOUT=60000
 ```
@@ -987,14 +970,15 @@ config :my_app, :bitcoin,
   username: System.get_env("BITCOIN_RPC_USER"),
   password: System.get_env("BITCOIN_RPC_PASSWORD"),
   ssl: System.get_env("BITCOIN_RPC_SSL", "false") == "true",
-  timeout: String.to_integer(System.get_env("BITCOIN_RPC_TIMEOUT", "30000"))
-
+  async_opts: [
+    timeout: String.to_integer(System.get_env("BITCOIN_RPC_TIMEOUT", "30000"))
+  ],
   # Connection pooling for production
-  adapter_config: [
-    pool: :bitcoin_pool,
-    timeout: 60_000,
-    recv_timeout: 60_000,
-    max_connections: 50
+  finch_config: [
+    name: :bitcoin,
+    pools: %{
+      default: [conn_opts: [transport_opts: [keep_secrets: true]]]
+    }
   ]
 ```
 
