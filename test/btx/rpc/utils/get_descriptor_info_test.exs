@@ -342,7 +342,7 @@ defmodule BTx.RPC.Utils.GetDescriptorInfoTest do
     @tag :integration
     test "real Bitcoin regtest integration" do
       # This test requires a real Bitcoin regtest node running
-      real_client = new_client(retry_opts: [max_retries: 10])
+      real_client = new_client(retry_opts: [max_retries: 10, delay: :timer.seconds(1)])
 
       # Test with a valid descriptor
       assert {:ok, %GetDescriptorInfoResult{} = result} =

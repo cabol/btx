@@ -391,7 +391,7 @@ defmodule BTx.RPC.Blockchain.GetBlockchainInfoTest do
     @tag :integration
     test "real Bitcoin regtest integration" do
       # This test requires a real Bitcoin regtest node running
-      real_client = new_client(retry_opts: [max_retries: 10])
+      real_client = new_client(retry_opts: [max_retries: 10, delay: :timer.seconds(1)])
 
       assert {:ok, %GetBlockchainInfoResult{} = result} =
                Blockchain.get_blockchain_info(real_client)

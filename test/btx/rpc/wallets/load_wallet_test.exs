@@ -356,7 +356,7 @@ defmodule BTx.RPC.Wallets.LoadWalletTest do
     @tag :integration
     test "real Bitcoin regtest integration" do
       # This test requires a real Bitcoin regtest node running
-      client = new_client(retry_opts: [max_retries: 10])
+      client = new_client(retry_opts: [max_retries: 10, delay: :timer.seconds(1)])
 
       # Create a unique wallet name
       wallet_name = "load-wallet-#{UUID.generate()}"

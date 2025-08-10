@@ -1,6 +1,6 @@
 # Fund a shared wallet for tests
 if :integration not in ExUnit.configuration()[:exclude] do
-  client = BTx.TestUtils.new_client(retry_opts: [max_retries: 10])
+  client = BTx.TestUtils.new_client(retry_opts: [max_retries: 10, delay: :timer.seconds(1)])
   wallet = "btx-shared-test-wallet"
 
   # Step 1: Create and load a wallet

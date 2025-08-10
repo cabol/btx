@@ -354,7 +354,7 @@ defmodule BTx.RPCTest do
   describe "integration with real Bitcoin regtest" do
     @tag :integration
     test "can connect to regtest node" do
-      client = new_client(retry_opts: [max_retries: 10])
+      client = new_client(retry_opts: [max_retries: 10, delay: :timer.seconds(1)])
       wallet_name = "integration-test-#{UUID.generate()}"
 
       method = CreateWallet.new!(wallet_name: wallet_name, passphrase: "test")

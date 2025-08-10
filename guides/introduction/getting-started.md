@@ -147,7 +147,7 @@ config = [
 client = BTx.RPC.client(config)
 
 # You can also configure retries
-client = BTx.RPC.client([retry_opts: [max_retries: 10]] ++ config)
+client = BTx.RPC.client([retry_opts: [max_retries: 10, delay: :timer.seconds(1)]] ++ config)
 ```
 
 ## 💰 Working with Wallets

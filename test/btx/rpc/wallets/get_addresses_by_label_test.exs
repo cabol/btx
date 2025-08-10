@@ -497,7 +497,7 @@ defmodule BTx.RPC.Wallets.GetAddressesByLabelTest do
     @tag :integration
     test "real Bitcoin regtest integration" do
       # This test requires a real Bitcoin regtest node running
-      real_client = new_client(retry_opts: [max_retries: 10])
+      real_client = new_client(retry_opts: [max_retries: 10, delay: :timer.seconds(1)])
 
       # Create a new wallet for testing
       wallet_name = "getaddressesbylabel-test-#{UUID.generate()}"

@@ -499,7 +499,7 @@ defmodule BTx.RPC.RawTransactions.SignRawTransactionWithKeyTest do
     @tag :integration
     test "real Bitcoin regtest integration" do
       # This test requires a real Bitcoin regtest node with wallet and funds
-      real_client = new_client(retry_opts: [max_retries: 10])
+      real_client = new_client(retry_opts: [max_retries: 10, delay: :timer.seconds(1)])
 
       # Get the best block hash first
       assert {:ok, blockchain_info} = Blockchain.get_blockchain_info(real_client)
