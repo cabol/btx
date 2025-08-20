@@ -1129,4 +1129,197 @@ defmodule BTx.WalletsFixtures do
       ]
     }
   end
+
+  ## GetBalances fixtures
+
+  @doc """
+  Returns a fixture for getbalances request.
+
+  ## Options
+
+  You can override any field by passing a map with the desired values:
+
+  ## Examples
+
+      # Default request
+      get_balances_request_fixture()
+
+      # Override wallet name
+      get_balances_request_fixture(%{
+        "wallet_name" => "custom_wallet"
+      })
+
+  """
+  @spec get_balances_request_fixture(map()) :: map()
+  def get_balances_request_fixture(overrides \\ %{}) do
+    %{
+      "wallet_name" => "test_wallet"
+    }
+    |> deep_merge(overrides)
+  end
+
+  @doc """
+  Returns a fixture for getbalances result.
+
+  ## Options
+
+  You can override any field by passing a map with the desired values:
+
+  ## Examples
+
+      # Default result with mine and watchonly balances
+      get_balances_result_fixture()
+
+      # Override specific values
+      get_balances_result_fixture(%{
+        "mine" => %{
+          "trusted" => 2.5,
+          "untrusted_pending" => 0.1,
+          "immature" => 0.0,
+          "used" => 0.2
+        }
+      })
+
+      # Wallet without watchonly balances
+      get_balances_result_fixture(%{
+        "watchonly" => nil
+      })
+
+      # Wallet with avoid_reuse disabled (no "used" field)
+      get_balances_result_fixture(%{
+        "mine" => %{
+          "trusted" => 1.5,
+          "untrusted_pending" => 0.0,
+          "immature" => 0.25
+        }
+      })
+
+  """
+  @spec get_balances_result_fixture(map()) :: map()
+  def get_balances_result_fixture(overrides \\ %{}) do
+    default_balances_fixture()
+    |> deep_merge(overrides)
+  end
+
+  @doc """
+  Returns a fixture for getbalances detail (mine or watchonly).
+
+  ## Options
+
+  You can override any field by passing a map with the desired values:
+
+  ## Examples
+
+      # Default balance detail
+      get_balances_detail_fixture()
+
+      # Override specific values
+      get_balances_detail_fixture(%{
+        "trusted" => 5.0,
+        "untrusted_pending" => 0.5
+      })
+
+      # Balance detail without "used" field (avoid_reuse disabled)
+      get_balances_detail_fixture(%{
+        "used" => nil
+      })
+
+  """
+  @spec get_balances_detail_fixture(map()) :: map()
+  def get_balances_detail_fixture(overrides \\ %{}) do
+    %{
+      "trusted" => 1.50000000,
+      "untrusted_pending" => 0.00000000,
+      "immature" => 0.25000000,
+      "used" => 0.10000000
+    }
+    |> deep_merge(overrides)
+  end
+
+  @doc """
+  Returns preset fixtures for common getbalances scenarios.
+
+  ## Examples
+
+      get_balances_preset(:with_watchonly)
+      get_balances_preset(:mine_only)
+      get_balances_preset(:with_pending)
+      get_balances_preset(:with_immature)
+      get_balances_preset(:empty_wallet)
+
+  """
+  @spec get_balances_preset(atom()) :: map()
+  def get_balances_preset(type) do
+    case type do
+      :with_watchonly -> get_balances_result_fixture()
+      :mine_only -> get_balances_result_fixture(mine_only_overrides())
+      :with_pending -> get_balances_result_fixture(with_pending_overrides())
+      :with_immature -> get_balances_result_fixture(with_immature_overrides())
+      :empty_wallet -> get_balances_result_fixture(empty_wallet_overrides())
+    end
+  end
+
+  ## Private functions for GetBalances
+
+  defp default_balances_fixture do
+    %{
+      "mine" => %{
+        "trusted" => 1.50000000,
+        "untrusted_pending" => 0.00000000,
+        "immature" => 0.25000000,
+        "used" => 0.10000000
+      },
+      "watchonly" => %{
+        "trusted" => 0.50000000,
+        "untrusted_pending" => 0.00000000,
+        "immature" => 0.00000000
+      }
+    }
+  end
+
+  defp mine_only_overrides do
+    %{
+      "watchonly" => nil
+    }
+  end
+
+  defp with_pending_overrides do
+    %{
+      "mine" => %{
+        "trusted" => 1.25000000,
+        "untrusted_pending" => 0.15000000,
+        "immature" => 0.00000000,
+        "used" => 0.05000000
+      },
+      "watchonly" => %{
+        "trusted" => 0.30000000,
+        "untrusted_pending" => 0.10000000,
+        "immature" => 0.00000000
+      }
+    }
+  end
+
+  defp with_immature_overrides do
+    %{
+      "mine" => %{
+        "trusted" => 0.75000000,
+        "untrusted_pending" => 0.00000000,
+        "immature" => 1.25000000,
+        "used" => 0.00000000
+      },
+      "watchonly" => nil
+    }
+  end
+
+  defp empty_wallet_overrides do
+    %{
+      "mine" => %{
+        "trusted" => 0.00000000,
+        "untrusted_pending" => 0.00000000,
+        "immature" => 0.00000000,
+        "used" => 0.00000000
+      },
+      "watchonly" => nil
+    }
+  end
 end

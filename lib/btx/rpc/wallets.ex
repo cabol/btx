@@ -30,6 +30,8 @@ defmodule BTx.RPC.Wallets do
     GetAddressInfo,
     GetAddressInfoResult,
     GetBalance,
+    GetBalances,
+    GetBalancesResult,
     GetNewAddress,
     GetReceivedByAddress,
     GetTransaction,
@@ -460,6 +462,82 @@ defmodule BTx.RPC.Wallets do
     client
     |> RPC.call!(GetBalance.new!(params), opts)
     |> Map.fetch!(:result)
+  end
+
+  @doc """
+  Returns an object with all balances in BTC.
+
+  Returns an object with all balances in BTC, including both "mine" (balances
+  from outputs that the wallet can sign) and optionally "watchonly" balances
+  (not present if wallet does not watch anything).
+
+  ## Arguments
+
+  - `client` - Same as `BTx.RPC.call/3`.
+  - `params` - A keyword list or map of parameters for the request.
+    See `BTx.RPC.Wallets.GetBalances` for more information about the
+    available parameters.
+  - `opts` - Same as `BTx.RPC.call/3`.
+
+  ## Options
+
+  See `BTx.RPC.call/3`.
+
+  ## Examples
+
+      # Get all balances for default wallet
+      iex> BTx.RPC.Wallets.get_balances(client)
+      {:ok, %BTx.RPC.Wallets.GetBalancesResult{
+        mine: %BTx.RPC.Wallets.GetBalancesDetail{
+          trusted: 1.5,
+          untrusted_pending: 0.0,
+          immature: 0.25,
+          used: 0.1
+        },
+        watchonly: nil
+      }}
+
+      # Get balances for specific wallet
+      iex> BTx.RPC.Wallets.get_balances(client,
+      ...>   wallet_name: "my_wallet"
+      ...> )
+      {:ok, %BTx.RPC.Wallets.GetBalancesResult{
+        mine: %BTx.RPC.Wallets.GetBalancesDetail{
+          trusted: 2.75,
+          untrusted_pending: 0.1,
+          immature: 0.0
+        },
+        watchonly: %BTx.RPC.Wallets.GetBalancesDetail{
+          trusted: 0.5,
+          untrusted_pending: 0.0,
+          immature: 0.0
+        }
+      }}
+
+      # Check different balance types
+      iex> {:ok, balances} = BTx.RPC.Wallets.get_balances(client, wallet_name: "trading")
+      iex> spendable = balances.mine.trusted
+      iex> pending = balances.mine.untrusted_pending
+      iex> IO.puts("Spendable: \#{spendable} BTC, Pending: \#{pending} BTC")
+
+  """
+  @spec get_balances(RPC.client(), params(), keyword()) :: response(GetBalancesResult.t())
+  def get_balances(client, params \\ %{}, opts \\ []) do
+    with {:ok, request} <- GetBalances.new(params),
+         {:ok, %Response{result: result}} <- RPC.call(client, request, opts) do
+      GetBalancesResult.new(result)
+    end
+  end
+
+  @doc """
+  Same as `get_balances/3` but raises on error.
+  """
+  @spec get_balances!(RPC.client(), params(), keyword()) :: GetBalancesResult.t()
+  def get_balances!(client, params \\ %{}, opts \\ []) do
+    client
+    |> RPC.call!(GetBalances.new!(params), opts)
+    |> Map.fetch!(:result)
+    |> GetBalancesResult.new!()
   end
 
   @doc """
