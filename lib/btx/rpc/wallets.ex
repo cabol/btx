@@ -72,7 +72,7 @@ defmodule BTx.RPC.Wallets do
   @doc """
   Creates and loads a new wallet.
 
-   ## Arguments
+  ## Arguments
 
   - `client` - Same as `BTx.RPC.call/3`.
   - `params` - A keyword list or map of parameters for the request.
